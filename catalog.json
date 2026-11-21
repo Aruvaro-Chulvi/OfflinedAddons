@@ -1,9 +1,9 @@
 {
   "format": 1,
-  "version": "addons-2026-11-21",
-  "generated": "2026-11-21T21:53:15Z",
+  "version": "addons-2026-11-22",
+  "generated": "2026-11-21T23:20:01Z",
   "repository": "https://github.com/Aruvaro-Chulvi/OfflinedAddons",
-  "base_url": "https://github.com/Aruvaro-Chulvi/OfflinedAddons/releases/download/addons-2026-11-21/",
+  "base_url": "https://github.com/Aruvaro-Chulvi/OfflinedAddons/releases/download/addons-2026-11-22/",
   "public_key": "13RbPjlJPu7T0VNjci2128gD/SVbHtw6nZMktYVU9C4=",
   "addons": [
     {
@@ -140,6 +140,51 @@
       "source": "https://github.com/Aruvaro-Chulvi/OfflinedAddons/tree/main/addons/spreadsheet",
       "published": "2026-11-21",
       "updated": "2026-11-21"
+    },
+    {
+      "id": "sudoku",
+      "name": "Sudoku",
+      "name_i18n": {
+        "en": "Sudoku",
+        "es": "Sudoku",
+        "fr": "Sudoku",
+        "pt": "Sudoku",
+        "it": "Sudoku",
+        "de": "Sudoku",
+        "zh": "数独",
+        "hi": "सुडोकू",
+        "ar": "سودوكو",
+        "ru": "Судоку"
+      },
+      "description": "Classic 9×9 sudoku with eight levels, from very easy to deadly, and its own generator that grades every puzzle by the techniques it needs.",
+      "description_i18n": {
+        "en": "Classic 9×9 sudoku with eight levels, from very easy to deadly, and its own generator that grades every puzzle by the techniques it needs.",
+        "es": "Sudoku clásico de 9×9 con ocho niveles, de muy fácil a mortal, y su propio generador que califica cada tablero por las técnicas que exige.",
+        "fr": "Sudoku classique 9×9 avec huit niveaux, de très facile à mortel, et son propre générateur qui classe chaque grille selon les techniques requises.",
+        "pt": "Sudoku clássico 9×9 com oito níveis, de muito fácil a mortal, e o seu próprio gerador que classifica cada tabuleiro pelas técnicas que exige.",
+        "it": "Sudoku classico 9×9 con otto livelli, da molto facile a mortale, e un generatore proprio che valuta ogni griglia in base alle tecniche richieste.",
+        "de": "Klassisches 9×9-Sudoku mit acht Stufen, von sehr leicht bis tödlich, und eigenem Generator, der jedes Rätsel nach den nötigen Techniken einstuft.",
+        "zh": "经典 9×9 数独，八个难度从非常简单到致命，自带生成器，按所需解题技巧为每道题定级。",
+        "hi": "क्लासिक 9×9 सुडोकू, बहुत आसान से घातक तक आठ स्तर, और अपना जनरेटर जो हर पहेली को ज़रूरी तकनीकों के अनुसार आँकता है।",
+        "ar": "سودوكو كلاسيكي 9×9 بثمانية مستويات، من السهل جدًا إلى القاتل، مع مولّد خاص يصنّف كل لغز حسب التقنيات التي يتطلبها.",
+        "ru": "Классическое судоку 9×9 с восемью уровнями, от очень лёгкого до смертельного, и собственным генератором, оценивающим каждую задачу по нужным приёмам."
+      },
+      "icon": "🔢",
+      "version": "1.0.0",
+      "author": "Álvaro C. Chulvi",
+      "license": "MIT",
+      "category": "games",
+      "min_offlined": "3.0.0",
+      "permissions": [],
+      "official": true,
+      "file": "sudoku-1.0.0.zip",
+      "size": 39880,
+      "sha256": "1c259b617a2d9f0d8f3fe52e4fb889f7a6a1184b6bfdeaeb9f96c0deed289134",
+      "content_sha256": "5250435c4b603ce504f48edeb055b474c63b03aa1e088f4c9d1bdfcd29ee6097",
+      "files": 7,
+      "source": "https://github.com/Aruvaro-Chulvi/OfflinedAddons/tree/main/addons/sudoku",
+      "published": "2026-11-22",
+      "updated": "2026-11-22"
     },
     {
       "id": "whiteboard",
