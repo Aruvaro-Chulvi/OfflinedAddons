@@ -23,6 +23,7 @@ addon in this repository can be installed from inside Offlined with one click, i
 | 🗒️ | **[Text document](addons/notes/)** | Rich-text documents with search, read-aloud and places on the map. | Official |
 | ✏️ | **[Whiteboard](addons/whiteboard/)** | An infinite whiteboard for sketches and diagrams, powered by Excalidraw. | Official |
 | 🎙️ | **[Audio notes](addons/audio-notes/)** | Voice notes with noise reduction, a player, MP3 export and calendar links. | Official |
+| 🔢 | **[Sudoku](addons/sudoku/)** | Classic sudoku with eight levels, from very easy to deadly, and its own puzzle generator. | Official |
 
 The full, current list is [`catalog.json`](catalog.json); the signed packages are in the
 [latest release](https://github.com/Aruvaro-Chulvi/OfflinedAddons/releases/latest).

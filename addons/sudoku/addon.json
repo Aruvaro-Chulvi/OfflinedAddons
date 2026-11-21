@@ -1,0 +1,36 @@
+{
+  "id": "sudoku",
+  "name": "Sudoku",
+  "version": "1.0.0",
+  "author": "Álvaro C. Chulvi",
+  "description": "Classic 9×9 sudoku with eight levels, from very easy to deadly, and its own generator that grades every puzzle by the techniques it needs.",
+  "icon": "🔢",
+  "license": "MIT",
+  "category": "games",
+  "min_offlined": "3.0.0",
+  "permissions": [],
+  "name_i18n": {
+    "en": "Sudoku",
+    "es": "Sudoku",
+    "fr": "Sudoku",
+    "pt": "Sudoku",
+    "it": "Sudoku",
+    "de": "Sudoku",
+    "zh": "数独",
+    "hi": "सुडोकू",
+    "ar": "سودوكو",
+    "ru": "Судоку"
+  },
+  "description_i18n": {
+    "en": "Classic 9×9 sudoku with eight levels, from very easy to deadly, and its own generator that grades every puzzle by the techniques it needs.",
+    "es": "Sudoku clásico de 9×9 con ocho niveles, de muy fácil a mortal, y su propio generador que califica cada tablero por las técnicas que exige.",
+    "fr": "Sudoku classique 9×9 avec huit niveaux, de très facile à mortel, et son propre générateur qui classe chaque grille selon les techniques requises.",
+    "pt": "Sudoku clássico 9×9 com oito níveis, de muito fácil a mortal, e o seu próprio gerador que classifica cada tabuleiro pelas técnicas que exige.",
+    "it": "Sudoku classico 9×9 con otto livelli, da molto facile a mortale, e un generatore proprio che valuta ogni griglia in base alle tecniche richieste.",
+    "de": "Klassisches 9×9-Sudoku mit acht Stufen, von sehr leicht bis tödlich, und eigenem Generator, der jedes Rätsel nach den nötigen Techniken einstuft.",
+    "zh": "经典 9×9 数独，八个难度从非常简单到致命，自带生成器，按所需解题技巧为每道题定级。",
+    "hi": "क्लासिक 9×9 सुडोकू, बहुत आसान से घातक तक आठ स्तर, और अपना जनरेटर जो हर पहेली को ज़रूरी तकनीकों के अनुसार आँकता है।",
+    "ar": "سودوكو كلاسيكي 9×9 بثمانية مستويات، من السهل جدًا إلى القاتل، مع مولّد خاص يصنّف كل لغز حسب التقنيات التي يتطلبها.",
+    "ru": "Классическое судоку 9×9 с восемью уровнями, от очень лёгкого до смертельного, и собственным генератором, оценивающим каждую задачу по нужным приёмам."
+  }
+}
