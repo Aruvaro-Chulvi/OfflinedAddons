@@ -1,0 +1,1010 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Audio Notes</title>
+<style>
+:root {
+  --bg: #f6f6f6;
+  --panel: #ffffff;
+  --ink: #1f1f1f;
+  --muted: #d6d6d6;
+  --soft: #e9e9e9;
+  --subtle: #6b7280;
+  --accent: #2d2d2d;
+}
+[data-theme="dark"] {
+  --bg: #0f0f10;
+  --panel: #17181a;
+  --ink: #e9e9ea;
+  --muted: #2b2c31;
+  --soft: #222327;
+  --subtle: #9a9a9a;
+  --accent: #dedede;
+}
+*, *::before, *::after { box-sizing: border-box; }
+html, body {
+  height: 100%; margin: 0; padding: 0;
+  background: var(--bg); color: var(--ink);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-size: 14px; overflow: hidden;
+}
+.hidden { display: none !important; }
+button, input, select { font-family: inherit; }
+
+.an-view { display: flex; width: 100%; height: 100%; background: var(--panel); }
+
+/* ── Sidebar ── */
+.an-sidebar {
+  flex: 0 0 240px; display: flex; flex-direction: column;
+  border-right: 1px solid var(--muted); background: var(--soft); min-width: 0;
+}
+.an-toolbar { display: flex; gap: 8px; padding: 8px; background: var(--panel); border-bottom: 1px solid var(--muted); }
+.an-toolbar button {
+  font-size: .8rem; padding: 5px 10px; border-radius: 8px; border: 1px solid var(--muted);
+  background: var(--soft); color: var(--ink); cursor: pointer;
+}
+.an-toolbar button:hover { background: var(--muted); }
+.an-search { padding: 8px; border-bottom: 1px solid var(--muted); }
+.an-search input {
+  width: 100%; padding: 6px 8px; border-radius: 8px; border: 1px solid var(--muted);
+  background: var(--bg); color: var(--ink);
+}
+.an-list { flex: 1; overflow-y: auto; padding: 4px 0; list-style: none; margin: 0; }
+.an-list-empty { padding: 16px 12px; color: var(--subtle); font-size: .82rem; text-align: center; }
+.an-list li {
+  padding: 8px 12px; cursor: pointer; font-size: .85rem; color: var(--ink);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  border-bottom: 1px solid rgba(0,0,0,0.03);
+}
+[data-theme="dark"] .an-list li { border-bottom-color: rgba(255,255,255,0.04); }
+.an-list li.active { background: var(--muted); font-weight: 600; }
+.an-list li:hover { background: color-mix(in srgb, var(--ink) 6%, transparent); }
+
+/* ── Editor ── */
+.an-editor { flex: 1; display: flex; flex-direction: column; min-width: 0; min-height: 0; background: var(--panel); overflow: hidden; }
+.an-header { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-bottom: 1px solid var(--muted); flex-shrink: 0; }
+.an-title-input {
+  flex: 1; padding: 7px 12px; border-radius: 10px; border: 1px solid var(--muted);
+  background: var(--bg); color: var(--ink); font-size: .9rem; outline: none; transition: border-color .15s;
+}
+.an-title-input:focus { border-color: var(--accent); }
+
+.an-btn {
+  padding: 6px 14px; border-radius: 8px; border: 1px solid var(--muted); background: var(--soft);
+  color: var(--ink); font-size: .82rem; cursor: pointer; display: inline-flex; align-items: center;
+  gap: 5px; white-space: nowrap; transition: background .15s, border-color .15s;
+}
+.an-btn:hover { background: var(--muted); }
+.an-btn:disabled { opacity: .45; cursor: not-allowed; }
+.an-btn--export { background: transparent; border-color: var(--accent); color: var(--accent); flex-shrink: 0; }
+.an-btn--export:hover { background: color-mix(in srgb, var(--accent) 10%, transparent); }
+.an-btn--record { background: var(--accent); color: var(--bg); border-color: transparent; font-weight: 600; }
+.an-btn--record:hover { filter: brightness(1.12); }
+.an-btn--record.recording { background: #ef4444; color: #fff; animation: an-rec-pulse-btn .9s ease infinite alternate; }
+@keyframes an-rec-pulse-btn { from { box-shadow: 0 0 0 0 rgba(239,68,68,.5); } to { box-shadow: 0 0 0 8px rgba(239,68,68,0); } }
+
+.an-viz-wrap { flex: 1 1 0; min-height: 120px; position: relative; overflow: hidden; background: #0d1117; border-bottom: 1px solid var(--muted); }
+:root:not([data-theme="dark"]) .an-viz-wrap { background: #e8edf3; }
+.an-visualizer { display: block; width: 100%; height: 100%; position: absolute; inset: 0; }
+
+.an-rec-indicator {
+  position: absolute; top: 10px; left: 14px; display: flex; align-items: center; gap: 6px;
+  background: rgba(0,0,0,.45); backdrop-filter: blur(6px); border-radius: 999px;
+  padding: 4px 12px 4px 8px; pointer-events: none; z-index: 5;
+}
+.an-rec-indicator.hidden { display: none; }
+.an-rec-dot { width: 10px; height: 10px; border-radius: 50%; background: #ef4444; animation: an-dot-pulse .8s ease infinite alternate; flex-shrink: 0; }
+@keyframes an-dot-pulse { from { opacity: 1; transform: scale(1); } to { opacity: .35; transform: scale(.7); } }
+.an-rec-label { font-size: .72rem; font-weight: 700; color: #ef4444; letter-spacing: .08em; }
+.an-rec-time { font-size: .78rem; font-variant-numeric: tabular-nums; color: rgba(255,255,255,.8); }
+
+.an-viz-idle { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; pointer-events: none; z-index: 4; }
+.an-viz-idle.hidden { display: none; }
+.an-viz-idle-icon { font-size: 2rem; opacity: .35; }
+.an-viz-idle-text { font-size: .82rem; color: rgba(128,128,128,.7); text-align: center; }
+
+.an-player { flex-shrink: 0; display: flex; flex-direction: column; gap: 4px; padding: 10px 14px 8px; border-bottom: 1px solid var(--muted); background: var(--panel); }
+.an-player.disabled { opacity: .45; pointer-events: none; }
+.an-player-row { display: flex; align-items: center; gap: 8px; }
+.an-transport { justify-content: center; gap: 12px; }
+.an-tbtn {
+  width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--muted); background: var(--soft);
+  color: var(--ink); font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+  transition: background .12s, transform .1s; flex-shrink: 0;
+}
+.an-tbtn:hover { background: var(--muted); transform: scale(1.08); }
+.an-tbtn:active { transform: scale(.93); }
+.an-tbtn--play { width: 52px; height: 52px; font-size: 20px; background: var(--panel); color: var(--ink); border: 2px solid var(--muted); }
+.an-tbtn--play:hover { opacity: .85; filter: none; }
+.an-tbtn--sm { width: 28px; height: 28px; font-size: 12px; border-radius: 8px; }
+
+.an-seek-row { gap: 10px; }
+.an-time { font-size: .75rem; font-variant-numeric: tabular-nums; color: var(--subtle); white-space: nowrap; min-width: 3ch; }
+.an-time--dur { text-align: right; }
+.an-seek-bar {
+  flex: 1; height: 4px; cursor: pointer; accent-color: var(--accent);
+  background: linear-gradient(to right, var(--accent) 0%, var(--accent) var(--seek-pct, 0%), var(--muted) var(--seek-pct, 0%), var(--muted) 100%);
+  border-radius: 999px; outline: none; appearance: none; -webkit-appearance: none;
+}
+.an-seek-bar::-webkit-slider-thumb { appearance: none; -webkit-appearance: none; width: 14px; height: 14px; border-radius: 50%; background: var(--accent); border: 2px solid var(--panel); box-shadow: 0 0 0 1px var(--accent); cursor: pointer; }
+.an-seek-bar::-moz-range-thumb { width: 14px; height: 14px; border-radius: 50%; background: var(--accent); border: 2px solid var(--panel); cursor: pointer; }
+
+.an-player-bottom { gap: 10px; }
+.an-vol-bar {
+  width: 80px; height: 4px; cursor: pointer; accent-color: var(--ink);
+  background: linear-gradient(to right, var(--ink) 0%, var(--ink) var(--vol-pct, 100%), var(--muted) var(--vol-pct, 100%), var(--muted) 100%);
+  border-radius: 999px; outline: none; appearance: none; -webkit-appearance: none; opacity: .7;
+}
+.an-vol-bar::-webkit-slider-thumb { appearance: none; -webkit-appearance: none; width: 12px; height: 12px; border-radius: 50%; background: var(--ink); cursor: pointer; }
+.an-vol-bar::-moz-range-thumb { width: 12px; height: 12px; border-radius: 50%; background: var(--ink); cursor: pointer; }
+.an-speed-sel { height: 26px; padding: 0 6px; border-radius: 7px; border: 1px solid var(--muted); background: var(--soft); color: var(--ink); font-size: .78rem; cursor: pointer; outline: none; margin-left: auto; }
+
+.an-rec-row { flex-shrink: 0; display: flex; align-items: center; gap: 10px; padding: 8px 14px; border-bottom: 1px solid var(--muted); background: var(--panel); }
+.an-rec-clock { margin-left: auto; font-variant-numeric: tabular-nums; font-size: .85rem; font-weight: 600; color: var(--accent); letter-spacing: .04em; }
+
+.an-filters-row { flex-shrink: 0; display: flex; flex-wrap: wrap; gap: 6px 16px; padding: 8px 14px; font-size: .8rem; color: var(--subtle); border-bottom: 1px solid var(--muted); background: var(--panel); }
+.an-filters-row label { display: inline-flex; align-items: center; gap: 5px; cursor: pointer; }
+
+/* ── Toast / confirm (mismo patrón que el resto de addons) ── */
+#anToast {
+  position: fixed; left: 50%; bottom: 22px; transform: translate(-50%, 12px);
+  background: var(--accent); color: var(--bg); padding: 8px 16px; border-radius: 10px;
+  font-size: .85rem; opacity: 0; pointer-events: none; transition: opacity .2s ease, transform .2s ease; z-index: 50;
+}
+#anToast.show { opacity: 1; transform: translate(-50%, 0); }
+.an-confirm-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.35); display: flex; align-items: center; justify-content: center; z-index: 100; }
+.an-confirm-card { background: var(--panel); border-radius: 12px; padding: 18px; width: 320px; box-shadow: 0 10px 30px rgba(0,0,0,.25); }
+.an-confirm-title { font-weight: 700; margin: 0 0 6px; }
+.an-confirm-msg { margin: 0 0 16px; color: var(--subtle); font-size: .88rem; }
+.an-confirm-actions { display: flex; justify-content: flex-end; gap: 8px; }
+
+/* ── Context menu (clic derecho sobre una nota de audio) ── */
+.an-ctxmenu {
+  position: fixed; z-index: 200; min-width: 220px; padding: 4px;
+  background: var(--panel); border: 1px solid var(--muted); border-radius: 10px;
+  box-shadow: 0 10px 30px rgba(0,0,0,.25); display: none;
+}
+.an-ctxmenu.show { display: block; }
+.an-ctxmenu-item {
+  padding: 7px 10px; border-radius: 6px; font-size: .85rem; cursor: pointer;
+  display: flex; align-items: center; gap: 8px; color: var(--ink);
+}
+.an-ctxmenu-item:hover { background: var(--muted); }
+</style>
+</head>
+<body>
+
+<div class="an-view">
+  <aside class="an-sidebar">
+    <div class="an-toolbar">
+      <button id="audioNewBtn">➕ <span id="audioNewLbl">New</span></button>
+      <button id="audioDelBtn">🗑️ <span id="audioDelLbl">Delete</span></button>
+    </div>
+    <div class="an-search">
+      <input id="audioNotesSearch" type="search" placeholder="Search audio notes…">
+    </div>
+    <ul id="audioNotesList" class="an-list"></ul>
+  </aside>
+  <div id="anCtxMenu" class="an-ctxmenu"></div>
+
+  <div class="an-editor">
+    <div class="an-header">
+      <input id="audioNoteTitle" class="an-title-input" type="text" placeholder="Untitled recording" autocomplete="off">
+      <button id="audioExportBtn" class="an-btn an-btn--export" title="Download audio">⬇ <span id="audioExportLabel">Export</span></button>
+    </div>
+
+    <div class="an-viz-wrap">
+      <canvas id="audioVisualizer" class="an-visualizer"></canvas>
+      <div id="audioRecIndicator" class="an-rec-indicator hidden">
+        <span class="an-rec-dot"></span>
+        <span class="an-rec-label">REC</span>
+        <span id="audioRecTimerViz" class="an-rec-time">00:00</span>
+      </div>
+      <div id="audioVizIdle" class="an-viz-idle">
+        <span class="an-viz-idle-icon">🎙️</span>
+        <span class="an-viz-idle-text" id="audioVizIdleText">Select a note or record a new one</span>
+      </div>
+    </div>
+
+    <div class="an-player" id="audioCustomPlayer">
+      <div class="an-player-row an-transport">
+        <button id="audioPlayerRestart" class="an-tbtn" title="Restart">⏮</button>
+        <button id="audioPlayerBack10"  class="an-tbtn" title="−10 s">⏪</button>
+        <button id="audioPlayerPlay"    class="an-tbtn an-tbtn--play" title="Play / Pause">▶</button>
+        <button id="audioPlayerFwd10"   class="an-tbtn" title="+10 s">⏩</button>
+      </div>
+      <div class="an-player-row an-seek-row">
+        <span id="audioPlayerTimeElapsed" class="an-time">0:00</span>
+        <input id="audioPlayerSeekBar" class="an-seek-bar" type="range" min="0" max="100" step="0.1" value="0">
+        <span id="audioPlayerTimeDuration" class="an-time an-time--dur">0:00</span>
+      </div>
+      <div class="an-player-row an-player-bottom">
+        <button id="audioPlayerMute" class="an-tbtn an-tbtn--sm" title="Mute / Unmute">🔊</button>
+        <input id="audioPlayerVolume" class="an-vol-bar" type="range" min="0" max="1" step="0.02" value="1">
+        <select id="audioPlayerSpeed" class="an-speed-sel" title="Playback speed">
+          <option value="0.5">0.5×</option>
+          <option value="0.75">0.75×</option>
+          <option value="1" selected>1×</option>
+          <option value="1.25">1.25×</option>
+          <option value="1.5">1.5×</option>
+          <option value="2">2×</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="an-rec-row">
+      <button id="audioRecBtn" class="an-btn an-btn--record">⏺ <span id="audioRecLabel">Record</span></button>
+      <button id="audioStopBtn" class="an-btn" disabled>⏹ <span id="audioStopLabel">Stop</span></button>
+      <span id="audioRecTimer" class="an-rec-clock">00:00</span>
+    </div>
+
+    <div class="an-filters-row">
+      <label><input id="audioFilterNormalize" type="checkbox" checked> <span id="audioFilterNormalizeLabel">Normalize volume</span></label>
+      <label><input id="audioFilterNoise" type="checkbox" checked> <span id="audioFilterNoiseLabel">Noise reduction</span></label>
+      <label><input id="audioFilterHighpass" type="checkbox"> <span id="audioFilterHighpassLabel">High-pass filter</span></label>
+    </div>
+
+    <audio id="audioPlayer" preload="metadata" style="display:none;"></audio>
+  </div>
+</div>
+
+<div id="anToast"></div>
+
+<script>
+const I18N = {
+  en: { newBtn:"New", del:"Delete", searchPh:"Search audio notes…", export:"Export", record:"Record", stop:"Stop",
+        normalize:"Normalize volume", noise:"Noise reduction", highpass:"High-pass filter",
+        idleText:"Select a note or record a new one", untitled:"Untitled recording",
+        nameRequiredTitle:"Name required", nameRequiredMsg:"Give the audio note a name before recording.",
+        overwriteTitle:"Overwrite?", overwriteMsg:'A note named "{name}" already exists. Overwrite it?',
+        deleteTitle:"Delete audio note?", deleteMsg:"This can't be undone.", cancel:"Cancel", ok:"OK",
+        noSupport:"Audio recording is not supported in this browser.", empty:"No saved audio notes yet.",
+        savedToast:"Audio note saved",
+        ctxRename:"Rename", ctxExportMp3:"Export to MP3", ctxAttachCalendar:"Attach to calendar event",
+        renamePrompt:"New name:", renamedToast:"Renamed", attachedToast:"Opening calendar…" },
+  es: { newBtn:"Nuevo", del:"Eliminar", searchPh:"Buscar notas de audio…", export:"Exportar", record:"Grabar", stop:"Detener",
+        normalize:"Normalizar volumen", noise:"Reducción de ruido", highpass:"Filtro paso alto",
+        idleText:"Selecciona una nota o graba una nueva", untitled:"Grabación sin título",
+        nameRequiredTitle:"Nombre requerido", nameRequiredMsg:"Antes de grabar, asigna un nombre a la nota de audio.",
+        overwriteTitle:"¿Sobrescribir?", overwriteMsg:'Ya existe una nota llamada "{name}". ¿Sobrescribirla?',
+        deleteTitle:"¿Eliminar nota de audio?", deleteMsg:"Esto no se puede deshacer.", cancel:"Cancelar", ok:"Aceptar",
+        noSupport:"La grabación de audio no está disponible en este navegador.", empty:"Todavía no hay notas de audio guardadas.",
+        savedToast:"Nota de audio guardada",
+        ctxRename:"Renombrar", ctxExportMp3:"Exportar a MP3", ctxAttachCalendar:"Adjuntar a evento de calendario",
+        renamePrompt:"Nuevo nombre:", renamedToast:"Renombrada", attachedToast:"Abriendo calendario…" },
+  fr: { newBtn:"Nouveau", del:"Supprimer", searchPh:"Rechercher des notes audio…", export:"Exporter", record:"Enregistrer", stop:"Arrêter",
+        normalize:"Normaliser le volume", noise:"Réduction du bruit", highpass:"Filtre passe-haut",
+        idleText:"Sélectionnez une note ou enregistrez-en une nouvelle", untitled:"Enregistrement sans titre",
+        nameRequiredTitle:"Nom requis", nameRequiredMsg:"Donnez un nom à la note audio avant d'enregistrer.",
+        overwriteTitle:"Écraser ?", overwriteMsg:'Une note nommée "{name}" existe déjà. L\'écraser ?',
+        deleteTitle:"Supprimer cette note audio ?", deleteMsg:"Action irréversible.", cancel:"Annuler", ok:"OK",
+        noSupport:"L'enregistrement audio n'est pas pris en charge par ce navigateur.", empty:"Aucune note audio enregistrée.",
+        savedToast:"Note audio enregistrée",
+        ctxRename:"Renommer", ctxExportMp3:"Exporter en MP3", ctxAttachCalendar:"Associer à un événement",
+        renamePrompt:"Nouveau nom :", renamedToast:"Renommé", attachedToast:"Ouverture du calendrier…" },
+  pt: { newBtn:"Novo", del:"Eliminar", searchPh:"Pesquisar notas de áudio…", export:"Exportar", record:"Gravar", stop:"Parar",
+        normalize:"Normalizar volume", noise:"Redução de ruído", highpass:"Filtro passa-alto",
+        idleText:"Seleciona uma nota ou grava uma nova", untitled:"Gravação sem título",
+        nameRequiredTitle:"Nome necessário", nameRequiredMsg:"Antes de gravar, dá um nome à nota de áudio.",
+        overwriteTitle:"Substituir?", overwriteMsg:'Já existe uma nota chamada "{name}". Substituir?',
+        deleteTitle:"Eliminar nota de áudio?", deleteMsg:"Não é possível desfazer.", cancel:"Cancelar", ok:"OK",
+        noSupport:"A gravação de áudio não é suportada neste navegador.", empty:"Ainda sem notas de áudio guardadas.",
+        savedToast:"Nota de áudio guardada",
+        ctxRename:"Renomear", ctxExportMp3:"Exportar para MP3", ctxAttachCalendar:"Anexar a evento do calendário",
+        renamePrompt:"Novo nome:", renamedToast:"Renomeada", attachedToast:"A abrir o calendário…" },
+  it: { newBtn:"Nuovo", del:"Elimina", searchPh:"Cerca note audio…", export:"Esporta", record:"Registra", stop:"Ferma",
+        normalize:"Normalizza volume", noise:"Riduzione rumore", highpass:"Filtro passa-alto",
+        idleText:"Seleziona una nota o registrane una nuova", untitled:"Registrazione senza titolo",
+        nameRequiredTitle:"Nome richiesto", nameRequiredMsg:"Prima di registrare, assegna un nome alla nota audio.",
+        overwriteTitle:"Sovrascrivere?", overwriteMsg:'Esiste già una nota chiamata "{name}". Sovrascriverla?',
+        deleteTitle:"Eliminare la nota audio?", deleteMsg:"Non può essere annullato.", cancel:"Annulla", ok:"OK",
+        noSupport:"La registrazione audio non è supportata da questo browser.", empty:"Ancora nessuna nota audio salvata.",
+        savedToast:"Nota audio salvata",
+        ctxRename:"Rinomina", ctxExportMp3:"Esporta in MP3", ctxAttachCalendar:"Allega a evento del calendario",
+        renamePrompt:"Nuovo nome:", renamedToast:"Rinominata", attachedToast:"Apertura del calendario…" },
+  de: { newBtn:"Neu", del:"Löschen", searchPh:"Audionotizen durchsuchen…", export:"Exportieren", record:"Aufnehmen", stop:"Stopp",
+        normalize:"Lautstärke normalisieren", noise:"Rauschunterdrückung", highpass:"Hochpassfilter",
+        idleText:"Wähle eine Notiz oder nimm eine neue auf", untitled:"Unbenannte Aufnahme",
+        nameRequiredTitle:"Name erforderlich", nameRequiredMsg:"Gib der Audionotiz vor der Aufnahme einen Namen.",
+        overwriteTitle:"Überschreiben?", overwriteMsg:'Eine Notiz namens "{name}" existiert bereits. Überschreiben?',
+        deleteTitle:"Audionotiz löschen?", deleteMsg:"Kann nicht rückgängig gemacht werden.", cancel:"Abbrechen", ok:"OK",
+        noSupport:"Audioaufnahme wird von diesem Browser nicht unterstützt.", empty:"Noch keine gespeicherten Audionotizen.",
+        savedToast:"Audionotiz gespeichert",
+        ctxRename:"Umbenennen", ctxExportMp3:"Als MP3 exportieren", ctxAttachCalendar:"An Termin anhängen",
+        renamePrompt:"Neuer Name:", renamedToast:"Umbenannt", attachedToast:"Kalender wird geöffnet…" },
+  zh: { newBtn:"新建", del:"删除", searchPh:"搜索语音笔记…", export:"导出", record:"录音", stop:"停止",
+        normalize:"音量标准化", noise:"降噪", highpass:"高通滤波",
+        idleText:"选择一条笔记或录制新的", untitled:"未命名录音",
+        nameRequiredTitle:"需要名称", nameRequiredMsg:"录音前请先为语音笔记命名。",
+        overwriteTitle:"覆盖？", overwriteMsg:'已存在名为"{name}"的笔记，要覆盖吗？',
+        deleteTitle:"删除语音笔记？", deleteMsg:"此操作无法撤销。", cancel:"取消", ok:"确定",
+        noSupport:"此浏览器不支持录音。", empty:"还没有已保存的语音笔记。",
+        savedToast:"语音笔记已保存",
+        ctxRename:"重命名", ctxExportMp3:"导出为 MP3", ctxAttachCalendar:"附加到日历事件",
+        renamePrompt:"新名称：", renamedToast:"已重命名", attachedToast:"正在打开日历…" },
+  hi: { newBtn:"नया", del:"हटाएं", searchPh:"ऑडियो नोट खोजें…", export:"निर्यात", record:"रिकॉर्ड", stop:"रोकें",
+        normalize:"वॉल्यूम सामान्य करें", noise:"शोर में कमी", highpass:"हाई-पास फ़िल्टर",
+        idleText:"एक नोट चुनें या नया रिकॉर्ड करें", untitled:"शीर्षकहीन रिकॉर्डिंग",
+        nameRequiredTitle:"नाम आवश्यक है", nameRequiredMsg:"रिकॉर्ड करने से पहले ऑडियो नोट को नाम दें।",
+        overwriteTitle:"अधिलेखित करें?", overwriteMsg:'"{name}" नाम का नोट पहले से मौजूद है। अधिलेखित करें?',
+        deleteTitle:"ऑडियो नोट हटाएं?", deleteMsg:"यह पूर्ववत नहीं किया जा सकता।", cancel:"रद्द करें", ok:"ठीक है",
+        noSupport:"यह ब्राउज़र ऑडियो रिकॉर्डिंग समर्थित नहीं करता।", empty:"अभी तक कोई सहेजा गया ऑडियो नोट नहीं।",
+        savedToast:"ऑडियो नोट सहेजा गया",
+        ctxRename:"नाम बदलें", ctxExportMp3:"MP3 में निर्यात करें", ctxAttachCalendar:"कैलेंडर इवेंट से जोड़ें",
+        renamePrompt:"नया नाम:", renamedToast:"नाम बदला गया", attachedToast:"कैलेंडर खोला जा रहा है…" },
+  ar: { newBtn:"جديد", del:"حذف", searchPh:"البحث في الملاحظات الصوتية…", export:"تصدير", record:"تسجيل", stop:"إيقاف",
+        normalize:"توحيد مستوى الصوت", noise:"تقليل الضوضاء", highpass:"مرشح تمرير عالٍ",
+        idleText:"اختر ملاحظة أو سجّل واحدة جديدة", untitled:"تسجيل بلا عنوان",
+        nameRequiredTitle:"الاسم مطلوب", nameRequiredMsg:"قبل التسجيل، أعطِ الملاحظة الصوتية اسمًا.",
+        overwriteTitle:"استبدال؟", overwriteMsg:'توجد ملاحظة باسم "{name}" بالفعل. استبدالها؟',
+        deleteTitle:"حذف الملاحظة الصوتية؟", deleteMsg:"لا يمكن التراجع عن هذا.", cancel:"إلغاء", ok:"موافق",
+        noSupport:"تسجيل الصوت غير مدعوم في هذا المتصفح.", empty:"لا توجد ملاحظات صوتية محفوظة بعد.",
+        savedToast:"تم حفظ الملاحظة الصوتية",
+        ctxRename:"إعادة تسمية", ctxExportMp3:"تصدير إلى MP3", ctxAttachCalendar:"إرفاق بحدث في التقويم",
+        renamePrompt:"اسم جديد:", renamedToast:"تمت إعادة التسمية", attachedToast:"جارٍ فتح التقويم…" },
+  ru: { newBtn:"Новая", del:"Удалить", searchPh:"Поиск аудиозаметок…", export:"Экспорт", record:"Запись", stop:"Стоп",
+        normalize:"Нормализация громкости", noise:"Шумоподавление", highpass:"Фильтр верхних частот",
+        idleText:"Выберите заметку или запишите новую", untitled:"Запись без названия",
+        nameRequiredTitle:"Требуется имя", nameRequiredMsg:"Перед записью присвойте имя аудиозаметке.",
+        overwriteTitle:"Перезаписать?", overwriteMsg:'Заметка с именем "{name}" уже существует. Перезаписать?',
+        deleteTitle:"Удалить аудиозаметку?", deleteMsg:"Это нельзя отменить.", cancel:"Отмена", ok:"ОК",
+        noSupport:"Запись звука не поддерживается этим браузером.", empty:"Пока нет сохранённых аудиозаметок.",
+        savedToast:"Аудиозаметка сохранена",
+        ctxRename:"Переименовать", ctxExportMp3:"Экспортировать в MP3", ctxAttachCalendar:"Прикрепить к событию календаря",
+        renamePrompt:"Новое имя:", renamedToast:"Переименовано", attachedToast:"Открытие календаря…" },
+};
+
+(function () {
+  const p = new URLSearchParams(location.search);
+  const th = p.get("theme");
+  if (th === "dark" || (!th && window.matchMedia?.("(prefers-color-scheme: dark)").matches))
+    document.documentElement.setAttribute("data-theme", "dark");
+})();
+window.addEventListener("message", e => { if (e.data?.type === "theme") document.documentElement.setAttribute("data-theme", e.data.value); });
+
+const _LANG = (() => {
+  const l = (new URLSearchParams(location.search).get("lang") || "en").slice(0, 2).toLowerCase();
+  return I18N[l] ? l : "en";
+})();
+document.documentElement.setAttribute("lang", _LANG);
+if (_LANG === "ar") document.documentElement.setAttribute("dir", "rtl");
+function t(key) { return I18N[_LANG]?.[key] || I18N.en[key] || key; }
+function tfmt(key, params) {
+  let s = t(key);
+  for (const k in (params || {})) s = s.replace(`{${k}}`, params[k]);
+  return s;
+}
+
+function escapeHTML(s = "") { return String(s).replace(/[&<>"']/g, ch => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[ch])); }
+
+let _toastT = null;
+function toast(msg) {
+  const el = document.getElementById("anToast");
+  el.textContent = String(msg);
+  el.classList.add("show");
+  clearTimeout(_toastT);
+  _toastT = setTimeout(() => el.classList.remove("show"), 2400);
+}
+
+function showConfirmDialog({ title, message, confirmLabel, cancelLabel, onConfirm, onCancel }) {
+  const ov = document.createElement("div");
+  ov.className = "an-confirm-overlay";
+  const card = document.createElement("div");
+  card.className = "an-confirm-card";
+  const h = document.createElement("p"); h.className = "an-confirm-title"; h.textContent = title || "";
+  const m = document.createElement("p"); m.className = "an-confirm-msg"; m.textContent = message || "";
+  const acts = document.createElement("div"); acts.className = "an-confirm-actions";
+  const cancel = document.createElement("button"); cancel.className = "an-btn"; cancel.textContent = cancelLabel || t("cancel");
+  const ok = document.createElement("button"); ok.className = "an-btn an-btn--record"; ok.textContent = confirmLabel || t("ok");
+  acts.append(cancel, ok); card.append(h, m, acts); ov.append(card); document.body.append(ov);
+  const close = () => { ov.remove(); document.removeEventListener("keydown", onKey); };
+  const onKey = e => { if (e.key === "Escape") { close(); onCancel?.(); } };
+  document.addEventListener("keydown", onKey);
+  ov.addEventListener("click", e => { if (e.target === ov) { close(); onCancel?.(); } });
+  cancel.addEventListener("click", () => { close(); onCancel?.(); });
+  ok.addEventListener("click", () => { close(); onConfirm?.(); });
+  ok.focus();
+}
+
+(function () {
+  const API = "/api/addon-audio-notes";
+
+  // ── DOM refs ──
+  const audioNotesView   = document.querySelector(".an-view");
+  const audioNotesList   = document.getElementById("audioNotesList");
+  const audioNewBtn      = document.getElementById("audioNewBtn");
+  const audioDelBtn      = document.getElementById("audioDelBtn");
+  const audioTitleInput  = document.getElementById("audioNoteTitle");
+  const audioSearchInput = document.getElementById("audioNotesSearch");
+  const audioRecBtn      = document.getElementById("audioRecBtn");
+  const audioStopBtn     = document.getElementById("audioStopBtn");
+  const audioPlayer      = document.getElementById("audioPlayer");
+  const audioFilterNormalize = document.getElementById("audioFilterNormalize");
+  const audioFilterNoise     = document.getElementById("audioFilterNoise");
+  const audioFilterHighpass  = document.getElementById("audioFilterHighpass");
+  const audioRecTimer    = document.getElementById("audioRecTimer");
+
+  const _state = {
+    items: [], activeId: null, searchQuery: "", isRecording: false,
+    recordedChunks: [], mediaRecorder: null, stream: null, audioCtx: null, graphNodes: null,
+    timerId: null, elapsedSec: 0, uiMode: "new",
+    filters: { normalize: true, noiseReduction: true, highpass: false },
+  };
+
+  async function _api(path, opts) {
+    const r = await fetch(`${API}${path}`, opts);
+    if (!r.ok) throw new Error(await r.text());
+    const ct = r.headers.get("content-type") || "";
+    return ct.includes("application/json") ? r.json() : null;
+  }
+
+  // ── Visualizer ──────────────────────────────────────────────
+  const _viz = { recCtx:null, recAnalyser:null, playCtx:null, playSource:null, playAnalyser:null, analyser:null, raf:null, mode:null };
+
+  function _vizGetCanvas() { return document.getElementById("audioVisualizer"); }
+  function _vizResize() {
+    const c = _vizGetCanvas(); if (!c) return;
+    const wrap = c.parentElement; if (!wrap) return;
+    c.width = wrap.clientWidth || 600; c.height = wrap.clientHeight || 200;
+  }
+  function _vizStartRec(stream) {
+    _vizStop();
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    if (!AudioCtx || !stream) return;
+    try {
+      _viz.recCtx = new AudioCtx();
+      _viz.recAnalyser = _viz.recCtx.createAnalyser();
+      _viz.recAnalyser.fftSize = 256; _viz.recAnalyser.smoothingTimeConstant = 0.75;
+      const src = _viz.recCtx.createMediaStreamSource(stream);
+      src.connect(_viz.recAnalyser);
+      _viz.analyser = _viz.recAnalyser; _viz.mode = "rec";
+      _vizResize(); _vizHideIdle(); _vizDraw();
+    } catch (e) { console.warn("[viz] recStart error:", e); }
+  }
+  function _vizStartPlay() {
+    _vizStop();
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    const ap = audioPlayer;
+    if (!AudioCtx || !ap) return;
+    try {
+      if (!_viz.playCtx) {
+        _viz.playCtx = new AudioCtx();
+        _viz.playSource = _viz.playCtx.createMediaElementSource(ap);
+        _viz.playAnalyser = _viz.playCtx.createAnalyser();
+        _viz.playAnalyser.fftSize = 256; _viz.playAnalyser.smoothingTimeConstant = 0.82;
+        _viz.playSource.connect(_viz.playAnalyser);
+        _viz.playAnalyser.connect(_viz.playCtx.destination);
+      }
+      if (_viz.playCtx.state === "suspended") _viz.playCtx.resume();
+      _viz.analyser = _viz.playAnalyser; _viz.mode = "play";
+      _vizResize(); _vizHideIdle(); _vizDraw();
+    } catch (e) { console.warn("[viz] playStart error:", e); }
+  }
+  function _vizStop() {
+    if (_viz.raf) { cancelAnimationFrame(_viz.raf); _viz.raf = null; }
+    _viz.analyser = null; _viz.mode = null;
+    if (_viz.recCtx) { _viz.recCtx.close().catch(() => {}); _viz.recCtx = null; _viz.recAnalyser = null; }
+    const c = _vizGetCanvas();
+    if (c) _vizDrawIdle(c);
+  }
+  function _vizHideIdle() { document.getElementById("audioVizIdle")?.classList.add("hidden"); }
+  function _vizShowIdle() { document.getElementById("audioVizIdle")?.classList.remove("hidden"); }
+  function _vizDrawIdle(canvas) {
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    const isDark = document.documentElement.getAttribute("data-theme") === "dark";
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.strokeStyle = isDark ? "rgba(255,255,255,.1)" : "rgba(0,0,0,.1)";
+    ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(0, canvas.height / 2); ctx.lineTo(canvas.width, canvas.height / 2); ctx.stroke();
+    _vizShowIdle();
+  }
+  function _vizDraw() {
+    const canvas = _vizGetCanvas();
+    if (!canvas || !_viz.analyser) return;
+    const ctx = canvas.getContext("2d");
+    const isDark = document.documentElement.getAttribute("data-theme") === "dark";
+    const bufLen = _viz.analyser.frequencyBinCount;
+    const data = new Uint8Array(bufLen);
+    const W = canvas.width, H = canvas.height;
+    const recColors  = isDark ? ["#ff4444","#ff6b35","#ff9234"] : ["#dc2626","#ea580c","#d97706"];
+    const playColors = isDark ? ["#38bdf8","#34d399","#a78bfa"] : ["#0284c7","#059669","#7c3aed"];
+    const colors = _viz.mode === "rec" ? recColors : playColors;
+    function frame() {
+      _viz.raf = requestAnimationFrame(frame);
+      _viz.analyser.getByteFrequencyData(data);
+      ctx.fillStyle = isDark ? "#0d1117" : "#e8edf3";
+      ctx.fillRect(0, 0, W, H);
+      const bufHalf = Math.floor(bufLen * 0.55);
+      for (let i = 0; i < bufHalf; i++) {
+        const v = data[i] / 255;
+        const barH = Math.max(2, v * H * 0.9);
+        const x = (i / bufHalf) * W;
+        const bw = (W / bufHalf) - 1.5;
+        const ci = Math.floor((i / bufHalf) * colors.length);
+        const baseColor = colors[Math.min(ci, colors.length - 1)];
+        if (v > 0.3) { ctx.shadowBlur = 8 * v; ctx.shadowColor = baseColor; } else { ctx.shadowBlur = 0; }
+        ctx.fillStyle = baseColor;
+        const cy = H / 2;
+        ctx.fillRect(x, cy - barH / 2, bw, barH);
+      }
+      ctx.shadowBlur = 0;
+    }
+    frame();
+  }
+  (function _initVizResize() {
+    const wrap = document.querySelector(".an-viz-wrap");
+    if (!wrap) return;
+    const ro = new ResizeObserver(() => { _vizResize(); const c = _vizGetCanvas(); if (!_viz.mode && c) _vizDrawIdle(c); });
+    ro.observe(wrap);
+  })();
+
+  // ── Custom player ────────────────────────────────────────────
+  let _playerInited = false;
+  function _initAudioPlayerUI() {
+    if (_playerInited) return;
+    _playerInited = true;
+    const ap = audioPlayer;
+    if (!ap) return;
+    const btnPlay = document.getElementById("audioPlayerPlay");
+    const btnBack = document.getElementById("audioPlayerBack10");
+    const btnFwd  = document.getElementById("audioPlayerFwd10");
+    const btnRestart = document.getElementById("audioPlayerRestart");
+    const btnMute = document.getElementById("audioPlayerMute");
+    const seekBar = document.getElementById("audioPlayerSeekBar");
+    const volBar  = document.getElementById("audioPlayerVolume");
+    const speedSel = document.getElementById("audioPlayerSpeed");
+    const tElapsed = document.getElementById("audioPlayerTimeElapsed");
+    const tDuration = document.getElementById("audioPlayerTimeDuration");
+
+    btnPlay?.addEventListener("click", _audioPlayerTogglePlay);
+    btnRestart?.addEventListener("click", () => { if (ap.src) ap.currentTime = 0; });
+    btnBack?.addEventListener("click", () => { ap.currentTime = Math.max(0, ap.currentTime - 10); });
+    btnFwd?.addEventListener("click", () => { ap.currentTime = Math.min(ap.duration || 0, ap.currentTime + 10); });
+
+    let seeking = false;
+    seekBar?.addEventListener("mousedown", () => { seeking = true; });
+    seekBar?.addEventListener("touchstart", () => { seeking = true; });
+    seekBar?.addEventListener("input", () => { if (ap.duration) ap.currentTime = (parseFloat(seekBar.value) / 100) * ap.duration; _updateSeekBar(); });
+    seekBar?.addEventListener("mouseup", () => { seeking = false; });
+    seekBar?.addEventListener("touchend", () => { seeking = false; });
+
+    volBar?.addEventListener("input", () => { ap.volume = parseFloat(volBar.value); _updateVolBar(); if (btnMute) btnMute.textContent = ap.volume === 0 ? "🔇" : "🔊"; });
+    btnMute?.addEventListener("click", () => { ap.muted = !ap.muted; if (btnMute) btnMute.textContent = ap.muted ? "🔇" : "🔊"; });
+    speedSel?.addEventListener("change", () => { ap.playbackRate = parseFloat(speedSel.value); });
+
+    ap.addEventListener("timeupdate", () => {
+      if (seeking) return;
+      const pct = ap.duration ? (ap.currentTime / ap.duration) * 100 : 0;
+      if (seekBar) seekBar.value = pct;
+      _updateSeekBar();
+      if (tElapsed) tElapsed.textContent = _playerFmt(ap.currentTime);
+    });
+    ap.addEventListener("loadedmetadata", () => {
+      if (tDuration) tDuration.textContent = _playerFmt(ap.duration);
+      if (tElapsed) tElapsed.textContent = "0:00";
+      if (seekBar) seekBar.value = 0;
+      _updateSeekBar(); _updateVolBar(); _vizHideIdle();
+    });
+    ap.addEventListener("play", () => { if (btnPlay) btnPlay.textContent = "⏸"; _vizStartPlay(); });
+    ap.addEventListener("pause", () => { if (btnPlay) btnPlay.textContent = "▶"; _vizStop(); });
+    ap.addEventListener("ended", () => {
+      if (btnPlay) btnPlay.textContent = "▶"; _vizStop();
+      if (seekBar) seekBar.value = 0; _updateSeekBar();
+      if (tElapsed) tElapsed.textContent = "0:00"; _vizShowIdle();
+    });
+    ap.addEventListener("error", () => { if (btnPlay) btnPlay.textContent = "▶"; });
+
+    document.getElementById("audioExportBtn")?.addEventListener("click", () => {
+      const src = ap.src;
+      if (!src || src === window.location.href) return;
+      const title = (audioTitleInput?.value || "audio-note").replace(/[^a-z0-9_\-\.]/gi, "_");
+      const a = document.createElement("a");
+      a.href = src; a.download = title + ".mp3"; a.click();
+    });
+
+    document.addEventListener("keydown", (e) => {
+      const tag = document.activeElement?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+      switch (e.key) {
+        case " ": e.preventDefault(); _audioPlayerTogglePlay(); break;
+        case "ArrowLeft": e.preventDefault(); ap.currentTime = Math.max(0, ap.currentTime - 10); break;
+        case "ArrowRight": e.preventDefault(); ap.currentTime = Math.min(ap.duration || 0, ap.currentTime + 10); break;
+        case "r": case "R": if (_state.uiMode === "new" && !_state.isRecording) startAudioRecording(); break;
+        case "s": case "S": if (_state.isRecording) stopAudioRecording(); break;
+      }
+    });
+  }
+  function _audioPlayerTogglePlay() {
+    const ap = audioPlayer;
+    if (!ap || !ap.src || ap.src === window.location.href) return;
+    if (ap.paused) ap.play().catch(() => {}); else ap.pause();
+  }
+  function _updateSeekBar() {
+    const seekBar = document.getElementById("audioPlayerSeekBar");
+    if (seekBar) seekBar.style.setProperty("--seek-pct", (seekBar.value / seekBar.max * 100).toFixed(1) + "%");
+  }
+  function _updateVolBar() {
+    const volBar = document.getElementById("audioPlayerVolume");
+    if (volBar) volBar.style.setProperty("--vol-pct", (parseFloat(volBar.value) * 100).toFixed(1) + "%");
+  }
+  function _playerFmt(sec) {
+    if (!isFinite(sec) || isNaN(sec)) return "0:00";
+    const s = Math.floor(sec), m = Math.floor(s / 60), r = s % 60;
+    return m + ":" + String(r).padStart(2, "0");
+  }
+
+  // ── Recording timer / UI mode ────────────────────────────────
+  function _formatAudioTime(sec) {
+    const s = Math.max(0, sec | 0), m = Math.floor(s / 60), r = s % 60;
+    return String(m).padStart(2, "0") + ":" + String(r).padStart(2, "0");
+  }
+  function _resetAudioTimer() { _state.elapsedSec = 0; if (audioRecTimer) audioRecTimer.textContent = "00:00"; }
+  function _startAudioTimer() {
+    _resetAudioTimer();
+    if (_state.timerId) clearInterval(_state.timerId);
+    _state.timerId = setInterval(() => {
+      _state.elapsedSec = (_state.elapsedSec || 0) + 1;
+      const tt = _formatAudioTime(_state.elapsedSec);
+      if (audioRecTimer) audioRecTimer.textContent = tt;
+      const vizTimer = document.getElementById("audioRecTimerViz");
+      if (vizTimer) vizTimer.textContent = tt;
+    }, 1000);
+  }
+  function _stopAudioTimer() { if (_state.timerId) { clearInterval(_state.timerId); _state.timerId = null; } }
+
+  function slugifyAudioTitle(raw) {
+    const s = (raw || "").normalize("NFD").replace(/[̀-ͯ]/g, "");
+    const slug = s.replace(/[^a-z0-9_\-]+/gi, "_").replace(/^_+|_+$/g, "").toLowerCase();
+    return slug || "nota_audio";
+  }
+
+  function setAudioUiMode(mode) {
+    _state.uiMode = mode;
+    const controlsRow = document.querySelector(".an-rec-row");
+    const filtersRow  = document.querySelector(".an-filters-row");
+    const playerDiv   = document.getElementById("audioCustomPlayer");
+    const canRecord = (mode === "new");
+    const canPlay   = (mode === "readonly");
+    if (controlsRow) controlsRow.style.display = canRecord ? "flex" : "none";
+    if (filtersRow)  filtersRow.style.display  = canRecord ? "flex" : "none";
+    if (playerDiv) playerDiv.classList.toggle("disabled", !canPlay);
+    if (audioRecBtn)  audioRecBtn.disabled  = !canRecord;
+    if (audioStopBtn) audioStopBtn.disabled = true;
+  }
+
+  function updateAudioRecordingUi(isRecording) {
+    _state.isRecording = !!isRecording;
+    if (audioRecBtn)  audioRecBtn.disabled  = isRecording;
+    if (audioStopBtn) audioStopBtn.disabled = !isRecording;
+    const recInd = document.getElementById("audioRecIndicator");
+    if (recInd) recInd.classList.toggle("hidden", !isRecording);
+    if (audioRecBtn) audioRecBtn.classList.toggle("recording", isRecording);
+    if (!isRecording) {
+      _stopAudioTimer();
+      const vizTimer = document.getElementById("audioRecTimerViz");
+      if (vizTimer) vizTimer.textContent = "00:00";
+    }
+  }
+
+  function cleanupAudioStream() {
+    try { if (_state.mediaRecorder) { _state.mediaRecorder.ondataavailable = null; _state.mediaRecorder.onstop = null; } } catch {}
+    if (_state.stream) _state.stream.getTracks().forEach(tr => tr.stop());
+    if (_state.audioCtx) _state.audioCtx.close().catch(() => {});
+    _state.stream = null; _state.mediaRecorder = null; _state.recordedChunks = [];
+    _state.audioCtx = null; _state.graphNodes = null;
+    _vizStop();
+    updateAudioRecordingUi(false);
+  }
+
+  async function buildAudioGraph(stream) {
+    if (!window.AudioContext && !window.webkitAudioContext) return stream;
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    const audioCtx = new AudioCtx();
+    _state.audioCtx = audioCtx;
+    const source = audioCtx.createMediaStreamSource(stream);
+    const highpass = audioCtx.createBiquadFilter();
+    highpass.type = "highpass"; highpass.frequency.value = _state.filters.highpass ? 200 : 20;
+    const lowpass = audioCtx.createBiquadFilter();
+    lowpass.type = "lowpass"; lowpass.frequency.value = _state.filters.noiseReduction ? 6000 : 20000;
+    const compressor = audioCtx.createDynamicsCompressor();
+    if (_state.filters.normalize) {
+      compressor.threshold.value = -24; compressor.knee.value = 30;
+      compressor.ratio.value = 12; compressor.attack.value = 0.003; compressor.release.value = 0.25;
+    }
+    const dest = audioCtx.createMediaStreamDestination();
+    source.connect(highpass); highpass.connect(lowpass); lowpass.connect(compressor); compressor.connect(dest);
+    _state.graphNodes = { source, highpass, lowpass, compressor, dest };
+    return dest.stream;
+  }
+
+  async function startAudioRecording() {
+    const title = (audioTitleInput?.value || "").trim();
+    if (!title) {
+      showConfirmDialog({
+        title: t("nameRequiredTitle"), message: t("nameRequiredMsg"), confirmLabel: t("ok"), cancelLabel: "",
+        onConfirm: () => { if (audioTitleInput) audioTitleInput.focus(); }
+      });
+      return;
+    }
+    const currentId = _state.activeId;
+    const desiredSlug = slugifyAudioTitle(title);
+    const conflict = (_state.items || []).find(note => {
+      const noteTitle = (note?.title || "").trim();
+      if (!noteTitle) return false;
+      return slugifyAudioTitle(noteTitle) === desiredSlug && note.id !== currentId;
+    });
+    if (conflict) {
+      showConfirmDialog({
+        title: t("overwriteTitle"), message: tfmt("overwriteMsg", { name: title }),
+        confirmLabel: t("ok"), cancelLabel: t("cancel"),
+        onConfirm: () => { _state.activeId = conflict.id; actuallyStartAudioRecording(); }
+      });
+      return;
+    }
+    actuallyStartAudioRecording();
+  }
+
+  async function actuallyStartAudioRecording() {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { toast(t("noSupport")); return; }
+    if (_state.isRecording) return;
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      _state.stream = stream;
+      const anyFilter = _state.filters.normalize || _state.filters.noiseReduction || _state.filters.highpass;
+      const recordStream = anyFilter ? await buildAudioGraph(stream) : stream;
+      const options = {};
+      if (window.MediaRecorder && MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported("audio/webm")) options.mimeType = "audio/webm";
+      const recorder = new MediaRecorder(recordStream, options);
+      _state.mediaRecorder = recorder;
+      _state.recordedChunks = [];
+      recorder.ondataavailable = (ev) => { if (ev.data && ev.data.size > 0) _state.recordedChunks.push(ev.data); };
+      recorder.onstop = handleAudioRecordingStop;
+      recorder.start();
+      _startAudioTimer();
+      updateAudioRecordingUi(true);
+      _vizStartRec(stream);
+    } catch (e) {
+      console.error("[AUDIO] Error iniciando grabación:", e);
+      toast(t("noSupport"));
+      cleanupAudioStream();
+    }
+  }
+
+  function stopAudioRecording() {
+    if (!_state.mediaRecorder) return;
+    try { _state.mediaRecorder.stop(); } catch (e) { console.warn("[AUDIO] Error al parar grabación:", e); }
+  }
+
+  async function handleAudioRecordingStop() {
+    const chunks = _state.recordedChunks || [];
+    const blob = new Blob(chunks, { type: (_state.mediaRecorder && _state.mediaRecorder.mimeType) || "audio/webm" });
+    cleanupAudioStream();
+    if (!blob.size) { console.warn("[AUDIO] Grabación vacía, no se guarda."); return; }
+
+    const id = _state.activeId || Date.now().toString();
+    let title = (audioTitleInput?.value || "").trim();
+    if (!title) { toast(t("nameRequiredMsg")); audioTitleInput?.focus(); return; }
+
+    const formData = new FormData();
+    formData.append("id", id);
+    formData.append("title", title);
+    formData.append("file", blob, `${id}.webm`);
+
+    try {
+      const saved = await _api("/note", { method: "POST", body: formData });
+      const finalId = saved.id || id;
+      const finalTitle = saved.title || title;
+      const existing = _state.items.find(n => n.id === finalId);
+      if (existing) { existing.title = finalTitle; }
+      else { _state.items.unshift({ id: finalId, title: finalTitle }); }
+      _state.activeId = finalId;
+      renderAudioNotesList();
+      openAudioNote(finalId);
+      toast(t("savedToast"));
+    } catch (e) {
+      console.error("[AUDIO] Error guardando nota de audio:", e);
+      toast("❌ " + e.message);
+    }
+  }
+
+  async function loadAudioNotes() {
+    try { _state.items = await _api("/notes"); } catch (e) { console.warn("[AUDIO] Error listando notas:", e); _state.items = []; }
+  }
+
+  function renderAudioNotesList() {
+    if (!audioNotesList) return;
+    audioNotesList.innerHTML = "";
+    const q = (_state.searchQuery || "").toLowerCase();
+    const items = (_state.items || []).filter(n => !q || (n.title || "").toLowerCase().includes(q));
+    if (!items.length) {
+      audioNotesList.innerHTML = `<li class="an-list-empty">${escapeHTML(t("empty"))}</li>`;
+      return;
+    }
+    items.forEach(n => {
+      const li = document.createElement("li");
+      li.dataset.id = n.id;
+      li.textContent = n.title || t("untitled");
+      if (n.id === _state.activeId) li.classList.add("active");
+      li.addEventListener("click", () => openAudioNote(n.id));
+      li.addEventListener("contextmenu", (ev) => { ev.preventDefault(); _showAudioCtxMenu(ev.clientX, ev.clientY, n); });
+      audioNotesList.appendChild(li);
+    });
+  }
+
+  // ── Context menu: renombrar / eliminar / exportar / adjuntar a calendario ──
+  const _anCtxMenu = document.getElementById("anCtxMenu");
+  function _hideAudioCtxMenu() { _anCtxMenu.classList.remove("show"); }
+  function _showAudioCtxMenu(x, y, note) {
+    _anCtxMenu.innerHTML = "";
+    const mkItem = (icon, label, onClick) => {
+      const it = document.createElement("div");
+      it.className = "an-ctxmenu-item";
+      it.textContent = `${icon} ${label}`;
+      it.addEventListener("click", () => { _hideAudioCtxMenu(); onClick(); });
+      return it;
+    };
+    _anCtxMenu.appendChild(mkItem("✏️", t("ctxRename"), () => _ctxRenameAudioNote(note)));
+    _anCtxMenu.appendChild(mkItem("⬇️", t("ctxExportMp3"), () => _ctxExportAudioNote(note)));
+    _anCtxMenu.appendChild(mkItem("📅", t("ctxAttachCalendar"), () => _ctxAttachAudioToCalendar(note)));
+    _anCtxMenu.appendChild(mkItem("🗑️", t("del"), () => {
+      _state.activeId = note.id;
+      showAudioDeleteConfirm(note.title || t("untitled"));
+    }));
+    _anCtxMenu.classList.add("show");
+    const maxX = window.innerWidth - 230, maxY = window.innerHeight - 160;
+    _anCtxMenu.style.left = Math.min(x, Math.max(0, maxX)) + "px";
+    _anCtxMenu.style.top  = Math.min(y, Math.max(0, maxY)) + "px";
+  }
+  document.addEventListener("click", _hideAudioCtxMenu);
+  document.addEventListener("contextmenu", (e) => { if (!e.target.closest(".an-list li")) _hideAudioCtxMenu(); });
+
+  async function _ctxRenameAudioNote(note) {
+    const newTitle = window.prompt(t("renamePrompt"), note.title || "");
+    if (!newTitle || !newTitle.trim() || newTitle.trim() === note.title) return;
+    try {
+      await fetch("/api/audio/rename", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: note.id, newTitle: newTitle.trim() }),
+      });
+      note.title = newTitle.trim();
+      if (_state.activeId === note.id && audioTitleInput) audioTitleInput.value = note.title;
+      renderAudioNotesList();
+      toast(t("renamedToast"));
+    } catch (e) {
+      toast("❌ " + e.message);
+    }
+  }
+
+  function _ctxExportAudioNote(note) {
+    const url = `${API}/file?id=${encodeURIComponent(note.id)}`;
+    const a = document.createElement("a");
+    a.href = url; a.download = (note.title || "audio-note").replace(/[^a-z0-9_\-\.]/gi, "_") + ".mp3";
+    a.click();
+  }
+
+  function _ctxAttachAudioToCalendar(note) {
+    try {
+      window.parent.postMessage({ action: "attachAudioToCalendar", audioId: note.id, title: note.title || t("untitled") }, "*");
+    } catch (_) {}
+    toast(t("attachedToast"));
+  }
+
+  function openAudioNote(id) {
+    _state.activeId = id;
+    const item = (_state.items || []).find(n => n.id === id);
+    if (!item) return;
+    if (audioTitleInput) audioTitleInput.value = item.title || t("untitled");
+
+    const url = `${API}/file?id=${encodeURIComponent(id)}`;
+    _vizStop();
+    if (audioPlayer) { audioPlayer.pause(); audioPlayer.src = url; audioPlayer.load(); }
+    _initAudioPlayerUI();
+
+    const btnPlay = document.getElementById("audioPlayerPlay");
+    if (btnPlay) btnPlay.textContent = "▶";
+    const seekBar = document.getElementById("audioPlayerSeekBar");
+    if (seekBar) { seekBar.value = 0; seekBar.style.setProperty("--seek-pct", "0%"); }
+    const tElapsed = document.getElementById("audioPlayerTimeElapsed");
+    if (tElapsed) tElapsed.textContent = "0:00";
+
+    _vizShowIdle();
+    const c = _vizGetCanvas();
+    if (c) _vizDrawIdle(c);
+
+    setAudioUiMode("readonly");
+    renderAudioNotesList();
+  }
+
+  async function audioNoteDelete() {
+    if (!_state.activeId) return;
+    const id = _state.activeId;
+    try { await _api(`/note?id=${encodeURIComponent(id)}`, { method: "DELETE" }); }
+    catch (e) { console.error("[AUDIO] Error borrando nota de audio:", e); toast("❌ " + e.message); }
+    _state.items = (_state.items || []).filter(n => n.id !== id);
+    _state.activeId = null;
+    if (audioTitleInput) audioTitleInput.value = "";
+    if (audioPlayer) { audioPlayer.removeAttribute("src"); audioPlayer.load(); }
+    setAudioUiMode("new");
+    renderAudioNotesList();
+  }
+
+  function showAudioDeleteConfirm(name) {
+    showConfirmDialog({
+      title: t("deleteTitle"), message: name || t("deleteMsg"),
+      confirmLabel: t("del"), cancelLabel: t("cancel"), onConfirm: audioNoteDelete
+    });
+  }
+
+  // ── Bindings ──────────────────────────────────────────────────
+  audioNewBtn?.addEventListener("click", () => {
+    _state.activeId = null;
+    if (audioTitleInput) audioTitleInput.value = "";
+    if (audioPlayer) { audioPlayer.pause(); audioPlayer.removeAttribute("src"); audioPlayer.load(); }
+    _vizStop();
+    const btnPlay = document.getElementById("audioPlayerPlay");
+    if (btnPlay) btnPlay.textContent = "▶";
+    const seekBar = document.getElementById("audioPlayerSeekBar");
+    if (seekBar) { seekBar.value = 0; seekBar.style.setProperty("--seek-pct", "0%"); }
+    const tElapsed = document.getElementById("audioPlayerTimeElapsed");
+    if (tElapsed) tElapsed.textContent = "0:00";
+    const tDuration = document.getElementById("audioPlayerTimeDuration");
+    if (tDuration) tDuration.textContent = "0:00";
+    _vizShowIdle();
+    const c = _vizGetCanvas();
+    if (c) _vizDrawIdle(c);
+    setAudioUiMode("new");
+    renderAudioNotesList();
+  });
+
+  audioDelBtn?.addEventListener("click", () => {
+    if (!_state.activeId) return;
+    const active = _state.items.find(n => n.id === _state.activeId);
+    showAudioDeleteConfirm(active?.title || t("untitled"));
+  });
+
+  audioRecBtn?.addEventListener("click", startAudioRecording);
+  audioStopBtn?.addEventListener("click", stopAudioRecording);
+
+  audioSearchInput?.addEventListener("input", (ev) => { _state.searchQuery = ev.target.value || ""; renderAudioNotesList(); });
+
+  audioFilterNormalize?.addEventListener("change", (e) => { _state.filters.normalize = !!e.target.checked; });
+  audioFilterNoise?.addEventListener("change", (e) => { _state.filters.noiseReduction = !!e.target.checked; });
+  audioFilterHighpass?.addEventListener("change", (e) => { _state.filters.highpass = !!e.target.checked; });
+
+  window.addEventListener("beforeunload", (e) => {
+    if (!_state.isRecording) return;
+    e.preventDefault(); e.returnValue = "";
+  });
+
+  async function init() {
+    document.getElementById("audioNewLbl").textContent = t("newBtn");
+    document.getElementById("audioDelLbl").textContent = t("del");
+    audioSearchInput.placeholder = t("searchPh");
+    document.getElementById("audioExportLabel").textContent = t("export");
+    document.getElementById("audioRecLabel").textContent = t("record");
+    document.getElementById("audioStopLabel").textContent = t("stop");
+    document.getElementById("audioFilterNormalizeLabel").textContent = t("normalize");
+    document.getElementById("audioFilterNoiseLabel").textContent = t("noise");
+    document.getElementById("audioFilterHighpassLabel").textContent = t("highpass");
+    document.getElementById("audioVizIdleText").textContent = t("idleText");
+    audioTitleInput.placeholder = t("untitled");
+
+    _initAudioPlayerUI();
+    await loadAudioNotes();
+    renderAudioNotesList();
+    // Deep-link: el host puede pedir abrir directamente una nota concreta
+    // (p. ej. desde una nota de audio vinculada en el Calendario).
+    const deepLinkNote = new URLSearchParams(location.search).get("note");
+    if (deepLinkNote && _state.items.some(n => n.id === deepLinkNote)) openAudioNote(deepLinkNote);
+    else if (_state.activeId) openAudioNote(_state.activeId);
+    else setAudioUiMode("new");
+    _vizDrawIdle(_vizGetCanvas());
+  }
+  init();
+})();
+</script>
+</body>
+</html>

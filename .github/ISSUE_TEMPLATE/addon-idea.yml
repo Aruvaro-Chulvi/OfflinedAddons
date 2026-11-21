@@ -1,0 +1,29 @@
+name: "💡 Addon idea / Idea de addon"
+description: "Suggest an addon for someone to build. / Propón un addon para que alguien lo haga."
+labels: ["idea"]
+body:
+  - type: input
+    id: name
+    attributes:
+      label: "Name / Nombre"
+      placeholder: "e.g. Recipe book / Recetario"
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: "What would it do? / ¿Qué haría?"
+      description: "Who is it for, and what would they do with it? / ¿Para quién es y qué haría con él?"
+    validations:
+      required: true
+  - type: textarea
+    id: data
+    attributes:
+      label: "Offlined data it would need / Datos de Offlined que necesitaría"
+      description: "e.g. none, its own storage, the calendar, photos… / p. ej. ninguno, su propio almacén, el calendario, fotos…"
+  - type: checkboxes
+    id: build
+    attributes:
+      label: "Building it / Hacerlo"
+      options:
+        - label: "I would like to build it myself / Me gustaría hacerlo yo"

@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: "🔒 Security problem / Problema de seguridad"
+    url: "https://github.com/Aruvaro-Chulvi/OfflinedAddons/security/advisories/new"
+    about: "Report it privately, please. / Avísalo en privado, por favor."
+  - name: "📖 Addon SDK"
+    url: "https://github.com/Aruvaro-Chulvi/OfflinedAddons/blob/main/docs/sdk/README.md"
+    about: "How to write an addon. / Cómo escribir un addon."
+  - name: "Offlined"
+    url: "https://www.offlined.org"
+    about: "Problems with Offlined itself (not an addon). / Problemas de Offlined (no de un addon)."

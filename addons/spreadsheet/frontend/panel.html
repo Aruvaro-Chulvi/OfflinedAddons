@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Spreadsheet</title>
+<style>
+:root {
+  --bg: #f6f6f6;
+  --panel: #ffffff;
+  --ink: #1f1f1f;
+  --muted: #d6d6d6;
+  --soft: #e9e9e9;
+  --subtle: #6b7280;
+  --accent: #2d2d2d;
+  --univer-btn-bg:      #e9e9e9;
+  --univer-btn-text:    #1f1f1f;
+  --univer-btn-border:  #c8c8c8;
+  --univer-accent-bg:   #1f1f1f;
+  --univer-accent-text: #ffffff;
+  --univer-active-bg:   #2d2d2d;
+  --univer-active-text: #ffffff;
+  --univer-grey-area:   #c8c8c8;
+}
+[data-theme="dark"] {
+  --bg: #0f0f10;
+  --panel: #17181a;
+  --ink: #e9e9ea;
+  --muted: #2b2c31;
+  --soft: #222327;
+  --subtle: #9a9a9a;
+  --accent: #dedede;
+  --univer-btn-bg:      #2b2c31;
+  --univer-btn-text:    #e9e9ea;
+  --univer-btn-border:  #3a3b40;
+  --univer-accent-bg:   #e9e9ea;
+  --univer-accent-text: #0f0f10;
+  --univer-active-bg:   #dedede;
+  --univer-active-text: #0f0f10;
+  --univer-grey-area:   #1a1a1a;
+}
+*, *::before, *::after { box-sizing: border-box; }
+html, body {
+  height: 100%; margin: 0; padding: 0;
+  background: var(--bg); color: var(--ink);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-size: 14px; overflow: hidden;
+}
+.hidden { display: none !important; }
+button, input { font-family: inherit; }
+
+.sp-shell { display: flex; width: 100%; height: 100%; background: var(--bg); overflow: hidden; }
+
+/* ── Sidebar ── */
+.sp-sidebar {
+  flex: 0 0 240px; display: flex; flex-direction: column;
+  border-right: 1px solid var(--muted); background: var(--panel); min-width: 0;
+}
+.sp-sidebar-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: .55rem .75rem; border-bottom: 1px solid var(--muted);
+}
+.sp-sidebar-title {
+  font-size: .8rem; font-weight: 700; color: var(--subtle);
+  text-transform: uppercase; letter-spacing: .05em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.sp-new-btn {
+  background: var(--univer-accent-bg); color: var(--univer-accent-text);
+  border: none; border-radius: 6px; width: 24px; height: 24px; cursor: pointer;
+  font-size: 1rem; line-height: 1; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.sp-new-btn:hover { opacity: .8; }
+.sp-list { list-style: none; margin: 0; padding: .3rem 0; overflow-y: auto; flex: 1; }
+.sp-list-empty { padding: 16px 12px; color: var(--subtle); font-size: .8rem; text-align: center; }
+.sp-item {
+  display: flex; align-items: center; gap: 6px; padding: .38rem .7rem; margin: .1rem .3rem;
+  border-radius: 6px; cursor: pointer; font-size: .85rem; color: var(--ink); user-select: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.sp-item:hover  { background: var(--soft); }
+.sp-item.active { background: var(--univer-active-bg); color: var(--univer-active-text); font-weight: 600; }
+
+/* ── Editor area ── */
+.sp-editor { flex: 1; display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+.sp-topbar {
+  display: flex; align-items: center; gap: .5rem; padding: .35rem .7rem;
+  background: var(--panel); border-bottom: 1px solid var(--muted); flex-shrink: 0;
+}
+.sp-filename-input {
+  flex: 1; background: var(--bg); border: 1px solid var(--muted); border-radius: 6px;
+  color: var(--ink); font-size: .88rem; padding: .28rem .55rem; outline: none; min-width: 0;
+  transition: border-color .15s;
+}
+.sp-filename-input:focus { border-color: var(--accent); }
+.sp-topbar-actions { display: flex; gap: .35rem; flex-shrink: 0; }
+.sp-action-btn {
+  background: var(--univer-btn-bg); border: 1px solid var(--univer-btn-border); color: var(--univer-btn-text);
+  border-radius: 6px; padding: .3rem .65rem; font-size: .8rem; cursor: pointer; white-space: nowrap;
+  transition: background .12s, color .12s, border-color .12s;
+}
+.sp-action-btn:hover { background: var(--univer-accent-bg); color: var(--univer-accent-text); border-color: var(--univer-accent-bg); }
+.sp-action-btn.danger:hover { background: #c0392b; color: #fff; border-color: #c0392b; }
+
+.sp-container { flex: 1; min-height: 0; height: 100%; width: 100%; position: relative; overflow: hidden; background: var(--univer-grey-area); }
+.sp-container > .univer-app-layout { width: 100%; height: 100%; }
+.sp-container input[type="text"], .sp-container textarea { pointer-events: auto !important; opacity: 1 !important; }
+.sp-container canvas { display: block; outline: none; }
+
+.sp-empty-msg {
+  position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  color: var(--subtle); font-size: .95rem; gap: .5rem; pointer-events: none;
+}
+.sp-empty-msg .big-icon { font-size: 3rem; opacity: .35; }
+
+/* ── Install panel ── */
+.sp-install-panel {
+  position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: .75rem; padding: 2rem; text-align: center; background: var(--bg);
+}
+.sp-install-icon { font-size: 3rem; line-height: 1; }
+.sp-install-title { margin: 0; font-size: 1.1rem; font-weight: 700; color: var(--ink); }
+.sp-install-desc { margin: 0; font-size: .88rem; color: var(--subtle); max-width: 380px; line-height: 1.55; }
+.sp-install-btn {
+  background: var(--accent); color: var(--bg); border: none; border-radius: 8px; padding: .55rem 1.4rem;
+  font-size: .9rem; font-weight: 600; cursor: pointer; transition: opacity .15s;
+}
+.sp-install-btn:hover { opacity: .82; }
+.sp-install-btn:disabled { opacity: .5; cursor: default; }
+.sp-install-progress { display: flex; flex-direction: column; align-items: center; gap: .5rem; width: 100%; max-width: 340px; font-size: .82rem; color: var(--subtle); }
+.sp-install-bar { width: 100%; height: 6px; background: var(--muted); border-radius: 99px; overflow: hidden; }
+.sp-install-bar-fill { height: 100%; width: 0%; background: var(--accent); border-radius: 99px; transition: width .4s ease; }
+
+/* ── Toast / confirm ── */
+#spToast {
+  position: fixed; left: 50%; bottom: 22px; transform: translate(-50%, 12px);
+  background: var(--accent); color: var(--bg); padding: 8px 16px; border-radius: 10px;
+  font-size: .85rem; opacity: 0; pointer-events: none; transition: opacity .2s ease, transform .2s ease; z-index: 50;
+}
+#spToast.show { opacity: 1; transform: translate(-50%, 0); }
+.sp-confirm-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.35); display: flex; align-items: center; justify-content: center; z-index: 100; }
+.sp-confirm-card { background: var(--panel); border-radius: 12px; padding: 18px; width: 320px; box-shadow: 0 10px 30px rgba(0,0,0,.25); }
+.sp-confirm-title { font-weight: 700; margin: 0 0 6px; }
+.sp-confirm-msg { margin: 0 0 16px; color: var(--subtle); font-size: .88rem; }
+.sp-confirm-actions { display: flex; justify-content: flex-end; gap: 8px; }
+.sp-confirm-actions .sp-btn {
+  padding: 6px 14px; border-radius: 8px; border: 1px solid var(--muted); background: var(--soft);
+  color: var(--ink); font-size: .85rem; cursor: pointer;
+}
+.sp-confirm-actions .sp-btn--primary { background: var(--accent); color: var(--bg); border-color: transparent; font-weight: 600; }
+</style>
+</head>
+<body>
+
+<div class="sp-shell">
+  <aside class="sp-sidebar">
+    <div class="sp-sidebar-header">
+      <span class="sp-sidebar-title" id="spSidebarTitle">📊 Spreadsheets</span>
+      <button class="sp-new-btn" id="spNewBtn" title="New spreadsheet">＋</button>
+    </div>
+    <ul id="spFileList" class="sp-list"></ul>
+  </aside>
+
+  <div class="sp-editor">
+    <div class="sp-topbar">
+      <input id="spFilenameInput" class="sp-filename-input" type="text" placeholder="Spreadsheet name…" spellcheck="false" autocomplete="off">
+      <div class="sp-topbar-actions">
+        <button class="sp-action-btn" id="spSaveBtn">💾 <span id="spSaveLbl">Save</span></button>
+        <button class="sp-action-btn danger" id="spDeleteBtn" aria-label="Delete sheet">🗑</button>
+      </div>
+    </div>
+    <div id="spContainer" class="sp-container"></div>
+  </div>
+</div>
+
+<div id="spToast"></div>
+
+<script>
+const I18N = {
+  en: { newTitle:"New spreadsheet", save:"Save", filenamePh:"Spreadsheet name…", untitled:"Untitled",
+        empty:"No spreadsheets yet.", noSheets:"No sheets", emptyMsg:"Press <strong>＋</strong> to create a new spreadsheet",
+        savedToast:"Saved:", deletedToast:"Deleted", createFirst:"Create a spreadsheet first", saveFirst:"Save first",
+        deleteTitle:"Delete spreadsheet?", deleteMsg:'Delete "{name}"?', cancel:"Cancel", ok:"Delete",
+        unsavedTitle:"Unsaved changes", unsavedMsg:"You have unsaved changes. Discard them?", okGeneric:"OK",
+        installTitle:"Spreadsheet editor (Univer)", installDesc:"The spreadsheet module is based on Univer and works fully offline. Estimated additional package size: ~50 MB.",
+        installBtn:"Download and install", installing:"⏳ Downloading…", installed:"✅ Installed", retry:"🔁 Retry",
+        installStarting:"Connecting to unpkg.com…" },
+  es: { newTitle:"Nueva hoja de cálculo", save:"Guardar", filenamePh:"Nombre de la hoja…", untitled:"Sin título",
+        empty:"Todavía no hay hojas de cálculo.", noSheets:"Sin hojas", emptyMsg:"Pulsa <strong>＋</strong> para crear una hoja nueva",
+        savedToast:"Guardado:", deletedToast:"Eliminado", createFirst:"Crea una hoja primero", saveFirst:"Guarda primero",
+        deleteTitle:"¿Eliminar hoja?", deleteMsg:'¿Eliminar "{name}"?', cancel:"Cancelar", ok:"Eliminar",
+        unsavedTitle:"Cambios sin guardar", unsavedMsg:"Tienes cambios sin guardar. ¿Descartarlos?", okGeneric:"Aceptar",
+        installTitle:"Editor de hojas de cálculo (Univer)", installDesc:"El módulo de hojas de cálculo está basado en Univer y funciona completamente offline. Tamaño estimado del paquete adicional: ~50 MB.",
+        installBtn:"Descargar e instalar", installing:"⏳ Descargando…", installed:"✅ Instalado", retry:"🔁 Reintentar",
+        installStarting:"Conectando con unpkg.com…" },
+  fr: { newTitle:"Nouvelle feuille de calcul", save:"Enregistrer", filenamePh:"Nom de la feuille…", untitled:"Sans titre",
+        empty:"Aucune feuille de calcul.", noSheets:"Aucune feuille", emptyMsg:"Appuyez sur <strong>＋</strong> pour créer une nouvelle feuille",
+        savedToast:"Enregistré :", deletedToast:"Supprimé", createFirst:"Créez d'abord une feuille", saveFirst:"Enregistrez d'abord",
+        deleteTitle:"Supprimer la feuille ?", deleteMsg:'Supprimer "{name}" ?', cancel:"Annuler", ok:"Supprimer",
+        unsavedTitle:"Modifications non enregistrées", unsavedMsg:"Vous avez des modifications non enregistrées. Les abandonner ?", okGeneric:"OK",
+        installTitle:"Éditeur de feuilles de calcul (Univer)", installDesc:"Le module tableur est basé sur Univer et fonctionne entièrement hors ligne. Taille estimée : ~50 Mo.",
+        installBtn:"Télécharger et installer", installing:"⏳ Téléchargement…", installed:"✅ Installé", retry:"🔁 Réessayer",
+        installStarting:"Connexion à unpkg.com…" },
+  pt: { newTitle:"Nova folha de cálculo", save:"Guardar", filenamePh:"Nome da folha…", untitled:"Sem título",
+        empty:"Ainda sem folhas de cálculo.", noSheets:"Sem folhas", emptyMsg:"Carrega em <strong>＋</strong> para criar uma folha nova",
+        savedToast:"Guardado:", deletedToast:"Eliminado", createFirst:"Cria uma folha primeiro", saveFirst:"Guarda primeiro",
+        deleteTitle:"Eliminar folha?", deleteMsg:'Eliminar "{name}"?', cancel:"Cancelar", ok:"Eliminar",
+        unsavedTitle:"Alterações não guardadas", unsavedMsg:"Tens alterações não guardadas. Descartar?", okGeneric:"OK",
+        installTitle:"Editor de folhas de cálculo (Univer)", installDesc:"O módulo de folhas de cálculo é baseado em Univer e funciona totalmente offline. Tamanho estimado: ~50 MB.",
+        installBtn:"Descarregar e instalar", installing:"⏳ A descarregar…", installed:"✅ Instalado", retry:"🔁 Repetir",
+        installStarting:"A ligar a unpkg.com…" },
+  it: { newTitle:"Nuovo foglio di calcolo", save:"Salva", filenamePh:"Nome del foglio…", untitled:"Senza titolo",
+        empty:"Ancora nessun foglio di calcolo.", noSheets:"Nessun foglio", emptyMsg:"Premi <strong>＋</strong> per creare un nuovo foglio",
+        savedToast:"Salvato:", deletedToast:"Eliminato", createFirst:"Crea prima un foglio", saveFirst:"Salva prima",
+        deleteTitle:"Eliminare il foglio?", deleteMsg:'Eliminare "{name}"?', cancel:"Annulla", ok:"Elimina",
+        unsavedTitle:"Modifiche non salvate", unsavedMsg:"Hai modifiche non salvate. Scartarle?", okGeneric:"OK",
+        installTitle:"Editor fogli di calcolo (Univer)", installDesc:"Il modulo foglio di calcolo è basato su Univer e funziona completamente offline. Dimensione stimata: ~50 MB.",
+        installBtn:"Scarica e installa", installing:"⏳ Download…", installed:"✅ Installato", retry:"🔁 Riprova",
+        installStarting:"Connessione a unpkg.com…" },
+  de: { newTitle:"Neue Tabelle", save:"Speichern", filenamePh:"Tabellenname…", untitled:"Unbenannt",
+        empty:"Noch keine Tabellen.", noSheets:"Keine Blätter", emptyMsg:"Drücke <strong>＋</strong>, um eine neue Tabelle zu erstellen",
+        savedToast:"Gespeichert:", deletedToast:"Gelöscht", createFirst:"Erstelle zuerst eine Tabelle", saveFirst:"Zuerst speichern",
+        deleteTitle:"Tabelle löschen?", deleteMsg:'"{name}" löschen?', cancel:"Abbrechen", ok:"Löschen",
+        unsavedTitle:"Nicht gespeicherte Änderungen", unsavedMsg:"Du hast nicht gespeicherte Änderungen. Verwerfen?", okGeneric:"OK",
+        installTitle:"Tabellen-Editor (Univer)", installDesc:"Das Tabellenmodul basiert auf Univer und funktioniert komplett offline. Geschätzte Größe: ~50 MB.",
+        installBtn:"Herunterladen und installieren", installing:"⏳ Wird heruntergeladen…", installed:"✅ Installiert", retry:"🔁 Erneut versuchen",
+        installStarting:"Verbindung zu unpkg.com…" },
+  zh: { newTitle:"新建电子表格", save:"保存", filenamePh:"电子表格名称…", untitled:"未命名",
+        empty:"还没有电子表格。", noSheets:"没有工作表", emptyMsg:"点击 <strong>＋</strong> 创建新的电子表格",
+        savedToast:"已保存：", deletedToast:"已删除", createFirst:"请先创建一个表格", saveFirst:"请先保存",
+        deleteTitle:"删除电子表格？", deleteMsg:'删除 "{name}"？', cancel:"取消", ok:"删除",
+        unsavedTitle:"未保存的更改", unsavedMsg:"你有未保存的更改，要放弃吗？", okGeneric:"确定",
+        installTitle:"电子表格编辑器 (Univer)", installDesc:"电子表格模块基于 Univer，完全离线运行。预计额外大小：约 50 MB。",
+        installBtn:"下载并安装", installing:"⏳ 下载中…", installed:"✅ 已安装", retry:"🔁 重试",
+        installStarting:"正在连接 unpkg.com…" },
+  hi: { newTitle:"नई स्प्रेडशीट", save:"सहेजें", filenamePh:"स्प्रेडशीट का नाम…", untitled:"शीर्षकहीन",
+        empty:"अभी तक कोई स्प्रेडशीट नहीं।", noSheets:"कोई शीट नहीं", emptyMsg:"नई स्प्रेडशीट बनाने के लिए <strong>＋</strong> दबाएं",
+        savedToast:"सहेजा गया:", deletedToast:"हटाया गया", createFirst:"पहले एक शीट बनाएं", saveFirst:"पहले सहेजें",
+        deleteTitle:"स्प्रेडशीट हटाएं?", deleteMsg:'"{name}" हटाएं?', cancel:"रद्द करें", ok:"हटाएं",
+        unsavedTitle:"असहेजे परिवर्तन", unsavedMsg:"आपके पास असहेजे परिवर्तन हैं। उन्हें छोड़ दें?", okGeneric:"ठीक है",
+        installTitle:"स्प्रेडशीट संपादक (Univer)", installDesc:"स्प्रेडशीट मॉड्यूल Univer पर आधारित है और पूरी तरह ऑफ़लाइन काम करता है। अनुमानित आकार: ~50 MB।",
+        installBtn:"डाउनलोड करें और इंस्टॉल करें", installing:"⏳ डाउनलोड हो रहा है…", installed:"✅ इंस्टॉल हो गया", retry:"🔁 पुनः प्रयास करें",
+        installStarting:"unpkg.com से जुड़ रहे हैं…" },
+  ar: { newTitle:"جدول بيانات جديد", save:"حفظ", filenamePh:"اسم جدول البيانات…", untitled:"بلا عنوان",
+        empty:"لا توجد جداول بيانات بعد.", noSheets:"لا توجد أوراق", emptyMsg:"اضغط <strong>＋</strong> لإنشاء جدول بيانات جديد",
+        savedToast:"تم الحفظ:", deletedToast:"تم الحذف", createFirst:"أنشئ جدولاً أولاً", saveFirst:"احفظ أولاً",
+        deleteTitle:"حذف جدول البيانات؟", deleteMsg:'حذف "{name}"؟', cancel:"إلغاء", ok:"حذف",
+        unsavedTitle:"تغييرات غير محفوظة", unsavedMsg:"لديك تغييرات غير محفوظة. هل تريد تجاهلها؟", okGeneric:"موافق",
+        installTitle:"محرر جداول البيانات (Univer)", installDesc:"وحدة جداول البيانات مبنية على Univer وتعمل دون اتصال بالكامل. الحجم التقديري: ~50 ميجابايت.",
+        installBtn:"تنزيل وتثبيت", installing:"⏳ جارٍ التنزيل…", installed:"✅ تم التثبيت", retry:"🔁 إعادة المحاولة",
+        installStarting:"جارٍ الاتصال بـ unpkg.com…" },
+  ru: { newTitle:"Новая таблица", save:"Сохранить", filenamePh:"Название таблицы…", untitled:"Без названия",
+        empty:"Пока нет таблиц.", noSheets:"Нет листов", emptyMsg:"Нажмите <strong>＋</strong>, чтобы создать новую таблицу",
+        savedToast:"Сохранено:", deletedToast:"Удалено", createFirst:"Сначала создайте таблицу", saveFirst:"Сначала сохраните",
+        deleteTitle:"Удалить таблицу?", deleteMsg:'Удалить "{name}"?', cancel:"Отмена", ok:"Удалить",
+        unsavedTitle:"Несохранённые изменения", unsavedMsg:"У вас есть несохранённые изменения. Отменить их?", okGeneric:"ОК",
+        installTitle:"Редактор таблиц (Univer)", installDesc:"Модуль таблиц основан на Univer и работает полностью офлайн. Примерный размер: ~50 МБ.",
+        installBtn:"Скачать и установить", installing:"⏳ Загрузка…", installed:"✅ Установлено", retry:"🔁 Повторить",
+        installStarting:"Подключение к unpkg.com…" },
+};
+
+(function () {
+  const p = new URLSearchParams(location.search);
+  const th = p.get("theme");
+  if (th === "dark" || (!th && window.matchMedia?.("(prefers-color-scheme: dark)").matches))
+    document.documentElement.setAttribute("data-theme", "dark");
+})();
+window.addEventListener("message", e => { if (e.data?.type === "theme") document.documentElement.setAttribute("data-theme", e.data.value); });
+
+const _LANG = (() => {
+  const l = (new URLSearchParams(location.search).get("lang") || "en").slice(0, 2).toLowerCase();
+  return I18N[l] ? l : "en";
+})();
+document.documentElement.setAttribute("lang", _LANG);
+if (_LANG === "ar") document.documentElement.setAttribute("dir", "rtl");
+function t(key) { return I18N[_LANG]?.[key] || I18N.en[key] || key; }
+function tfmt(key, params) {
+  let s = t(key);
+  for (const k in (params || {})) s = s.replace(`{${k}}`, params[k]);
+  return s;
+}
+
+function escapeHTML(s = "") { return String(s).replace(/[&<>"']/g, ch => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[ch])); }
+
+let _toastT = null;
+function toast(msg) {
+  const el = document.getElementById("spToast");
+  el.textContent = String(msg);
+  el.classList.add("show");
+  clearTimeout(_toastT);
+  _toastT = setTimeout(() => el.classList.remove("show"), 2400);
+}
+
+function showConfirmDialog({ title, message, confirmLabel, cancelLabel, onConfirm, onCancel }) {
+  const ov = document.createElement("div");
+  ov.className = "sp-confirm-overlay";
+  const card = document.createElement("div");
+  card.className = "sp-confirm-card";
+  const h = document.createElement("p"); h.className = "sp-confirm-title"; h.textContent = title || "";
+  const m = document.createElement("p"); m.className = "sp-confirm-msg"; m.textContent = message || "";
+  const acts = document.createElement("div"); acts.className = "sp-confirm-actions";
+  const cancel = document.createElement("button"); cancel.className = "sp-btn"; cancel.textContent = cancelLabel || t("cancel");
+  const ok = document.createElement("button"); ok.className = "sp-btn sp-btn--primary"; ok.textContent = confirmLabel || t("okGeneric");
+  acts.append(cancel, ok); card.append(h, m, acts); ov.append(card); document.body.append(ov);
+  const close = () => { ov.remove(); document.removeEventListener("keydown", onKey); };
+  const onKey = e => { if (e.key === "Escape") { close(); onCancel?.(); } };
+  document.addEventListener("keydown", onKey);
+  ov.addEventListener("click", e => { if (e.target === ov) { close(); onCancel?.(); } });
+  cancel.addEventListener("click", () => { close(); onCancel?.(); });
+  ok.addEventListener("click", () => { close(); onConfirm?.(); });
+  ok.focus();
+}
+function showUnsavedConfirm() {
+  return new Promise(resolve => {
+    showConfirmDialog({
+      title: t("unsavedTitle"), message: t("unsavedMsg"),
+      confirmLabel: t("okGeneric"), cancelLabel: t("cancel"),
+      onConfirm: () => resolve(true), onCancel: () => resolve(false)
+    });
+  });
+}
+
+(function () {
+  const API = "/api/addon-spreadsheet";
+
+  // ── DOM refs ──
+  const spFileList      = document.getElementById("spFileList");
+  const spNewBtn         = document.getElementById("spNewBtn");
+  const spSaveBtn        = document.getElementById("spSaveBtn");
+  const spDeleteBtn      = document.getElementById("spDeleteBtn");
+  const spFilenameInput  = document.getElementById("spFilenameInput");
+  const spContainer      = document.getElementById("spContainer");
+
+  let _sheetUniver = null, _sheetAPI = null, _sheetUnit = null, _sheetCurrentName = null;
+  let _dirty = false;
+  let _dirtyListenerAttached = false;
+
+  // ══════════════════════════════════════════════════════════
+  // Carga de scripts Univer (offline-first, vendor/univer/presets)
+  // ══════════════════════════════════════════════════════════
+  let _univerLoaded = false, _univerLoadPromise = null;
+
+  function _loadUniverScripts() {
+    if (_univerLoaded) return Promise.resolve();
+    if (_univerLoadPromise) return _univerLoadPromise;
+
+    const BASE = "/vendor/univer/presets";
+    const JS_FILES = [
+      "react.js", "react-dom.js", "rxjs.js", "echarts.js", "redi.js", "redi-react.js",
+      "themes.js", "protocol.js", "core.js", "network.js", "telemetry.js", "rpc.js",
+      "design.js", "engine-render.js", "engine-formula.js", "drawing.js", "ui.js",
+      "docs.js", "docs-ui.js", "sheets.js", "sheets-ui.js", "sheets-formula.js",
+      "sheets-formula-ui.js", "sheets-numfmt.js", "sheets-numfmt-ui.js",
+      "facade-core.js", "facade-formula.js", "facade-ui.js", "facade-docs-ui.js",
+      "facade-sheets.js", "facade-sheets-ui.js", "facade-sheets-formula.js", "facade-sheets-numfmt.js",
+      "locale-design.js", "locale-ui.js", "locale-sheets.js", "locale-sheets-ui.js",
+      "locale-docs-ui.js", "locale-sheets-formula-ui.js", "locale-sheets-numfmt-ui.js",
+    ];
+    const CSS_FILES = ["design.css", "ui.css", "docs-ui.css", "sheets-ui.css", "sheets-formula-ui.css", "sheets-numfmt-ui.css"];
+
+    CSS_FILES.forEach(name => {
+      const href = BASE + "/" + name;
+      if (!document.querySelector(`link[data-univer-css="${name}"]`)) {
+        const l = document.createElement("link");
+        l.rel = "stylesheet"; l.href = href;
+        l.setAttribute("data-univer-css", name);
+        document.head.appendChild(l);
+      }
+    });
+
+    function _js(src) {
+      return new Promise((ok, fail) => {
+        if (document.querySelector(`script[data-us="${src}"]`)) { ok(); return; }
+        const s = document.createElement("script");
+        s.src = src; s.setAttribute("data-us", src);
+        s.onload = ok;
+        s.onerror = () => fail(new Error("No se pudo cargar: " + src));
+        document.head.appendChild(s);
+      });
+    }
+
+    function _injectReactPolyfills() {
+      if (window.ReactDOM && !window.ReactDOM.createRoot) {
+        window.ReactDOM.createRoot = function(container) {
+          return { render: function(el) { window.ReactDOM.render(el, container); } };
+        };
+      }
+      if (window.React && (!window.React.jsx || !window.React.jsxs)) {
+        const REACT_ELEMENT_TYPE = Symbol.for("react.element");
+        const hasOwn = Object.prototype.hasOwnProperty;
+        const RESERVED = { key: true, ref: true, __self: true, __source: true };
+        const ReactCurrentOwner = window.React.__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED.ReactCurrentOwner;
+        function createEl(type, config, maybeKey) {
+          const props = {}; let key = null, ref = null;
+          if (maybeKey !== undefined) key = "" + maybeKey;
+          if (config != null) {
+            if (config.key !== undefined) key = "" + config.key;
+            if (config.ref !== undefined) ref = config.ref;
+            for (const p in config) { if (hasOwn.call(config, p) && !RESERVED[p]) props[p] = config[p]; }
+          }
+          if (type && type.defaultProps) {
+            const dp = type.defaultProps;
+            for (const p in dp) { if (props[p] === undefined) props[p] = dp[p]; }
+          }
+          return { $$typeof: REACT_ELEMENT_TYPE, type, key, ref, props, _owner: ReactCurrentOwner.current };
+        }
+        window.React.jsx = createEl;
+        window.React.jsxs = createEl;
+      }
+    }
+
+    _univerLoadPromise = JS_FILES.reduce((p, name) => {
+      return p.then(() => _js(BASE + "/" + name).then(() => { if (name === "react-dom.js") _injectReactPolyfills(); }));
+    }, Promise.resolve()).then(() => {
+      if (!window.UniverCore || !window.UniverCore.Univer) {
+        throw new Error("UniverCore.Univer no disponible.");
+      }
+      _univerLoaded = true;
+    });
+
+    return _univerLoadPromise;
+  }
+
+  function _buildLocales() {
+    const C = window.UniverCore;
+    const merge = (C && C.mergeLocales) ? C.mergeLocales : function() {
+      const r = {};
+      for (let i = 0; i < arguments.length; i++) { if (arguments[i] && typeof arguments[i] === "object") Object.assign(r, arguments[i]); }
+      return r;
+    };
+    return merge(
+      window.UniverDesignEnUS          || {},
+      window.UniverUiEnUS              || {},
+      window.UniverSheetsEnUS          || {},
+      window.UniverSheetsUiEnUS        || {},
+      window.UniverDocsUiEnUS          || {},
+      window.UniverSheetsFormulaUiEnUS || {},
+      window.UniverSheetsNumfmtUiEnUS  || {}
+    );
+  }
+
+  function _isDark() { return (document.documentElement.getAttribute("data-theme") || "light") === "dark"; }
+
+  function _newUniverSheets(container) {
+    const C = window.UniverCore;
+    const D = window.UniverDesign;
+    const F = window.UniverCoreFacade;
+
+    const UniverRenderEnginePlugin    = window.UniverEngineRender    && window.UniverEngineRender.UniverRenderEnginePlugin;
+    const UniverFormulaEnginePlugin   = window.UniverEngineFormula   && window.UniverEngineFormula.UniverFormulaEnginePlugin;
+    const UniverUIPlugin              = window.UniverUi              && window.UniverUi.UniverUIPlugin;
+    const UniverDocsPlugin            = window.UniverDocs            && window.UniverDocs.UniverDocsPlugin;
+    const UniverDocsUIPlugin          = window.UniverDocsUi          && window.UniverDocsUi.UniverDocsUIPlugin;
+    const UniverSheetsPlugin          = window.UniverSheets          && window.UniverSheets.UniverSheetsPlugin;
+    const UniverSheetsUIPlugin        = window.UniverSheetsUi        && window.UniverSheetsUi.UniverSheetsUIPlugin;
+    const UniverSheetsFormulaPlugin   = window.UniverSheetsFormula   && window.UniverSheetsFormula.UniverSheetsFormulaPlugin;
+    const UniverSheetsFormulaUIPlugin = window.UniverSheetsFormulaUi && window.UniverSheetsFormulaUi.UniverSheetsFormulaUIPlugin;
+    const UniverSheetsNumfmtPlugin    = window.UniverSheetsNumfmt    && window.UniverSheetsNumfmt.UniverSheetsNumfmtPlugin;
+    const UniverSheetsNumfmtUIPlugin  = window.UniverSheetsNumfmtUi  && window.UniverSheetsNumfmtUi.UniverSheetsNumfmtUIPlugin;
+
+    const univer = new C.Univer({
+      theme: D && D.defaultTheme,
+      darkMode: _isDark(),
+      locale: C.LocaleType.EN_US,
+      locales: _buildLocales(),
+    });
+
+    if (UniverRenderEnginePlugin)    univer.registerPlugin(UniverRenderEnginePlugin);
+    if (UniverFormulaEnginePlugin)   univer.registerPlugin(UniverFormulaEnginePlugin);
+    if (UniverUIPlugin) univer.registerPlugin(UniverUIPlugin, { container, header: true, toolbar: true, footer: true, contextMenu: true });
+    if (UniverDocsPlugin)            univer.registerPlugin(UniverDocsPlugin);
+    if (UniverDocsUIPlugin)          univer.registerPlugin(UniverDocsUIPlugin);
+    if (UniverSheetsPlugin)          univer.registerPlugin(UniverSheetsPlugin);
+    if (UniverSheetsUIPlugin)        univer.registerPlugin(UniverSheetsUIPlugin);
+    if (UniverSheetsFormulaPlugin)   univer.registerPlugin(UniverSheetsFormulaPlugin);
+    if (UniverSheetsFormulaUIPlugin) univer.registerPlugin(UniverSheetsFormulaUIPlugin);
+    if (UniverSheetsNumfmtPlugin)    univer.registerPlugin(UniverSheetsNumfmtPlugin);
+    if (UniverSheetsNumfmtUIPlugin)  univer.registerPlugin(UniverSheetsNumfmtUIPlugin);
+
+    const univerAPI = (F && F.FUniver) ? F.FUniver.newAPI(univer) : null;
+    return { univer, univerAPI };
+  }
+
+  // ══════════════════════════════════════════════════════════
+  // Instalación (descarga de Univer bajo demanda)
+  // ══════════════════════════════════════════════════════════
+  async function _univerReady() {
+    try {
+      const r = await fetch("/api/univer/status");
+      return (await r.json()).ready === true;
+    } catch (_) { return false; }
+  }
+
+  function _showInstallPanel() {
+    spContainer.innerHTML =
+      '<div class="sp-install-panel">' +
+      '  <span class="sp-install-icon">📦</span>' +
+      '  <h3 class="sp-install-title">' + escapeHTML(t("installTitle")) + '</h3>' +
+      '  <p class="sp-install-desc">' + escapeHTML(t("installDesc")) + '</p>' +
+      '  <button class="sp-install-btn" id="spInstallBtn">' + escapeHTML(t("installBtn")) + '</button>' +
+      '  <div class="sp-install-progress hidden" id="spInstallProgress">' +
+      '    <div class="sp-install-bar"><div class="sp-install-bar-fill" id="spInstallFill"></div></div>' +
+      '    <span id="spInstallMsg">' + escapeHTML(t("installStarting")) + '</span>' +
+      '  </div>' +
+      '</div>';
+    document.getElementById("spInstallBtn").addEventListener("click", _doInstall);
+  }
+
+  async function _doInstall() {
+    const btn = document.getElementById("spInstallBtn");
+    const prog = document.getElementById("spInstallProgress");
+    const fill = document.getElementById("spInstallFill");
+    const msg = document.getElementById("spInstallMsg");
+
+    if (btn) { btn.disabled = true; btn.textContent = t("installing"); }
+    if (prog) prog.classList.remove("hidden");
+
+    let pct = 0;
+    const ticker = setInterval(() => {
+      pct = Math.min(pct + 1.2, 88);
+      if (fill) fill.style.width = pct + "%";
+    }, 400);
+
+    try {
+      const res = await fetch("/api/univer/download", { method: "POST" });
+      const data = await res.json();
+      clearInterval(ticker);
+
+      if (data.ok) {
+        if (fill) fill.style.width = "100%";
+        if (btn) btn.textContent = t("installed");
+        await new Promise(r => setTimeout(r, 800));
+        _univerLoaded = false; _univerLoadPromise = null;
+        _sheetUniver = null;
+        await sheetOpenNew();
+      } else {
+        const bad = (data.results || []).find(r => !r.ok);
+        const errTxt = bad ? (bad.file + ": " + bad.error) : "Error";
+        if (msg) msg.textContent = "❌ " + errTxt;
+        if (btn) { btn.disabled = false; btn.textContent = t("retry"); }
+      }
+    } catch (e) {
+      clearInterval(ticker);
+      if (msg) msg.textContent = "❌ " + e.message;
+      if (btn) { btn.disabled = false; btn.textContent = t("retry"); }
+    }
+  }
+
+  // ══════════════════════════════════════════════════════════
+  // Sheets: CRUD
+  // ══════════════════════════════════════════════════════════
+  function _sheetSnap(title) {
+    return {
+      id: "sheet-" + Date.now(),
+      title: title || "Sheet1",
+      sheetOrder: ["s1"],
+      sheets: {
+        s1: {
+          id: "s1", name: "Sheet1", rowCount: 1000, columnCount: 26, zoomRatio: 1,
+          scrollTop: 0, scrollLeft: 0, defaultColumnWidth: 93, defaultRowHeight: 27,
+          cellData: {}, rowData: {}, columnData: {}, status: 1,
+          freeze: { startRow: -1, startColumn: -1, ySplit: 0, xSplit: 0 }, mergeData: []
+        }
+      },
+      styles: {}, namedRanges: [], locale: "en"
+    };
+  }
+
+  async function _sheetEnsure() {
+    if (_sheetUniver) return;
+    const ready = await _univerReady();
+    if (!ready) { _showInstallPanel(); throw new Error("not_ready"); }
+    await _loadUniverScripts();
+    spContainer.innerHTML = "";
+
+    await new Promise(resolve => {
+      requestAnimationFrame(() => requestAnimationFrame(() => { void spContainer.getBoundingClientRect(); resolve(); }));
+    });
+
+    const inst = _newUniverSheets(spContainer);
+    _sheetUniver = inst.univer;
+    _sheetAPI = inst.univerAPI;
+
+    if (_sheetAPI && typeof _sheetAPI.onCommandExecuted === "function" && !_dirtyListenerAttached) {
+      _sheetAPI.onCommandExecuted(cmd => { if (cmd) _dirty = true; });
+      _dirtyListenerAttached = true;
+    }
+  }
+
+  async function sheetOpenNew() {
+    if (_dirty) {
+      const leave = await showUnsavedConfirm();
+      if (!leave) return;
+      _dirty = false;
+    }
+    try { await _sheetEnsure(); } catch (e) { if (e.message !== "not_ready") console.error(e); return; }
+    try {
+      if (_sheetUnit) { try { _sheetUniver.disposeUnit(_sheetUnit.getUnitId()); } catch (_) {} }
+      _sheetUnit = _sheetUniver.createUnit(UniverCore.UniverInstanceType.UNIVER_SHEET, _sheetSnap("Sheet1"));
+      _sheetCurrentName = null;
+      _dirty = false;
+      if (spFilenameInput) spFilenameInput.value = "";
+      _markActive(null);
+      window.dispatchEvent(new Event("resize"));
+    } catch (e) { console.error(e); toast("❌ " + e.message); }
+  }
+
+  async function sheetOpenFile(name) {
+    if (_dirty && _sheetCurrentName && _sheetCurrentName !== name) {
+      const leave = await showUnsavedConfirm();
+      if (!leave) return;
+      _dirty = false;
+    }
+    try { await _sheetEnsure(); } catch (e) { if (e.message !== "not_ready") console.error(e); return; }
+    try {
+      const res = await fetch(`${API}/load?name=${encodeURIComponent(name)}`);
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      const d = await res.json();
+      if (!d.data) throw new Error("El archivo no contiene datos válidos");
+
+      if (_sheetUnit) { try { _sheetUniver.disposeUnit(_sheetUnit.getUnitId()); } catch (_) {} _sheetUnit = null; }
+
+      const snapshot = Object.assign({}, d.data, { id: "sheet-" + Date.now() });
+      _sheetUnit = _sheetUniver.createUnit(UniverCore.UniverInstanceType.UNIVER_SHEET, snapshot);
+      _sheetCurrentName = d.name;
+      _dirty = false;
+      if (spFilenameInput) spFilenameInput.value = d.name;
+      _markActive(name);
+      window.dispatchEvent(new Event("resize"));
+    } catch (e) {
+      console.error("[Sheets] openFile error:", e);
+      toast("❌ " + e.message);
+    }
+  }
+
+  async function sheetSave() {
+    if (!_sheetUniver || !_sheetUnit) { toast("⚠️ " + t("createFirst")); return; }
+    const name = (spFilenameInput?.value || "").trim() || t("untitled");
+    try {
+      await fetch(`${API}/save`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, data: _sheetUnit.getSnapshot() })
+      });
+      _sheetCurrentName = name;
+      _dirty = false;
+      toast("💾 " + t("savedToast") + " " + name);
+      await refreshList(); _markActive(name);
+    } catch (e) { toast("❌ " + e.message); }
+  }
+
+  function sheetDelete() {
+    if (!_sheetCurrentName) { toast("⚠️ " + t("saveFirst")); return; }
+    const name = _sheetCurrentName;
+    showConfirmDialog({
+      title: t("deleteTitle"), message: tfmt("deleteMsg", { name }),
+      confirmLabel: t("ok"), cancelLabel: t("cancel"),
+      onConfirm: async () => {
+        try {
+          await fetch(`${API}/delete?name=${encodeURIComponent(name)}`, { method: "DELETE" });
+          toast("🗑 " + t("deletedToast"));
+          _sheetCurrentName = null;
+          if (_sheetUnit) { try { _sheetUniver.disposeUnit(_sheetUnit.getUnitId()); } catch (_) {} _sheetUnit = null; }
+          if (spFilenameInput) spFilenameInput.value = "";
+          await refreshList(); _showEmpty();
+        } catch (e) { toast("❌ " + e.message); }
+      }
+    });
+  }
+
+  function _showEmpty() {
+    spContainer.innerHTML = `<div class="sp-empty-msg"><span class="big-icon">📊</span><span>${t("emptyMsg")}</span></div>`;
+  }
+
+  async function refreshList() {
+    if (!spFileList) return;
+    try {
+      const items = await (await fetch(`${API}/list`)).json();
+      spFileList.innerHTML = "";
+      if (!items.length) { spFileList.innerHTML = `<li class="sp-list-empty">${escapeHTML(t("empty"))}</li>`; return; }
+      items.forEach(item => {
+        const li = document.createElement("li");
+        li.className = "sp-item" + (_sheetCurrentName === item.name ? " active" : "");
+        li.dataset.name = item.name;
+        li.textContent = item.name;
+        li.title = item.name;
+        li.addEventListener("click", () => sheetOpenFile(item.name));
+        spFileList.appendChild(li);
+      });
+    } catch (e) { console.warn("[Sheets] list:", e); }
+  }
+
+  function _markActive(name) {
+    spFileList?.querySelectorAll(".sp-item").forEach(li => li.classList.toggle("active", li.dataset.name === name));
+  }
+
+  // ── Bindings ──────────────────────────────────────────────────
+  spNewBtn?.addEventListener("click", sheetOpenNew);
+  spSaveBtn?.addEventListener("click", sheetSave);
+  spDeleteBtn?.addEventListener("click", sheetDelete);
+
+  window.addEventListener("beforeunload", (e) => {
+    if (!_dirty) return;
+    e.preventDefault(); e.returnValue = "";
+  });
+
+  async function init() {
+    document.getElementById("spSaveLbl").textContent = t("save");
+    if (spFilenameInput) spFilenameInput.placeholder = t("filenamePh");
+    spNewBtn.title = t("newTitle");
+
+    await refreshList();
+    if (!(await _univerReady())) { _showInstallPanel(); return; }
+
+    const deepLinkSheet = new URLSearchParams(location.search).get("sheet");
+    if (deepLinkSheet) {
+      await sheetOpenFile(deepLinkSheet);
+    } else if (!_sheetUnit) {
+      _showEmpty();
+    }
+  }
+  init();
+})();
+</script>
+</body>
+</html>

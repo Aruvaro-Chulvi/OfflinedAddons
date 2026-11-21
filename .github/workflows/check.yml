@@ -1,0 +1,52 @@
+name: Check addons
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: check-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+
+      - name: Check every addon (docs/sdk/05-publishing.md)
+        run: python tools/validate.py --report report.md
+
+      - name: Report
+        if: always()
+        run: |
+          if [ -f report.md ]; then cat report.md >> "$GITHUB_STEP_SUMMARY"; fi
+
+      - name: Check the template
+        run: |
+          mkdir -p /tmp/t/addons && cp -r templates/hello-world /tmp/t/addons/
+          cp -r tools /tmp/t/ && cd /tmp/t
+          python - <<'PY'
+          import sys; sys.path.insert(0, "tools")
+          import addonkit as K, validate as V
+          r = V.validate(K.ADDONS_DIR / "hello-world", {"addons": []})
+          errs = [e for e in r.errors if "reserved" not in e]
+          print("template:", errs or "ok"); sys.exit(1 if errs else 0)
+          PY
+
+      - name: Build test packages (unsigned)
+        run: python tools/package.py
+
+      - name: Upload test packages
+        uses: actions/upload-artifact@v7
+        with:
+          name: test-packages-unsigned
+          path: dist/test/*.zip
+          retention-days: 30

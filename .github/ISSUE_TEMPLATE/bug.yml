@@ -1,0 +1,31 @@
+name: "🐞 Bug in an addon / Fallo en un addon"
+description: "Something in an addon does not work. / Algo de un addon no funciona."
+labels: ["bug"]
+body:
+  - type: input
+    id: addon
+    attributes:
+      label: "Addon and version / Addon y versión"
+      description: "Shown in the addon's title bar. / Aparece en la barra del addon."
+      placeholder: "Whiteboard 1.0.0"
+    validations:
+      required: true
+  - type: input
+    id: offlined
+    attributes:
+      label: "Offlined version / Versión de Offlined"
+      placeholder: "4.0.0"
+  - type: textarea
+    id: what
+    attributes:
+      label: "What happens, and what did you expect? / ¿Qué pasa y qué esperabas?"
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: "Steps / Pasos"
+      placeholder: "1. Open… 2. Click… 3. …"
+  - type: markdown
+    attributes:
+      value: "Please do not include personal data (mail, contacts, files). / Por favor, no incluyas datos personales (correo, contactos, archivos)."

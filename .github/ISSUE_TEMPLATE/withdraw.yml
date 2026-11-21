@@ -1,0 +1,26 @@
+name: "🗑️ Withdraw an addon / Retirar un addon"
+description: "Ask for an addon to be removed from the catalogue (authors, or a rules problem). / Pide que un addon salga del catálogo (autores, o un problema con las normas)."
+labels: ["withdraw"]
+body:
+  - type: input
+    id: addon
+    attributes:
+      label: "Addon"
+    validations:
+      required: true
+  - type: dropdown
+    id: who
+    attributes:
+      label: "Who are you? / ¿Quién eres?"
+      options:
+        - "Its author / Su autor"
+        - "Someone else / Otra persona"
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: "Why? / ¿Por qué?"
+      description: "For a security problem, use a private report instead. / Para un problema de seguridad, usa un aviso privado."
+    validations:
+      required: true

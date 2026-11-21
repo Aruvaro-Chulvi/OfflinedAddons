@@ -1,0 +1,20 @@
+{
+  "id": "hello-world",
+  "name": "Hello World",
+  "version": "1.0.0",
+  "author": "Your Name",
+  "description": "A tiny example addon: a counter that remembers its value and follows Offlined's theme and language.",
+  "icon": "👋",
+  "license": "MIT",
+  "category": "tools",
+  "min_offlined": "3.0.0",
+  "permissions": [],
+  "name_i18n": {
+    "en": "Hello World",
+    "es": "Hola mundo"
+  },
+  "description_i18n": {
+    "en": "A tiny example addon: a counter that remembers its value and follows Offlined's theme and language.",
+    "es": "Un addon de ejemplo: un contador que recuerda su valor y sigue el tema y el idioma de Offlined."
+  }
+}

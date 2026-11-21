@@ -1,0 +1,36 @@
+{
+  "id": "audio-notes",
+  "name": "Audio Notes",
+  "version": "1.0.0",
+  "author": "Álvaro C. Chulvi",
+  "description": "Record, filter and play back voice notes — with a live visualizer and a custom player, fully offline.",
+  "icon": "🎙️",
+  "license": "MIT",
+  "category": "productivity",
+  "min_offlined": "3.0.0",
+  "permissions": [],
+  "name_i18n": {
+    "en": "Audio Notes",
+    "es": "Notas de audio",
+    "fr": "Notes audio",
+    "pt": "Notas de áudio",
+    "it": "Note audio",
+    "de": "Audionotizen",
+    "zh": "语音笔记",
+    "hi": "ऑडियो नोट",
+    "ar": "ملاحظات صوتية",
+    "ru": "Аудиозаметки"
+  },
+  "description_i18n": {
+    "en": "Record, filter and play back voice notes — with a live visualizer and a custom player, fully offline.",
+    "es": "Graba, filtra y reproduce notas de voz — con visualizador en vivo y reproductor propio, totalmente sin conexión.",
+    "fr": "Enregistrez, filtrez et écoutez des notes vocales — avec visualiseur en direct et lecteur intégré, entièrement hors ligne.",
+    "pt": "Grava, filtra e reproduz notas de voz — com visualizador ao vivo e leitor próprio, totalmente offline.",
+    "it": "Registra, filtra e riproduci note vocali — con visualizzatore live e lettore integrato, completamente offline.",
+    "de": "Nimm Sprachnotizen auf, filtere und spiele sie ab — mit Live-Visualizer und eigenem Player, komplett offline.",
+    "zh": "录制、过滤并回放语音笔记——配有实时可视化和自定义播放器，完全离线。",
+    "hi": "आवाज़ नोट रिकॉर्ड करें, फ़िल्टर करें और सुनें — लाइव विज़ुअलाइज़र और कस्टम प्लेयर के साथ, पूरी तरह ऑफ़लाइन।",
+    "ar": "سجّل مذكرات صوتية وصفّها واستمع إليها — مع عارض مباشر ومشغل مخصص، دون اتصال بالإنترنت بالكامل.",
+    "ru": "Записывайте, фильтруйте и слушайте голосовые заметки — с живым визуализатором и собственным плеером, полностью офлайн."
+  }
+}

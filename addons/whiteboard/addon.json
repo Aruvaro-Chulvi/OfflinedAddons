@@ -1,0 +1,36 @@
+{
+  "id": "whiteboard",
+  "name": "Whiteboard",
+  "version": "1.0.0",
+  "author": "Álvaro C. Chulvi",
+  "description": "Draw freely with a full-featured whiteboard — save, rename and reopen your drawings, fully offline.",
+  "icon": "✏️",
+  "license": "MIT",
+  "category": "office",
+  "min_offlined": "3.0.0",
+  "permissions": [],
+  "name_i18n": {
+    "en": "Whiteboard",
+    "es": "Pizarra",
+    "fr": "Tableau blanc",
+    "pt": "Quadro branco",
+    "it": "Lavagna",
+    "de": "Whiteboard",
+    "zh": "白板",
+    "hi": "व्हाइटबोर्ड",
+    "ar": "السبورة",
+    "ru": "Доска"
+  },
+  "description_i18n": {
+    "en": "Draw freely with a full-featured whiteboard — save, rename and reopen your drawings, fully offline.",
+    "es": "Dibuja libremente con una pizarra completa — guarda, renombra y reabre tus dibujos, totalmente sin conexión.",
+    "fr": "Dessinez librement avec un tableau blanc complet — enregistrez, renommez et rouvrez vos dessins, entièrement hors ligne.",
+    "pt": "Desenha livremente com um quadro branco completo — guarda, renomeia e reabre os teus desenhos, totalmente offline.",
+    "it": "Disegna liberamente con una lavagna completa — salva, rinomina e riapri i tuoi disegni, completamente offline.",
+    "de": "Zeichne frei mit einem vollwertigen Whiteboard — speichere, benenne um und öffne deine Zeichnungen erneut, komplett offline.",
+    "zh": "使用功能齐全的白板自由绘画——保存、重命名并重新打开你的绘图，完全离线。",
+    "hi": "एक पूर्ण-सुविधा संपन्न व्हाइटबोर्ड के साथ स्वतंत्र रूप से चित्र बनाएं — अपने चित्र सहेजें, नाम बदलें और फिर से खोलें, पूरी तरह ऑफ़लाइन।",
+    "ar": "ارسم بحرية باستخدام سبورة كاملة الميزات — احفظ رسوماتك وأعد تسميتها وافتحها مجددًا، دون اتصال بالإنترنت بالكامل.",
+    "ru": "Рисуйте свободно на полнофункциональной доске — сохраняйте, переименовывайте и открывайте свои рисунки снова, полностью офлайн."
+  }
+}

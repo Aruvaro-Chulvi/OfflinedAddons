@@ -1,0 +1,36 @@
+{
+  "id": "notes",
+  "name": "Notes",
+  "version": "1.0.0",
+  "author": "Álvaro C. Chulvi",
+  "description": "Write and organize rich-text notes — with formatting, search and location tagging, fully offline.",
+  "icon": "🗒️",
+  "license": "MIT",
+  "category": "office",
+  "min_offlined": "3.0.0",
+  "permissions": [],
+  "name_i18n": {
+    "en": "Notes",
+    "es": "Documento de texto",
+    "fr": "Document texte",
+    "pt": "Documento de texto",
+    "it": "Documento di testo",
+    "de": "Textdokument",
+    "zh": "文本文档",
+    "hi": "टेक्स्ट दस्तावेज़",
+    "ar": "مستند نصي",
+    "ru": "Текстовый документ"
+  },
+  "description_i18n": {
+    "en": "Write and organize rich-text notes — with formatting, search and location tagging, fully offline.",
+    "es": "Escribe y organiza notas con formato — con búsqueda y etiquetado de ubicación, totalmente sin conexión.",
+    "fr": "Rédigez et organisez des notes enrichies — avec recherche et géolocalisation, entièrement hors ligne.",
+    "pt": "Escreve e organiza notas com formatação — com busca e marcação de localização, totalmente offline.",
+    "it": "Scrivi e organizza note formattate — con ricerca e geolocalizzazione, completamente offline.",
+    "de": "Schreibe und organisiere formatierte Notizen — mit Suche und Standortmarkierung, komplett offline.",
+    "zh": "撰写和整理富文本笔记——支持搜索和位置标记，完全离线。",
+    "hi": "फ़ॉर्मेटेड नोट लिखें और व्यवस्थित करें — खोज और स्थान टैगिंग के साथ, पूरी तरह ऑफ़लाइन।",
+    "ar": "اكتب ونظّم ملاحظات منسّقة — مع بحث ووسم الموقع، دون اتصال بالإنترنت بالكامل.",
+    "ru": "Пишите и упорядочивайте форматированные заметки — с поиском и геометками, полностью офлайн."
+  }
+}

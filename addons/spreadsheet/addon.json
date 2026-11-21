@@ -1,0 +1,36 @@
+{
+  "id": "spreadsheet",
+  "name": "Spreadsheet",
+  "version": "1.0.0",
+  "author": "Álvaro C. Chulvi",
+  "description": "Create and edit spreadsheets with formulas, formatting and multiple sheets — powered by Univer, fully offline.",
+  "icon": "📊",
+  "license": "MIT",
+  "category": "office",
+  "min_offlined": "3.0.0",
+  "permissions": [],
+  "name_i18n": {
+    "en": "Spreadsheet",
+    "es": "Hoja de Cálculo",
+    "fr": "Feuille de calcul",
+    "pt": "Folha de cálculo",
+    "it": "Foglio di calcolo",
+    "de": "Tabellenkalkulation",
+    "zh": "电子表格",
+    "hi": "स्प्रेडशीट",
+    "ar": "جدول بيانات",
+    "ru": "Таблица"
+  },
+  "description_i18n": {
+    "en": "Create and edit spreadsheets with formulas, formatting and multiple sheets — powered by Univer, fully offline.",
+    "es": "Crea y edita hojas de cálculo con fórmulas, formato y varias hojas — basado en Univer, totalmente sin conexión.",
+    "fr": "Créez et modifiez des feuilles de calcul avec formules et mise en forme — propulsé par Univer, entièrement hors ligne.",
+    "pt": "Cria e edita folhas de cálculo com fórmulas e formatação — baseado em Univer, totalmente offline.",
+    "it": "Crea e modifica fogli di calcolo con formule e formattazione — basato su Univer, completamente offline.",
+    "de": "Erstelle und bearbeite Tabellen mit Formeln und Formatierung — auf Basis von Univer, komplett offline.",
+    "zh": "创建和编辑带公式与格式的电子表格——基于 Univer，完全离线。",
+    "hi": "फ़ॉर्मूला और फ़ॉर्मेटिंग के साथ स्प्रेडशीट बनाएं और संपादित करें — Univer पर आधारित, पूरी तरह ऑफ़लाइन।",
+    "ar": "أنشئ وحرّر جداول بيانات بصيغ وتنسيقات — مبني على Univer، دون اتصال بالإنترنت بالكامل.",
+    "ru": "Создавайте и редактируйте таблицы с формулами и форматированием — на основе Univer, полностью офлайн."
+  }
+}
