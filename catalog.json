@@ -1,9 +1,9 @@
 {
   "format": 1,
-  "version": "addons-2026-11-22c",
-  "generated": "2026-11-22T01:08:08Z",
+  "version": "addons-2026-11-22d",
+  "generated": "2026-11-22T02:19:06Z",
   "repository": "https://github.com/Aruvaro-Chulvi/OfflinedAddons",
-  "base_url": "https://github.com/Aruvaro-Chulvi/OfflinedAddons/releases/download/addons-2026-11-22c/",
+  "base_url": "https://github.com/Aruvaro-Chulvi/OfflinedAddons/releases/download/addons-2026-11-22d/",
   "public_key": "13RbPjlJPu7T0VNjci2128gD/SVbHtw6nZMktYVU9C4=",
   "addons": [
     {
@@ -35,21 +35,21 @@
         "ru": "Записывайте, фильтруйте и слушайте голосовые заметки — с живым визуализатором и собственным плеером, полностью офлайн."
       },
       "icon": "🎙️",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "author": "Álvaro C. Chulvi",
       "license": "MIT",
       "category": "productivity",
       "min_offlined": "3.0.0",
       "permissions": [],
       "official": true,
-      "file": "audio-notes-1.0.0.zip",
-      "size": 17140,
-      "sha256": "9ad3e6bba18df6546e3d462f09645afdf689cfbf2fff0d6a45ef89145ed96bc3",
-      "content_sha256": "b77cb64e122ffe9ff400bd4c2bfb952b645be058c52b7ba8d8bf27606f48ddcf",
-      "files": 2,
+      "file": "audio-notes-1.1.0.zip",
+      "size": 35440,
+      "sha256": "41d89d69143544ae45151c772095fc4180148ecfac4696a43eceb8bb68eb563f",
+      "content_sha256": "0bbba985070da25f5f7fbf8cee9a62454ef4c9ea5b957e2cf5f308ff1a522c5c",
+      "files": 3,
       "source": "https://github.com/Aruvaro-Chulvi/OfflinedAddons/tree/main/addons/audio-notes",
       "published": "2026-11-21",
-      "updated": "2026-11-21"
+      "updated": "2026-11-22"
     },
     {
       "id": "calcudoku",
@@ -260,21 +260,21 @@
         "ru": "Пишите и упорядочивайте форматированные заметки — с поиском и геометками, полностью офлайн."
       },
       "icon": "🗒️",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "author": "Álvaro C. Chulvi",
       "license": "MIT",
       "category": "office",
       "min_offlined": "3.0.0",
       "permissions": [],
       "official": true,
-      "file": "notes-1.0.0.zip",
-      "size": 9988,
-      "sha256": "fc40bfaafe89fa0adbdce7b3f9378ad82a99d4facb8f676e6734d35969dcdad4",
-      "content_sha256": "606d27ecc0ccb726c2ab7830b0692395ddaddc6a14cec56d207bb5329c069710",
-      "files": 2,
+      "file": "notes-1.1.0.zip",
+      "size": 27759,
+      "sha256": "98468ea7fe0342018186cc53554c26eb5df37ccba3c207d436ec59775fcd2a9a",
+      "content_sha256": "ab3fa867957b3e25466c86b3915019d46f00a89ae3caf609b5ec7f684254778d",
+      "files": 3,
       "source": "https://github.com/Aruvaro-Chulvi/OfflinedAddons/tree/main/addons/notes",
       "published": "2026-11-21",
-      "updated": "2026-11-21"
+      "updated": "2026-11-22"
     },
     {
       "id": "spreadsheet",
@@ -305,21 +305,21 @@
         "ru": "Создавайте и редактируйте таблицы с формулами и форматированием — на основе Univer, полностью офлайн."
       },
       "icon": "📊",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "author": "Álvaro C. Chulvi",
       "license": "MIT",
       "category": "office",
       "min_offlined": "3.0.0",
       "permissions": [],
       "official": true,
-      "file": "spreadsheet-1.0.0.zip",
-      "size": 13102,
-      "sha256": "79990837835d514a0555e14b7dad48c6a9b09ff97e577c3ab6a39f9c330e142d",
-      "content_sha256": "b6cd6e58edc9083cea49f69c97ff596f53938a86e61c113b84bf3760375af3ba",
-      "files": 2,
+      "file": "spreadsheet-1.1.0.zip",
+      "size": 31965,
+      "sha256": "0ac2511482c2de4454ce65f28216a28ca336220def129664f4fe4bda3380f25b",
+      "content_sha256": "9f838111645594f8e9917c5f37c6a44402a69845f89fe10aa45fcfa8c1a41ba6",
+      "files": 3,
       "source": "https://github.com/Aruvaro-Chulvi/OfflinedAddons/tree/main/addons/spreadsheet",
       "published": "2026-11-21",
-      "updated": "2026-11-21"
+      "updated": "2026-11-22"
     },
     {
       "id": "sudoku",
@@ -395,21 +395,21 @@
         "ru": "Рисуйте свободно на полнофункциональной доске — сохраняйте, переименовывайте и открывайте свои рисунки снова, полностью офлайн."
       },
       "icon": "✏️",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "author": "Álvaro C. Chulvi",
       "license": "MIT",
       "category": "office",
       "min_offlined": "3.0.0",
       "permissions": [],
       "official": true,
-      "file": "whiteboard-1.0.0.zip",
-      "size": 9105,
-      "sha256": "312b8610344dd0572c001f219fe89d397ce36426f25c40c1704aefbb8efb831c",
-      "content_sha256": "e8f30428d265b26450a4fc82d6f49691b101b79de75aa2dd258d8d21bc00f8d5",
-      "files": 2,
+      "file": "whiteboard-1.1.0.zip",
+      "size": 27664,
+      "sha256": "a0cb500a686fec913bc14622bd9d3e0f62fcef9c56f952de67c0d773abd1d057",
+      "content_sha256": "0db43bc58fa7a0735f6ae61d5d47f86c864cb2e1b038b3ba06a9456a73944fac",
+      "files": 3,
       "source": "https://github.com/Aruvaro-Chulvi/OfflinedAddons/tree/main/addons/whiteboard",
       "published": "2026-11-21",
-      "updated": "2026-11-21"
+      "updated": "2026-11-22"
     }
   ]
 }
