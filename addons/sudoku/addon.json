@@ -1,7 +1,7 @@
 {
   "id": "sudoku",
   "name": "Sudoku",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "author": "Álvaro C. Chulvi",
   "description": "Classic 9×9 sudoku with eight levels, from very easy to deadly, and its own generator that grades every puzzle by the techniques it needs.",
   "icon": "🔢",

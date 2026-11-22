@@ -24,6 +24,7 @@ menú **Addons**. Todos los addons de este repositorio se pueden instalar desde 
 | ✏️ | **[Pizarra](addons/whiteboard/)** | Una pizarra infinita para bocetos y diagramas, con tecnología de Excalidraw. | Oficial |
 | 🎙️ | **[Notas de audio](addons/audio-notes/)** | Notas de voz con reducción de ruido, reproductor, exportación a MP3 y enlaces al calendario. | Oficial |
 | 🔢 | **[Sudoku](addons/sudoku/)** | Sudoku clásico con ocho niveles, de muy fácil a mortal, y su propio generador de tableros. | Oficial |
+| ♟️ | **[Ajedrez](addons/chess/)** | Ajedrez contra el ordenador: cuatro niveles, reloj opcional, pistas y motor propio. | Oficial |
 
 La lista completa y actualizada está en [`catalog.json`](catalog.json); los paquetes firmados están en la
 [última versión publicada](https://github.com/Aruvaro-Chulvi/OfflinedAddons/releases/latest).

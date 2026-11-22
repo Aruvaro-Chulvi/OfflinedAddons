@@ -1,0 +1,36 @@
+{
+  "id": "chess",
+  "name": "Chess",
+  "version": "1.0.0",
+  "author": "Álvaro C. Chulvi",
+  "description": "Play chess against the computer, with four levels from beginner to master, an optional clock, hints and our own chess engine.",
+  "icon": "♟️",
+  "license": "MIT",
+  "category": "games",
+  "min_offlined": "3.0.0",
+  "permissions": [],
+  "name_i18n": {
+    "en": "Chess",
+    "es": "Ajedrez",
+    "fr": "Échecs",
+    "pt": "Xadrez",
+    "it": "Scacchi",
+    "de": "Schach",
+    "zh": "国际象棋",
+    "hi": "शतरंज",
+    "ar": "شطرنج",
+    "ru": "Шахматы"
+  },
+  "description_i18n": {
+    "en": "Play chess against the computer, with four levels from beginner to master, an optional clock, hints and our own chess engine.",
+    "es": "Juega al ajedrez contra el ordenador, con cuatro niveles de principiante a maestro, reloj opcional, pistas y un motor de ajedrez propio.",
+    "fr": "Jouez aux échecs contre l'ordinateur, avec quatre niveaux de débutant à maître, une pendule facultative, des indices et notre propre moteur.",
+    "pt": "Joga xadrez contra o computador, com quatro níveis de principiante a mestre, relógio opcional, dicas e um motor de xadrez próprio.",
+    "it": "Gioca a scacchi contro il computer, con quattro livelli da principiante a maestro, orologio facoltativo, suggerimenti e un motore proprio.",
+    "de": "Spiele Schach gegen den Computer, mit vier Stufen vom Anfänger bis zum Meister, optionaler Uhr, Tipps und eigener Schach-Engine.",
+    "zh": "与电脑下国际象棋，从新手到大师四个难度，可选计时、提示，以及我们自己的象棋引擎。",
+    "hi": "कंप्यूटर के ख़िलाफ़ शतरंज खेलें — शुरुआती से मास्टर तक चार स्तर, वैकल्पिक घड़ी, संकेत और हमारा अपना शतरंज इंजन।",
+    "ar": "العب الشطرنج ضد الحاسوب بأربعة مستويات من المبتدئ إلى الأستاذ، مع ساعة اختيارية وتلميحات ومحرك شطرنج خاص بنا.",
+    "ru": "Играйте в шахматы с компьютером: четыре уровня от новичка до мастера, часы по желанию, подсказки и собственный шахматный движок."
+  }
+}

@@ -1,5 +1,6 @@
 /* Sudoku addon — Offlined colours (light / dark) with a soft blue accent. Flat: no shadows anywhere. */
 :root {
+  --btn-bg: #e4e4e7; --btn-fg: #18181b; --btn-hover: #d4d4d8; --sel-line: #2d2d2d; --on: #2d2d2d;
   --bg: #f6f6f6; --panel: #ffffff; --ink: #1f1f1f; --muted: #d6d6d6; --soft: #e9e9e9; --subtle: #6b7280;
   --grid-thick: #1f1f1f; --grid-thin: #cfcfcf;
   --acc: #3b6fd4; --acc-ink: #ffffff; --acc-soft: #dfe8fa;
@@ -7,6 +8,7 @@
   --err: #d64545; --err-bg: #fbe4e4; --hint-bg: #fff3c4; --hint-cell: #ffe08a;
 }
 [data-theme="dark"] {
+  --btn-bg: #3f3f46; --btn-fg: #fafafa; --btn-hover: #52525b; --sel-line: #6b6d75; --on: #dedede;
   --bg: #0f0f10; --panel: #17181a; --ink: #e9e9ea; --muted: #2b2c31; --soft: #222327; --subtle: #9a9a9a;
   --grid-thick: #cfcfd2; --grid-thin: #34353a;
   --acc: #6d9bf0; --acc-ink: #0d1526; --acc-soft: #1d2a44;
@@ -168,6 +170,26 @@ svg.i { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-widt
 .rec { display: inline-flex; align-items: center; gap: 6px; background: var(--acc-soft); border-radius: 999px; padding: 3px 10px; font-size: 12px; margin-bottom: 14px; }
 .trophy { width: 46px; height: 46px; margin: 0 auto; border-radius: 50%; background: var(--acc); color: var(--acc-ink); display: grid; place-items: center; }
 .trophy svg { width: 24px; height: 24px; }
+
+/* ── Offlined buttons: no blue. Primary = grey; selected = soft background + accent-line border. ── */
+.btn.cta, .btn.cta:hover { background: var(--btn-bg); color: var(--btn-fg); border-color: transparent; filter: none; }
+.btn.cta:hover { background: var(--btn-hover); }
+.lvl, .colors button { background: var(--panel); border: 1px solid var(--muted); }
+.lvl:hover, .colors button:hover { background: var(--soft); }
+.lvl.on, .colors button.on { background: var(--soft); color: var(--ink); border-color: var(--sel-line); }
+.lvl.on small { color: var(--subtle); opacity: 1; }
+.seg button { border: 1px solid transparent; }
+.seg button.on { background: var(--panel); color: var(--ink); border-color: var(--sel-line); }
+.stats-tabs button { border: 1px solid transparent; }
+.stats-tabs button.on { background: var(--panel); color: var(--ink); border-color: var(--sel-line); }
+.sw.on { background: var(--on); }
+.tool.on, .num.on { background: var(--soft); color: var(--ink); border-color: var(--sel-line); }
+.num.on small { color: var(--subtle); }
+.avatar { background: #6b7280; }
+.tag, .rec { background: var(--soft); }
+.bar i { background: var(--ink); }
+.code-form input:focus { border-color: var(--sel-line); }
+.trophy { background: var(--btn-bg); color: var(--btn-fg); }
 
 @media (max-width: 800px) {
   .app { --board: min(calc(100vw - 32px), calc(100vh - 230px)); }
