@@ -1,9 +1,9 @@
 {
   "format": 1,
-  "version": "addons-2026-11-22d",
-  "generated": "2026-11-22T02:19:06Z",
+  "version": "addons-2026-11-22e",
+  "generated": "2026-11-22T03:50:29Z",
   "repository": "https://github.com/Aruvaro-Chulvi/OfflinedAddons",
-  "base_url": "https://github.com/Aruvaro-Chulvi/OfflinedAddons/releases/download/addons-2026-11-22d/",
+  "base_url": "https://github.com/Aruvaro-Chulvi/OfflinedAddons/releases/download/addons-2026-11-22e/",
   "public_key": "13RbPjlJPu7T0VNjci2128gD/SVbHtw6nZMktYVU9C4=",
   "addons": [
     {
@@ -305,18 +305,18 @@
         "ru": "Создавайте и редактируйте таблицы с формулами и форматированием — на основе Univer, полностью офлайн."
       },
       "icon": "📊",
-      "version": "1.1.0",
+      "version": "1.2.0",
       "author": "Álvaro C. Chulvi",
       "license": "MIT",
       "category": "office",
       "min_offlined": "3.0.0",
       "permissions": [],
       "official": true,
-      "file": "spreadsheet-1.1.0.zip",
-      "size": 31965,
-      "sha256": "0ac2511482c2de4454ce65f28216a28ca336220def129664f4fe4bda3380f25b",
-      "content_sha256": "9f838111645594f8e9917c5f37c6a44402a69845f89fe10aa45fcfa8c1a41ba6",
-      "files": 3,
+      "file": "spreadsheet-1.2.0.zip",
+      "size": 337328,
+      "sha256": "1c1e0baf086c09206e6b110e72aa4bec9090f2adb169ac0fc474d0630df78458",
+      "content_sha256": "3835fa25ea610b7fedf21b15c0f20a9b5574be436ca5a12c3a71386a42c32fd8",
+      "files": 8,
       "source": "https://github.com/Aruvaro-Chulvi/OfflinedAddons/tree/main/addons/spreadsheet",
       "published": "2026-11-21",
       "updated": "2026-11-22"
