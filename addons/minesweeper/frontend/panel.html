@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Minesweeper</title>
+<link rel="stylesheet" href="mines.css">
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <!-- Lucide icons (ISC licence) -->
+    <symbol id="i-chev" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+    <symbol id="i-play" viewBox="0 0 24 24"><path d="M6 3l14 9-14 9z"/></symbol>
+    <symbol id="i-pause" viewBox="0 0 24 24"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol>
+    <symbol id="i-bulb" viewBox="0 0 24 24"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5M9 18h6M10 22h4"/></symbol>
+    <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></symbol>
+    <symbol id="i-trophy" viewBox="0 0 24 24"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6M18 9h1.5a2.5 2.5 0 0 0 0-5H18M4 22h16M10 14.7V17c0 .6-.5 1-1 1.2C7.9 18.8 7 20.2 7 22M14 14.7V17c0 .6.5 1 1 1.2 1.1.6 2 2 2 3.8M18 2H6v7a6 6 0 0 0 12 0z"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+    <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></symbol>
+    <symbol id="i-undo" viewBox="0 0 24 24"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-15-6.7L3 13"/></symbol>
+    <symbol id="i-bomb" viewBox="0 0 24 24"><circle cx="11" cy="13" r="9"/><path d="M14.35 4.65 16.3 2.7a2.41 2.41 0 0 1 3.4 0l1.6 1.6a2.4 2.4 0 0 1 0 3.4l-1.95 1.95"/><path d="m22 2-1.5 1.5"/></symbol>
+    <symbol id="i-flag" viewBox="0 0 24 24"><path d="M6 22V2.8a.8.8 0 0 1 1.17-.71l11.38 5.69a.8.8 0 0 1 0 1.44L6 15.5"/></symbol>
+  </defs>
+</svg>
+
+<div class="app" id="app">
+  <!-- ═══════════ Side panel ═══════════ -->
+  <aside class="side">
+    <div class="user">
+      <div class="avatar" id="avatar">?</div>
+      <div><div class="name" id="userName">—</div><div class="sub" id="userSub"></div></div>
+      <button class="close" id="drawerClose" data-tt="close"><svg class="i"><use href="#i-x"/></svg></button>
+    </div>
+
+    <div class="sec">
+      <button class="sec-h"><span data-t="newGame"></span><svg class="i chev"><use href="#i-chev"/></svg></button>
+      <div class="sec-b">
+        <div class="levels" id="levels"></div>
+        <button class="btn cta wide" id="genBtn"><svg class="i"><use href="#i-play"/></svg><span data-t="start"></span></button>
+      </div>
+    </div>
+
+    <div class="sec">
+      <button class="sec-h"><span data-t="thisGame"></span><svg class="i chev"><use href="#i-chev"/></svg></button>
+      <div class="sec-b">
+        <div class="kv"><span data-t="level"></span><span id="infoLvl">—</span></div>
+        <div class="kv"><span data-t="size"></span><span id="infoSize">—</span></div>
+        <div class="kv"><span data-t="mines"></span><span id="infoMines">—</span></div>
+        <div class="kv"><span data-t="flags"></span><span id="infoFlags">0</span></div>
+        <div class="kv"><span data-t="hintsUsed"></span><span id="infoHints">0</span></div>
+        <div class="kv" style="margin-top:4px"><span data-t="cleared"></span><span id="infoPct">0 %</span></div>
+        <div class="bar"><i id="pctBar"></i></div>
+      </div>
+    </div>
+
+    <div class="sec">
+      <button class="sec-h"><span data-t="myStats"></span><svg class="i chev"><use href="#i-chev"/></svg></button>
+      <div class="sec-b">
+        <div class="stats-tabs" id="statTabs"></div>
+        <div class="grid4">
+          <div class="stat"><b id="stPlayed">0</b><span data-t="played"></span></div>
+          <div class="stat"><b id="stWon">0</b><span data-t="won"></span></div>
+          <div class="stat"><b id="stRate">—</b><span data-t="winRate"></span></div>
+          <div class="stat"><b id="stBest">—</b><span data-t="best"></span></div>
+        </div>
+        <div class="kv" style="margin-top:8px"><span data-t="avg"></span><span id="stAvg">—</span></div>
+      </div>
+    </div>
+
+    <div class="sec closed">
+      <button class="sec-h"><span data-t="settings"></span><svg class="i chev"><use href="#i-chev"/></svg></button>
+      <div class="sec-b">
+        <div class="opt"><span data-t="noGuess"></span><button class="sw" data-k="noGuess"></button></div>
+        <div class="help" data-t="noGuessHelp"></div>
+        <div class="opt"><span data-t="chord"></span><button class="sw" data-k="chord"></button></div>
+        <div class="opt"><span data-t="colorNums"></span><button class="sw" data-k="colorNums"></button></div>
+        <div class="opt"><span data-t="showTimer"></span><button class="sw" data-k="timer"></button></div>
+        <div class="opt"><span data-t="theme"></span>
+          <div class="seg" id="themeSeg"><button data-v="auto" data-t="auto"></button><button data-v="light" data-t="light"></button><button data-v="dark" data-t="dark"></button></div></div>
+      </div>
+    </div>
+    <div class="store-note" id="storeNote" hidden data-t="offlineStore"></div>
+  </aside>
+
+  <!-- ═══════════ Game ═══════════ -->
+  <main class="main" id="main">
+    <div class="status">
+      <button class="icon-btn menu-btn" id="menuBtn" data-tt="menu"><svg class="i"><use href="#i-menu"/></svg></button>
+      <span class="lv" id="stLvl">—</span>
+      <span class="pill"><svg class="i"><use href="#i-bomb"/></svg><b id="minesLeft">0</b></span>
+      <span class="pill" id="timerPill"><svg class="i"><use href="#i-clock"/></svg><b id="time">00:00</b></span>
+      <span class="sp"></span>
+      <button class="icon-btn" id="pauseBtn" data-tt="pause"><svg class="i"><use href="#i-pause"/></svg></button>
+    </div>
+
+    <div class="board-wrap" id="boardWrap">
+      <div class="board" id="board"></div>
+      <div class="cover" id="pauseCover" hidden>
+        <svg class="i big"><use href="#i-pause"/></svg><div data-t="paused"></div>
+        <button class="btn cta" id="resumeBtn"><svg class="i"><use href="#i-play"/></svg><span data-t="resume"></span></button>
+      </div>
+    </div>
+
+    <div class="tools">
+      <button class="tool" id="flagBtn"><svg class="i"><use href="#i-flag"/></svg><span class="l" data-t="flagMode"></span></button>
+      <button class="tool" id="hintBtn"><svg class="i"><use href="#i-bulb"/></svg><span class="l" data-t="hint"></span></button>
+      <button class="tool" id="restartBtn"><svg class="i"><use href="#i-refresh"/></svg><span class="l" data-t="restart"></span></button>
+    </div>
+    <div class="howto" data-t="howto"></div>
+
+    <div class="toast" id="toast"><svg class="i"><use href="#i-bulb"/></svg><span class="t" id="toastTxt"></span><button id="toastBtn"></button></div>
+  </main>
+</div>
+
+<div class="overlay" id="winDlg">
+  <div class="dlg">
+    <div class="trophy"><svg class="i"><use href="#i-trophy"/></svg></div>
+    <h2 data-t="solved"></h2>
+    <div class="lvl-t" id="winLvl"></div>
+    <div class="rec" id="winRec" hidden><svg class="i" style="width:13px;height:13px"><use href="#i-check"/></svg><span data-t="newRecord"></span></div>
+    <div class="grid4">
+      <div class="stat"><b id="winTime"></b><span data-t="time"></span></div>
+      <div class="stat"><b id="winHints"></b><span data-t="hintsUsed"></span></div>
+      <div class="stat"><b id="winRate"></b><span data-t="winRate"></span></div>
+      <div class="stat"><b id="winStreak"></b><span data-t="streak"></span></div>
+    </div>
+    <button class="btn cta wide" id="winAgain"><svg class="i"><use href="#i-play"/></svg><span data-t="another"></span></button>
+    <div class="row2"><button class="btn" id="winLevel" data-t="changeLevel"></button><button class="btn" id="winClose" data-t="close"></button></div>
+  </div>
+</div>
+
+<div class="overlay" id="loseDlg">
+  <div class="dlg">
+    <div class="trophy lose"><svg class="i"><use href="#i-bomb"/></svg></div>
+    <h2 data-t="boom"></h2>
+    <div class="lvl-t" data-t="boomSub"></div>
+    <button class="btn cta wide" id="loseAgain"><svg class="i"><use href="#i-play"/></svg><span data-t="another"></span></button>
+    <div class="row2"><button class="btn" id="loseUndo"><svg class="i"><use href="#i-undo"/></svg><span data-t="undoMove"></span></button><button class="btn" id="loseClose" data-t="showBoard"></button></div>
+  </div>
+</div>
+
+<div class="overlay" id="confirmDlg">
+  <div class="dlg">
+    <p data-t="confirmNew"></p>
+    <div class="row2"><button class="btn" id="confirmNo" data-t="no"></button><button class="btn cta" id="confirmYes" data-t="yes"></button></div>
+  </div>
+</div>
+
+<script src="i18n.js"></script>
+<script src="engine/mines-engine.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

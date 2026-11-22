@@ -25,6 +25,9 @@ addon in this repository can be installed from inside Offlined with one click, i
 | 🎙️ | **[Audio notes](addons/audio-notes/)** | Voice notes with noise reduction, a player, MP3 export and calendar links. | Official |
 | 🔢 | **[Sudoku](addons/sudoku/)** | Classic sudoku with eight levels, from very easy to deadly, and its own puzzle generator. | Official |
 | ♟️ | **[Chess](addons/chess/)** | Chess against the computer: four levels, optional clock, hints and our own engine. | Official |
+| ⭕ | **[Circuit](addons/circuit/)** | Draw one closed loop around the numbers (Slitherlink-style): six levels and its own generator. | Official |
+| 💣 | **[Minesweeper](addons/minesweeper/)** | Clear the board without stepping on a mine: four levels and boards solvable without guessing. | Official |
+| 🧮 | **[Calcudoku](addons/calcudoku/)** | Numbers without repeats and cages with + − × ÷: six sizes and its own generator. | Official |
 
 The full, current list is [`catalog.json`](catalog.json); the signed packages are in the
 [latest release](https://github.com/Aruvaro-Chulvi/OfflinedAddons/releases/latest).

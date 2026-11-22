@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Circuit</title>
+<link rel="stylesheet" href="circuit.css">
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <!-- Lucide icons (ISC licence) -->
+    <symbol id="i-chev" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+    <symbol id="i-play" viewBox="0 0 24 24"><path d="M6 3l14 9-14 9z"/></symbol>
+    <symbol id="i-pause" viewBox="0 0 24 24"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol>
+    <symbol id="i-bulb" viewBox="0 0 24 24"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5M9 18h6M10 22h4"/></symbol>
+    <symbol id="i-pencil" viewBox="0 0 24 24"><path d="M21.2 6.8a2.8 2.8 0 0 0-4-4L3.8 16.2a2 2 0 0 0-.5.8l-1.3 4.4a.5.5 0 0 0 .6.6l4.4-1.3a2 2 0 0 0 .8-.5z"/></symbol>
+    <symbol id="i-eraser" viewBox="0 0 24 24"><path d="m7 21-4.3-4.3c-1-1-1-2.5 0-3.4l9.6-9.6c1-1 2.5-1 3.4 0l5.6 5.6c1 1 1 2.5 0 3.4L13 21M22 21H7M5 11l9 9"/></symbol>
+    <symbol id="i-undo" viewBox="0 0 24 24"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-15-6.7L3 13"/></symbol>
+    <symbol id="i-redo" viewBox="0 0 24 24"><path d="M21 7v6h-6"/><path d="M3 17a9 9 0 0 1 15-6.7L21 13"/></symbol>
+    <symbol id="i-wand" viewBox="0 0 24 24"><path d="m21.6 2.4-1.2-1.2a1.2 1.2 0 0 0-1.7 0L1.2 18.7a1.2 1.2 0 0 0 0 1.7l1.2 1.2a1.2 1.2 0 0 0 1.7 0L21.6 4.1a1.2 1.2 0 0 0 0-1.7M14 7l3 3M5 6v4M19 14v4M10 2v2M7 8H3M21 16h-4M11 3H9"/></symbol>
+    <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></symbol>
+    <symbol id="i-copy" viewBox="0 0 24 24"><rect x="8" y="8" width="14" height="14" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></symbol>
+    <symbol id="i-hash" viewBox="0 0 24 24"><path d="M4 9h16M4 15h16M10 3 8 21M16 3l-2 18"/></symbol>
+    <symbol id="i-trophy" viewBox="0 0 24 24"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6M18 9h1.5a2.5 2.5 0 0 0 0-5H18M4 22h16M10 14.7V17c0 .6-.5 1-1 1.2C7.9 18.8 7 20.2 7 22M14 14.7V17c0 .6.5 1 1 1.2 1.1.6 2 2 2 3.8M18 2H6v7a6 6 0 0 0 12 0z"/></symbol>
+    <symbol id="i-alert" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+  </defs>
+</svg>
+
+<div class="app" id="app">
+  <!-- ═══════════ Side panel ═══════════ -->
+  <aside class="side" id="side">
+    <div class="user">
+      <div class="avatar" id="avatar">?</div>
+      <div><div class="name" id="userName">—</div><div class="sub" id="userSub"></div></div>
+      <button class="close" id="drawerClose" data-tt="close"><svg class="i"><use href="#i-x"/></svg></button>
+    </div>
+
+    <div class="sec">
+      <button class="sec-h"><span data-t="newGame"></span><svg class="i chev"><use href="#i-chev"/></svg></button>
+      <div class="sec-b">
+        <div class="levels" id="levels"></div>
+        <button class="btn cta wide" id="genBtn"><svg class="i"><use href="#i-play"/></svg><span data-t="generate"></span></button>
+        <div class="row2">
+          <button class="btn small" id="codeBtn"><svg class="i"><use href="#i-hash"/></svg><span data-t="useCode"></span></button>
+        </div>
+        <form class="code-form" id="codeForm" hidden autocomplete="off">
+          <input id="codeInput" maxlength="12" placeholder="XXXX-XXXX" spellcheck="false">
+          <button class="btn cta small" type="submit" data-t="play"></button>
+        </form>
+        <div class="code-err" id="codeErr" hidden data-t="codeInvalid"></div>
+        <div class="code"><span data-t="codeLabel"></span><b id="code">—</b>
+          <button class="icon-btn" id="copyBtn" data-tt="copy"><svg class="i" style="width:13px;height:13px"><use href="#i-copy"/></svg></button></div>
+      </div>
+    </div>
+
+    <div class="sec">
+      <button class="sec-h"><span data-t="thisGame"></span><svg class="i chev"><use href="#i-chev"/></svg></button>
+      <div class="sec-b">
+        <div class="kv"><span data-t="level"></span><span id="infoLvl">—</span></div>
+        <div class="kv"><span data-t="size"></span><span id="infoSize">—</span></div>
+        <div class="kv"><span data-t="hardest"></span><span class="tag" id="infoTech">—</span></div>
+        <div class="kv" id="infoErrRow"><span data-t="errors"></span><span id="infoErr">0</span></div>
+        <div class="kv"><span data-t="hintsUsed"></span><span id="infoHints">0</span></div>
+        <div class="kv" style="margin-top:4px"><span data-t="progress"></span><span id="infoPct">0 %</span></div>
+        <div class="bar"><i id="pctBar"></i></div>
+      </div>
+    </div>
+
+    <div class="sec">
+      <button class="sec-h"><span data-t="myStats"></span><svg class="i chev"><use href="#i-chev"/></svg></button>
+      <div class="sec-b">
+        <div class="stats-tabs" id="statTabs"></div>
+        <div class="grid4">
+          <div class="stat"><b id="stPlayed">0</b><span data-t="played"></span></div>
+          <div class="stat"><b id="stWon">0</b><span data-t="won"></span></div>
+          <div class="stat"><b id="stBest">—</b><span data-t="best"></span></div>
+          <div class="stat"><b id="stAvg">—</b><span data-t="avg"></span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sec closed">
+      <button class="sec-h"><span data-t="settings"></span><svg class="i chev"><use href="#i-chev"/></svg></button>
+      <div class="sec-b">
+        <div class="opt"><span data-t="errMode"></span>
+          <div class="seg" id="errMode"><button data-v="free" data-t="free"></button><button data-v="strict" data-t="strict"></button></div></div>
+        <div class="help" data-t="errModeHelp"></div>
+        <div class="opt"><span data-t="dimDone"></span><button class="sw" data-k="dimDone"></button></div>
+        <div class="opt"><span data-t="showTimer"></span><button class="sw" data-k="timer"></button></div>
+        <div class="opt"><span data-t="theme"></span>
+          <div class="seg" id="themeSeg"><button data-v="auto" data-t="auto"></button><button data-v="light" data-t="light"></button><button data-v="dark" data-t="dark"></button></div></div>
+      </div>
+    </div>
+    <div class="store-note" id="storeNote" hidden data-t="offlineStore"></div>
+  </aside>
+
+  <!-- ═══════════ Game ═══════════ -->
+  <main class="main" id="main">
+    <div class="status">
+      <button class="icon-btn menu-btn" id="menuBtn" data-tt="menu"><svg class="i"><use href="#i-menu"/></svg></button>
+      <span class="lv" id="stLvl">—</span>
+      <span class="pill" id="timerPill"><svg class="i"><use href="#i-clock"/></svg><b id="time">00:00</b></span>
+      <span class="pill" id="errPill"><svg class="i"><use href="#i-alert"/></svg><b id="errs">0</b><span data-t="errorsShort"></span></span>
+      <span class="sp"></span>
+      <button class="icon-btn" id="pauseBtn" data-tt="pause"><svg class="i"><use href="#i-pause"/></svg></button>
+    </div>
+
+    <div class="board-wrap" id="boardWrap">
+      <svg class="board" id="board" xmlns="http://www.w3.org/2000/svg"></svg>
+      <div class="cover" id="pauseCover" hidden>
+        <svg class="i big"><use href="#i-pause"/></svg><div data-t="paused"></div>
+        <button class="btn cta" id="resumeBtn"><svg class="i"><use href="#i-play"/></svg><span data-t="resume"></span></button>
+      </div>
+      <div class="cover" id="genCover" hidden>
+        <div class="spin"></div><div id="genTitle" data-t="generating"></div><div class="sub" id="genSub"></div>
+        <button class="btn small" id="genCancel" data-t="cancel"></button>
+      </div>
+    </div>
+
+    <div class="tools">
+      <button class="tool" id="crossBtn"><svg class="i"><use href="#i-x"/></svg><span class="l" data-t="crossMode"></span></button>
+      <button class="tool" id="undoBtn"><svg class="i"><use href="#i-undo"/></svg><span class="l" data-t="undo"></span></button>
+      <button class="tool" id="redoBtn"><svg class="i"><use href="#i-redo"/></svg><span class="l" data-t="redo"></span></button>
+      <button class="tool" id="restartBtn"><svg class="i"><use href="#i-eraser"/></svg><span class="l" data-t="restart"></span></button>
+      <button class="tool" id="hintBtn"><svg class="i"><use href="#i-bulb"/></svg><span class="l" data-t="hint"></span></button>
+    </div>
+    <div class="howto" data-t="howto"></div>
+
+    <div class="toast" id="toast"><svg class="i"><use href="#i-bulb"/></svg><span class="t" id="toastTxt"></span><button id="toastBtn"></button></div>
+  </main>
+</div>
+
+<div class="overlay" id="winDlg">
+  <div class="dlg">
+    <div class="trophy"><svg class="i"><use href="#i-trophy"/></svg></div>
+    <h2 data-t="solved"></h2>
+    <div class="lvl-t" id="winLvl"></div>
+    <div class="rec" id="winRec" hidden><svg class="i" style="width:13px;height:13px"><use href="#i-check"/></svg><span data-t="newRecord"></span></div>
+    <div class="grid4">
+      <div class="stat"><b id="winTime"></b><span data-t="time"></span></div>
+      <div class="stat" id="winErrBox"><b id="winErr"></b><span data-t="errors"></span></div>
+      <div class="stat"><b id="winHints"></b><span data-t="hintsUsed"></span></div>
+      <div class="stat"><b id="winStreak"></b><span data-t="streak"></span></div>
+    </div>
+    <button class="btn cta wide" id="winAgain"><svg class="i"><use href="#i-play"/></svg><span data-t="another"></span></button>
+    <div class="row2"><button class="btn" id="winLevel" data-t="changeLevel"></button><button class="btn" id="winClose" data-t="close"></button></div>
+  </div>
+</div>
+
+<div class="overlay" id="confirmDlg">
+  <div class="dlg">
+    <p id="confirmText"></p>
+    <div class="row2"><button class="btn" id="confirmNo" data-t="no"></button><button class="btn cta" id="confirmYes"></button></div>
+  </div>
+</div>
+
+<script src="i18n.js"></script>
+<script src="engine/circuit-engine.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

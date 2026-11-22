@@ -1,0 +1,36 @@
+{
+  "id": "minesweeper",
+  "name": "Minesweeper",
+  "version": "1.0.0",
+  "author": "Álvaro C. Chulvi",
+  "description": "Clear the board without stepping on a mine. Four levels, a first click that is always safe and boards that can be solved by logic alone, without guessing.",
+  "icon": "💣",
+  "license": "MIT",
+  "category": "games",
+  "min_offlined": "3.0.0",
+  "permissions": [],
+  "name_i18n": {
+    "en": "Minesweeper",
+    "es": "Buscaminas",
+    "fr": "Démineur",
+    "pt": "Campo minado",
+    "it": "Campo minato",
+    "de": "Minensuche",
+    "zh": "扫雷",
+    "hi": "माइनस्वीपर",
+    "ar": "كاسحة الألغام",
+    "ru": "Сапёр"
+  },
+  "description_i18n": {
+    "en": "Clear the board without stepping on a mine. Four levels, a first click that is always safe and boards that can be solved by logic alone, without guessing.",
+    "es": "Despeja el tablero sin pisar ninguna mina. Cuatro niveles, un primer clic siempre seguro y tableros que se resuelven solo con lógica, sin adivinar.",
+    "fr": "Déminez la grille sans marcher sur une mine. Quatre niveaux, un premier clic toujours sûr et des grilles qui se résolvent par la seule logique, sans deviner.",
+    "pt": "Limpa o tabuleiro sem pisar nenhuma mina. Quatro níveis, um primeiro clique sempre seguro e tabuleiros que se resolvem só com lógica, sem adivinhar.",
+    "it": "Libera la griglia senza calpestare mine. Quattro livelli, un primo clic sempre sicuro e griglie risolvibili con la sola logica, senza tirare a indovinare.",
+    "de": "Räume das Feld, ohne auf eine Mine zu treten. Vier Stufen, ein immer sicherer erster Klick und Felder, die sich allein mit Logik lösen lassen, ohne Raten.",
+    "zh": "在不踩雷的情况下清空棋盘。四个难度，第一次点击永远安全，棋盘只靠逻辑即可解开，无需猜测。",
+    "hi": "किसी माइन पर पैर रखे बिना बोर्ड साफ़ करें। चार स्तर, पहला क्लिक हमेशा सुरक्षित, और बोर्ड जो बिना अनुमान केवल तर्क से हल होते हैं।",
+    "ar": "نظّف اللوحة دون أن تدوس على لغم. أربعة مستويات، والنقرة الأولى آمنة دائمًا، ولوحات تُحل بالمنطق وحده دون تخمين.",
+    "ru": "Разминируйте поле, не наступив на мину. Четыре уровня, всегда безопасный первый клик и поля, которые решаются одной логикой, без угадывания."
+  }
+}

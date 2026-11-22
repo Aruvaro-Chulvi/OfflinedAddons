@@ -1,0 +1,36 @@
+{
+  "id": "calcudoku",
+  "name": "Calcudoku",
+  "version": "1.0.0",
+  "author": "Álvaro C. Chulvi",
+  "description": "Fill the grid so every row and column has each number once and every cage gives its result with + − × ÷. Six sizes, from 4×4 to 9×9, with its own puzzle generator.",
+  "icon": "🧮",
+  "license": "MIT",
+  "category": "games",
+  "min_offlined": "3.0.0",
+  "permissions": [],
+  "name_i18n": {
+    "en": "Calcudoku",
+    "es": "Calcudoku",
+    "fr": "Calcudoku",
+    "pt": "Calcudoku",
+    "it": "Calcudoku",
+    "de": "Calcudoku",
+    "zh": "计算数独",
+    "hi": "कैलकुडोकू",
+    "ar": "كالكودوكو",
+    "ru": "Калькудоку"
+  },
+  "description_i18n": {
+    "en": "Fill the grid so every row and column has each number once and every cage gives its result with + − × ÷. Six sizes, from 4×4 to 9×9, with its own puzzle generator.",
+    "es": "Rellena la cuadrícula sin repetir números en filas ni columnas y haz que cada jaula dé su resultado con + − × ÷. Seis tamaños, de 4×4 a 9×9, con generador propio.",
+    "fr": "Remplissez la grille sans répéter de chiffre par ligne ni colonne, et chaque cage doit donner son résultat avec + − × ÷. Six tailles, de 4×4 à 9×9, avec son propre générateur.",
+    "pt": "Preenche a grelha sem repetir números em linhas nem colunas e faz cada jaula dar o seu resultado com + − × ÷. Seis tamanhos, de 4×4 a 9×9, com gerador próprio.",
+    "it": "Riempi la griglia senza ripetere numeri in righe e colonne e fai dare a ogni gabbia il suo risultato con + − × ÷. Sei dimensioni, da 4×4 a 9×9, con generatore proprio.",
+    "de": "Fülle das Gitter, ohne Zahlen in Zeilen oder Spalten zu wiederholen, und jeder Käfig ergibt sein Ergebnis mit + − × ÷. Sechs Größen von 4×4 bis 9×9, mit eigenem Generator.",
+    "zh": "填满方格，每行每列数字不重复，每个笼子用 + − × ÷ 得到所示结果。六种尺寸，从 4×4 到 9×9，自带题目生成器。",
+    "hi": "ग्रिड भरें ताकि हर पंक्ति और स्तंभ में अंक दोहराए न जाएँ और हर पिंजरा + − × ÷ से अपना परिणाम दे। 4×4 से 9×9 तक छह आकार, अपने जनरेटर के साथ।",
+    "ar": "املأ الشبكة دون تكرار الأرقام في الصفوف والأعمدة، واجعل كل قفص يعطي نتيجته بـ + − × ÷. ستة أحجام من 4×4 إلى 9×9 مع مولّد خاص.",
+    "ru": "Заполните сетку без повторов в строках и столбцах, чтобы каждая клетка давала свой результат через + − × ÷. Шесть размеров от 4×4 до 9×9 и собственный генератор."
+  }
+}

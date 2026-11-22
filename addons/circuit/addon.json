@@ -1,0 +1,36 @@
+{
+  "id": "circuit",
+  "name": "Circuit",
+  "version": "1.0.0",
+  "author": "Álvaro C. Chulvi",
+  "description": "Draw a single closed loop through a grid of dots so that every number shows how many of its sides the loop uses. Six levels, from 5×5 to 15×15, with its own puzzle generator.",
+  "icon": "⭕",
+  "license": "MIT",
+  "category": "games",
+  "min_offlined": "3.0.0",
+  "permissions": [],
+  "name_i18n": {
+    "en": "Circuit",
+    "es": "Circuito",
+    "fr": "Circuit",
+    "pt": "Circuito",
+    "it": "Circuito",
+    "de": "Rundweg",
+    "zh": "回路",
+    "hi": "सर्किट",
+    "ar": "الدائرة",
+    "ru": "Контур"
+  },
+  "description_i18n": {
+    "en": "Draw a single closed loop through a grid of dots so that every number shows how many of its sides the loop uses. Six levels, from 5×5 to 15×15, with its own puzzle generator.",
+    "es": "Dibuja un único circuito cerrado entre los puntos de modo que cada número indique cuántos de sus lados usa. Seis niveles, de 5×5 a 15×15, con su propio generador de tableros.",
+    "fr": "Tracez une seule boucle fermée entre les points pour que chaque chiffre indique combien de ses côtés elle utilise. Six niveaux, de 5×5 à 15×15, avec son propre générateur.",
+    "pt": "Desenha um único circuito fechado entre os pontos para que cada número indique quantos dos seus lados usa. Seis níveis, de 5×5 a 15×15, com o seu próprio gerador.",
+    "it": "Disegna un unico circuito chiuso tra i punti in modo che ogni numero indichi quanti suoi lati usa. Sei livelli, da 5×5 a 15×15, con un generatore proprio.",
+    "de": "Zeichne einen einzigen geschlossenen Rundweg zwischen den Punkten, sodass jede Zahl angibt, wie viele ihrer Seiten er nutzt. Sechs Stufen von 5×5 bis 15×15 mit eigenem Generator.",
+    "zh": "在点阵中画出唯一的闭合回路，使每个数字表示回路经过其四边中的几条。六个难度，从 5×5 到 15×15，自带题目生成器。",
+    "hi": "बिंदुओं के बीच एक ही बंद सर्किट बनाएँ ताकि हर अंक बताए कि उसकी कितनी भुजाएँ सर्किट में हैं। 5×5 से 15×15 तक छह स्तर, अपने पहेली जनरेटर के साथ।",
+    "ar": "ارسم دائرة مغلقة واحدة بين النقاط بحيث يدل كل رقم على عدد أضلاعه التي تمر بها الدائرة. ستة مستويات من 5×5 إلى 15×15 مع مولّد ألغاز خاص.",
+    "ru": "Нарисуйте один замкнутый контур по точкам так, чтобы каждое число показывало, сколько его сторон занимает контур. Шесть уровней от 5×5 до 15×15 и собственный генератор."
+  }
+}
