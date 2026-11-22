@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Spreadsheet</title>
 <script src="sidebar.js"></script>
+<script src="sheet-import.js"></script>
+<script src="sheet-export.js"></script>
 <style>
 :root {
   --bg: #f6f6f6;
@@ -71,6 +73,22 @@ button, input { font-family: inherit; }
 }
 .sp-action-btn .ofs-ic { width: 16px; height: 16px; }
 .sp-action-btn:hover { background: var(--muted); }
+.sp-action-btn:disabled { opacity: .6; cursor: default; }
+.sp-drop { position: fixed; inset: 0; z-index: 480; display: flex; align-items: center; justify-content: center; background: color-mix(in srgb, var(--bg) 70%, transparent); pointer-events: none; }
+.sp-drop-card { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 28px 40px; border-radius: 14px; border: 2px dashed var(--subtle); background: var(--panel); color: var(--ink); font-weight: 600; }
+.sp-drop-card .ofs-ic { width: 32px; height: 32px; color: var(--subtle); }
+.sp-drop-card small { font-weight: 400; color: var(--subtle); }
+@media (max-width: 640px) { #spImportLbl, #spExportLbl, #spSaveLbl { display: none; } }
+.sp-action-btn.open { background: var(--muted); }
+.sp-pop { position: fixed; z-index: 420; padding: 6px; border-radius: 10px; min-width: 210px; background: var(--panel); color: var(--ink); border: 1px solid var(--muted); box-shadow: 0 8px 28px rgba(0,0,0,.28); }
+.sp-pop-item { display: flex; align-items: center; gap: 10px; width: 100%; padding: 7px 10px; border: none; background: transparent; color: inherit; border-radius: 7px; cursor: pointer; font-size: .84rem; text-align: start; }
+.sp-pop-item .ofs-ic { width: 16px; height: 16px; }
+.sp-pop-item:hover, .sp-pop-item:focus-visible { background: color-mix(in srgb, var(--ink) 7%, transparent); outline: none; }
+.sp-pop-sep { height: 1px; margin: 5px 4px; background: var(--muted); }
+.sp-pop-label { padding: 4px 10px 6px; font-size: .74rem; color: var(--subtle); max-width: 260px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sp-extras { display: flex; align-items: center; gap: 10px; padding: 8px 14px; background: var(--soft); border-bottom: 1px solid var(--muted); font-size: .84rem; flex-shrink: 0; }
+.sp-extras-msg { flex: 1; min-width: 0; }
+.sp-extras-x { border: none; background: transparent; color: var(--subtle); font-size: 1.1rem; cursor: pointer; padding: 0 4px; }
 
 .sp-container { flex: 1; min-height: 0; height: 100%; width: 100%; position: relative; overflow: hidden; background: var(--univer-grey-area); }
 .sp-container > .univer-app-layout { width: 100%; height: 100%; }
@@ -108,6 +126,15 @@ button, input { font-family: inherit; }
   font-size: .85rem; opacity: 0; pointer-events: none; transition: opacity .2s ease, transform .2s ease; z-index: 50;
 }
 #spToast.show { opacity: 1; transform: translate(-50%, 0); }
+/* Offlined: sin botones azules. Univer inyecta :root{--univer-primary-*} en azul (y no hace caso
+   del tema por JS); se cambia esa escala por grises neutros: botones, pestaña activa, casillas. */
+:root {
+  --univer-primary-50: #F5F6F7 !important; --univer-primary-100: #ECEDEF !important;
+  --univer-primary-200: #DCDEE2 !important; --univer-primary-300: #C3C7CE !important;
+  --univer-primary-400: #9AA0AA !important; --univer-primary-500: #6B7280 !important;
+  --univer-primary-600: #5B616C !important; --univer-primary-700: #4A4F58 !important;
+  --univer-primary-800: #3A3E45 !important; --univer-primary-900: #2B2E33 !important;
+}
 </style>
 </head>
 <body>
@@ -117,6 +144,8 @@ button, input { font-family: inherit; }
     <div class="sp-topbar">
       <input id="spFilenameInput" class="sp-filename-input" type="text" placeholder="Spreadsheet name…" spellcheck="false" autocomplete="off">
       <div class="sp-topbar-actions">
+        <button class="sp-action-btn" id="spImportBtn"><svg data-ic="file-up"></svg><span id="spImportLbl">Import</span></button>
+        <button class="sp-action-btn" id="spExportBtn"><svg data-ic="download"></svg><span id="spExportLbl">Export</span></button>
         <button class="sp-action-btn" id="spSaveBtn"><svg data-ic="save"></svg><span id="spSaveLbl">Save</span></button>
       </div>
     </div>
@@ -125,10 +154,15 @@ button, input { font-family: inherit; }
 </div>
 
 <div id="spToast"></div>
+<div id="spDrop" class="sp-drop hidden"><div class="sp-drop-card"><svg data-ic="file-up"></svg><span id="spDropLbl"></span><small>.xlsx · .ods · .csv</small></div></div>
+<input id="spImportInput" type="file" multiple class="hidden">
 
 <script>
 const I18N = {
-  en: { heading:"Spreadsheets", searchPh:"Search spreadsheets…", exportCsv:"Export sheet as CSV (.csv)", duplicatedToast:"Spreadsheet duplicated", emptyMsg:"Choose a spreadsheet on the left or create a new one",
+  en: { expBtn:"Export", expTitle:"Export this spreadsheet", expAs:"Export…", expXlsx:"Excel (.xlsx)", expOds:"LibreOffice (.ods)", expPdf:"PDF (print)", expCsv:"CSV of this sheet (.csv)", expHtml:"Web page (.html)", expSaved:"Saved in Offlined Exports: {name}", expError:"Couldn't export the spreadsheet.",
+        impBtn:"Import", impTitle:"Import spreadsheets (.xlsx, .ods, .csv)", impDrop:"Drop here to import", impBusy:"Importing «{name}»…", impDone:"Imported: {name}", impDoneN:"{n} spreadsheets imported", impError:"Couldn't import «{name}».", impLegacy:"«{name}» is an old format: save it as .xlsx or .ods in Excel or LibreOffice and import it again.", impUnsupported:"«{name}» can't be imported (use .xlsx, .ods or .csv).", impLost:"not imported: {what}", lostImages:"images and charts", lostCf:"conditional formatting",
+        extrasMsg:"New spreadsheet features are available: filters, sorting, conditional formatting, drop-down lists, find and replace, links, images, notes and tables.", extrasBtn:"Download (≈2 MB)", extrasBusy:"Downloading…", extrasDone:"Done. Reloading…", extrasDoneSave:"Downloaded. Save your sheet and open it again to use them.", extrasError:"Couldn't download them. Is there an internet connection?",
+        heading:"Spreadsheets", searchPh:"Search spreadsheets…", exportCsv:"Export sheet as CSV (.csv)", duplicatedToast:"Spreadsheet duplicated", emptyMsg:"Choose a spreadsheet on the left or create a new one",
         newTitle:"New spreadsheet", save:"Save", filenamePh:"Spreadsheet name…", untitled:"Untitled",
         empty:"No spreadsheets yet.", noSheets:"No sheets", savedToast:"Saved:", deletedToast:"Deleted", createFirst:"Create a spreadsheet first", saveFirst:"Save first",
         deleteTitle:"Delete spreadsheet?", deleteMsg:'Delete "{name}"?', cancel:"Cancel", ok:"Delete",
@@ -136,7 +170,10 @@ const I18N = {
         installTitle:"Spreadsheet editor (Univer)", installDesc:"The spreadsheet module is based on Univer and works fully offline. Estimated additional package size: ~50 MB.",
         installBtn:"Download and install", installing:"⏳ Downloading…", installed:"✅ Installed", retry:"🔁 Retry",
         installStarting:"Connecting to unpkg.com…" },
-  es: { heading:"Hojas de cálculo", searchPh:"Buscar hojas…", exportCsv:"Exportar hoja como CSV (.csv)", duplicatedToast:"Hoja duplicada", emptyMsg:"Elige una hoja a la izquierda o crea una nueva",
+  es: { expBtn:"Exportar", expTitle:"Exportar esta hoja de cálculo", expAs:"Exportar…", expXlsx:"Excel (.xlsx)", expOds:"LibreOffice (.ods)", expPdf:"PDF (imprimir)", expCsv:"CSV de esta hoja (.csv)", expHtml:"Página web (.html)", expSaved:"Guardado en Offlined Exports: {name}", expError:"No se pudo exportar la hoja.",
+        impBtn:"Importar", impTitle:"Importar hojas de cálculo (.xlsx, .ods, .csv)", impDrop:"Suelta aquí para importar", impBusy:"Importando «{name}»…", impDone:"Importada: {name}", impDoneN:"{n} hojas importadas", impError:"No se pudo importar «{name}».", impLegacy:"«{name}» es un formato antiguo: guárdalo como .xlsx u .ods en Excel o LibreOffice y vuelve a importarlo.", impUnsupported:"«{name}» no se puede importar (usa .xlsx, .ods o .csv).", impLost:"sin importar: {what}", lostImages:"imágenes y gráficos", lostCf:"formato condicional",
+        extrasMsg:"Hay funciones nuevas para la hoja de cálculo: filtros, ordenar, formato condicional, listas desplegables, buscar y reemplazar, enlaces, imágenes, notas y tablas.", extrasBtn:"Descargar (≈2 MB)", extrasBusy:"Descargando…", extrasDone:"Listo. Recargando…", extrasDoneSave:"Descargado. Guarda la hoja y vuelve a abrirla para usarlas.", extrasError:"No se pudieron descargar. ¿Hay conexión a internet?",
+        heading:"Hojas de cálculo", searchPh:"Buscar hojas…", exportCsv:"Exportar hoja como CSV (.csv)", duplicatedToast:"Hoja duplicada", emptyMsg:"Elige una hoja a la izquierda o crea una nueva",
         newTitle:"Nueva hoja de cálculo", save:"Guardar", filenamePh:"Nombre de la hoja…", untitled:"Sin título",
         empty:"Todavía no hay hojas de cálculo.", noSheets:"Sin hojas", savedToast:"Guardado:", deletedToast:"Eliminado", createFirst:"Crea una hoja primero", saveFirst:"Guarda primero",
         deleteTitle:"¿Eliminar hoja?", deleteMsg:'¿Eliminar "{name}"?', cancel:"Cancelar", ok:"Eliminar",
@@ -144,7 +181,10 @@ const I18N = {
         installTitle:"Editor de hojas de cálculo (Univer)", installDesc:"El módulo de hojas de cálculo está basado en Univer y funciona completamente offline. Tamaño estimado del paquete adicional: ~50 MB.",
         installBtn:"Descargar e instalar", installing:"⏳ Descargando…", installed:"✅ Instalado", retry:"🔁 Reintentar",
         installStarting:"Conectando con unpkg.com…" },
-  fr: { heading:"Feuilles de calcul", searchPh:"Rechercher des feuilles…", exportCsv:"Exporter la feuille en CSV (.csv)", duplicatedToast:"Feuille dupliquée", emptyMsg:"Choisissez une feuille à gauche ou créez-en une nouvelle",
+  fr: { expBtn:"Exporter", expTitle:"Exporter ce classeur", expAs:"Exporter…", expXlsx:"Excel (.xlsx)", expOds:"LibreOffice (.ods)", expPdf:"PDF (imprimer)", expCsv:"CSV de cette feuille (.csv)", expHtml:"Page web (.html)", expSaved:"Enregistré dans Offlined Exports : {name}", expError:"Impossible d'exporter le classeur.",
+        impBtn:"Importer", impTitle:"Importer des feuilles de calcul (.xlsx, .ods, .csv)", impDrop:"Déposez ici pour importer", impBusy:"Importation de « {name} »…", impDone:"Importée : {name}", impDoneN:"{n} feuilles importées", impError:"Impossible d'importer « {name} ».", impLegacy:"« {name} » est un ancien format : enregistrez-le en .xlsx ou .ods dans Excel ou LibreOffice puis réimportez-le.", impUnsupported:"« {name} » ne peut pas être importé (utilisez .xlsx, .ods ou .csv).", impLost:"non importé : {what}", lostImages:"images et graphiques", lostCf:"mise en forme conditionnelle",
+        extrasMsg:"De nouvelles fonctions sont disponibles pour le tableur : filtres, tri, mise en forme conditionnelle, listes déroulantes, rechercher et remplacer, liens, images, notes et tableaux.", extrasBtn:"Télécharger (≈2 Mo)", extrasBusy:"Téléchargement…", extrasDone:"Terminé. Rechargement…", extrasDoneSave:"Téléchargé. Enregistrez la feuille et rouvrez-la pour les utiliser.", extrasError:"Téléchargement impossible. Y a-t-il une connexion Internet ?",
+        heading:"Feuilles de calcul", searchPh:"Rechercher des feuilles…", exportCsv:"Exporter la feuille en CSV (.csv)", duplicatedToast:"Feuille dupliquée", emptyMsg:"Choisissez une feuille à gauche ou créez-en une nouvelle",
         newTitle:"Nouvelle feuille de calcul", save:"Enregistrer", filenamePh:"Nom de la feuille…", untitled:"Sans titre",
         empty:"Aucune feuille de calcul.", noSheets:"Aucune feuille", savedToast:"Enregistré :", deletedToast:"Supprimé", createFirst:"Créez d'abord une feuille", saveFirst:"Enregistrez d'abord",
         deleteTitle:"Supprimer la feuille ?", deleteMsg:'Supprimer "{name}" ?', cancel:"Annuler", ok:"Supprimer",
@@ -152,7 +192,10 @@ const I18N = {
         installTitle:"Éditeur de feuilles de calcul (Univer)", installDesc:"Le module tableur est basé sur Univer et fonctionne entièrement hors ligne. Taille estimée : ~50 Mo.",
         installBtn:"Télécharger et installer", installing:"⏳ Téléchargement…", installed:"✅ Installé", retry:"🔁 Réessayer",
         installStarting:"Connexion à unpkg.com…" },
-  pt: { heading:"Folhas de cálculo", searchPh:"Pesquisar folhas…", exportCsv:"Exportar folha como CSV (.csv)", duplicatedToast:"Folha duplicada", emptyMsg:"Escolhe uma folha à esquerda ou cria uma nova",
+  pt: { expBtn:"Exportar", expTitle:"Exportar esta folha de cálculo", expAs:"Exportar…", expXlsx:"Excel (.xlsx)", expOds:"LibreOffice (.ods)", expPdf:"PDF (imprimir)", expCsv:"CSV desta folha (.csv)", expHtml:"Página web (.html)", expSaved:"Guardado em Offlined Exports: {name}", expError:"Não foi possível exportar a folha.",
+        impBtn:"Importar", impTitle:"Importar folhas de cálculo (.xlsx, .ods, .csv)", impDrop:"Larga aqui para importar", impBusy:"A importar «{name}»…", impDone:"Importada: {name}", impDoneN:"{n} folhas importadas", impError:"Não foi possível importar «{name}».", impLegacy:"«{name}» é um formato antigo: guarda-o como .xlsx ou .ods no Excel ou no LibreOffice e volta a importá-lo.", impUnsupported:"«{name}» não pode ser importado (usa .xlsx, .ods ou .csv).", impLost:"não importado: {what}", lostImages:"imagens e gráficos", lostCf:"formatação condicional",
+        extrasMsg:"Há funções novas para a folha de cálculo: filtros, ordenar, formatação condicional, listas pendentes, procurar e substituir, ligações, imagens, notas e tabelas.", extrasBtn:"Descarregar (≈2 MB)", extrasBusy:"A descarregar…", extrasDone:"Pronto. A recarregar…", extrasDoneSave:"Descarregado. Guarda a folha e volta a abri-la para as usar.", extrasError:"Não foi possível descarregar. Há ligação à internet?",
+        heading:"Folhas de cálculo", searchPh:"Pesquisar folhas…", exportCsv:"Exportar folha como CSV (.csv)", duplicatedToast:"Folha duplicada", emptyMsg:"Escolhe uma folha à esquerda ou cria uma nova",
         newTitle:"Nova folha de cálculo", save:"Guardar", filenamePh:"Nome da folha…", untitled:"Sem título",
         empty:"Ainda sem folhas de cálculo.", noSheets:"Sem folhas", savedToast:"Guardado:", deletedToast:"Eliminado", createFirst:"Cria uma folha primeiro", saveFirst:"Guarda primeiro",
         deleteTitle:"Eliminar folha?", deleteMsg:'Eliminar "{name}"?', cancel:"Cancelar", ok:"Eliminar",
@@ -160,7 +203,10 @@ const I18N = {
         installTitle:"Editor de folhas de cálculo (Univer)", installDesc:"O módulo de folhas de cálculo é baseado em Univer e funciona totalmente offline. Tamanho estimado: ~50 MB.",
         installBtn:"Descarregar e instalar", installing:"⏳ A descarregar…", installed:"✅ Instalado", retry:"🔁 Repetir",
         installStarting:"A ligar a unpkg.com…" },
-  it: { heading:"Fogli di calcolo", searchPh:"Cerca fogli…", exportCsv:"Esporta foglio come CSV (.csv)", duplicatedToast:"Foglio duplicato", emptyMsg:"Scegli un foglio a sinistra o creane uno nuovo",
+  it: { expBtn:"Esporta", expTitle:"Esporta questo foglio di calcolo", expAs:"Esporta…", expXlsx:"Excel (.xlsx)", expOds:"LibreOffice (.ods)", expPdf:"PDF (stampa)", expCsv:"CSV di questo foglio (.csv)", expHtml:"Pagina web (.html)", expSaved:"Salvato in Offlined Exports: {name}", expError:"Impossibile esportare il foglio.",
+        impBtn:"Importa", impTitle:"Importa fogli di calcolo (.xlsx, .ods, .csv)", impDrop:"Rilascia qui per importare", impBusy:"Importazione di «{name}»…", impDone:"Importato: {name}", impDoneN:"{n} fogli importati", impError:"Impossibile importare «{name}».", impLegacy:"«{name}» è un formato vecchio: salvalo come .xlsx o .ods in Excel o LibreOffice e importalo di nuovo.", impUnsupported:"«{name}» non si può importare (usa .xlsx, .ods o .csv).", impLost:"non importato: {what}", lostImages:"immagini e grafici", lostCf:"formattazione condizionale",
+        extrasMsg:"Sono disponibili nuove funzioni per il foglio di calcolo: filtri, ordinamento, formattazione condizionale, elenchi a discesa, trova e sostituisci, link, immagini, note e tabelle.", extrasBtn:"Scarica (≈2 MB)", extrasBusy:"Download…", extrasDone:"Fatto. Ricarico…", extrasDoneSave:"Scaricato. Salva il foglio e riaprilo per usarle.", extrasError:"Download non riuscito. C'è una connessione a Internet?",
+        heading:"Fogli di calcolo", searchPh:"Cerca fogli…", exportCsv:"Esporta foglio come CSV (.csv)", duplicatedToast:"Foglio duplicato", emptyMsg:"Scegli un foglio a sinistra o creane uno nuovo",
         newTitle:"Nuovo foglio di calcolo", save:"Salva", filenamePh:"Nome del foglio…", untitled:"Senza titolo",
         empty:"Ancora nessun foglio di calcolo.", noSheets:"Nessun foglio", savedToast:"Salvato:", deletedToast:"Eliminato", createFirst:"Crea prima un foglio", saveFirst:"Salva prima",
         deleteTitle:"Eliminare il foglio?", deleteMsg:'Eliminare "{name}"?', cancel:"Annulla", ok:"Elimina",
@@ -168,7 +214,10 @@ const I18N = {
         installTitle:"Editor fogli di calcolo (Univer)", installDesc:"Il modulo foglio di calcolo è basato su Univer e funziona completamente offline. Dimensione stimata: ~50 MB.",
         installBtn:"Scarica e installa", installing:"⏳ Download…", installed:"✅ Installato", retry:"🔁 Riprova",
         installStarting:"Connessione a unpkg.com…" },
-  de: { heading:"Tabellen", searchPh:"Tabellen durchsuchen…", exportCsv:"Blatt als CSV exportieren (.csv)", duplicatedToast:"Tabelle dupliziert", emptyMsg:"Wähle links eine Tabelle oder erstelle eine neue",
+  de: { expBtn:"Exportieren", expTitle:"Diese Tabelle exportieren", expAs:"Exportieren…", expXlsx:"Excel (.xlsx)", expOds:"LibreOffice (.ods)", expPdf:"PDF (drucken)", expCsv:"CSV dieses Blatts (.csv)", expHtml:"Webseite (.html)", expSaved:"In Offlined Exports gespeichert: {name}", expError:"Die Tabelle konnte nicht exportiert werden.",
+        impBtn:"Importieren", impTitle:"Tabellen importieren (.xlsx, .ods, .csv)", impDrop:"Zum Importieren hier ablegen", impBusy:"„{name}“ wird importiert…", impDone:"Importiert: {name}", impDoneN:"{n} Tabellen importiert", impError:"„{name}“ konnte nicht importiert werden.", impLegacy:"„{name}“ ist ein altes Format: Speichere es in Excel oder LibreOffice als .xlsx oder .ods und importiere es erneut.", impUnsupported:"„{name}“ kann nicht importiert werden (nutze .xlsx, .ods oder .csv).", impLost:"nicht importiert: {what}", lostImages:"Bilder und Diagramme", lostCf:"bedingte Formatierung",
+        extrasMsg:"Neue Tabellenfunktionen sind verfügbar: Filter, Sortieren, bedingte Formatierung, Auswahllisten, Suchen und Ersetzen, Links, Bilder, Notizen und Tabellen.", extrasBtn:"Herunterladen (≈2 MB)", extrasBusy:"Wird heruntergeladen…", extrasDone:"Fertig. Wird neu geladen…", extrasDoneSave:"Heruntergeladen. Speichere die Tabelle und öffne sie erneut, um sie zu nutzen.", extrasError:"Download fehlgeschlagen. Besteht eine Internetverbindung?",
+        heading:"Tabellen", searchPh:"Tabellen durchsuchen…", exportCsv:"Blatt als CSV exportieren (.csv)", duplicatedToast:"Tabelle dupliziert", emptyMsg:"Wähle links eine Tabelle oder erstelle eine neue",
         newTitle:"Neue Tabelle", save:"Speichern", filenamePh:"Tabellenname…", untitled:"Unbenannt",
         empty:"Noch keine Tabellen.", noSheets:"Keine Blätter", savedToast:"Gespeichert:", deletedToast:"Gelöscht", createFirst:"Erstelle zuerst eine Tabelle", saveFirst:"Zuerst speichern",
         deleteTitle:"Tabelle löschen?", deleteMsg:'"{name}" löschen?', cancel:"Abbrechen", ok:"Löschen",
@@ -176,7 +225,10 @@ const I18N = {
         installTitle:"Tabellen-Editor (Univer)", installDesc:"Das Tabellenmodul basiert auf Univer und funktioniert komplett offline. Geschätzte Größe: ~50 MB.",
         installBtn:"Herunterladen und installieren", installing:"⏳ Wird heruntergeladen…", installed:"✅ Installiert", retry:"🔁 Erneut versuchen",
         installStarting:"Verbindung zu unpkg.com…" },
-  zh: { heading:"电子表格", searchPh:"搜索表格…", exportCsv:"将工作表导出为 CSV (.csv)", duplicatedToast:"表格已复制", emptyMsg:"在左侧选择一个表格，或新建一个",
+  zh: { expBtn:"导出", expTitle:"导出此电子表格", expAs:"导出…", expXlsx:"Excel (.xlsx)", expOds:"LibreOffice (.ods)", expPdf:"PDF（打印）", expCsv:"此工作表的 CSV (.csv)", expHtml:"网页 (.html)", expSaved:"已保存到 Offlined Exports：{name}", expError:"无法导出电子表格。",
+        impBtn:"导入", impTitle:"导入电子表格（.xlsx、.ods、.csv）", impDrop:"拖放到此处以导入", impBusy:"正在导入“{name}”…", impDone:"已导入：{name}", impDoneN:"已导入 {n} 个表格", impError:"无法导入“{name}”。", impLegacy:"“{name}”是旧格式：请在 Excel 或 LibreOffice 中另存为 .xlsx 或 .ods 后再导入。", impUnsupported:"无法导入“{name}”（请使用 .xlsx、.ods 或 .csv）。", impLost:"未导入：{what}", lostImages:"图片和图表", lostCf:"条件格式",
+        extrasMsg:"电子表格有新功能可用：筛选、排序、条件格式、下拉列表、查找和替换、链接、图片、批注和表格。", extrasBtn:"下载（约 2 MB）", extrasBusy:"下载中…", extrasDone:"完成，正在重新加载…", extrasDoneSave:"已下载。请保存表格并重新打开以使用。", extrasError:"下载失败。是否已连接互联网？",
+        heading:"电子表格", searchPh:"搜索表格…", exportCsv:"将工作表导出为 CSV (.csv)", duplicatedToast:"表格已复制", emptyMsg:"在左侧选择一个表格，或新建一个",
         newTitle:"新建电子表格", save:"保存", filenamePh:"电子表格名称…", untitled:"未命名",
         empty:"还没有电子表格。", noSheets:"没有工作表", savedToast:"已保存：", deletedToast:"已删除", createFirst:"请先创建一个表格", saveFirst:"请先保存",
         deleteTitle:"删除电子表格？", deleteMsg:'删除 "{name}"？', cancel:"取消", ok:"删除",
@@ -184,7 +236,10 @@ const I18N = {
         installTitle:"电子表格编辑器 (Univer)", installDesc:"电子表格模块基于 Univer，完全离线运行。预计额外大小：约 50 MB。",
         installBtn:"下载并安装", installing:"⏳ 下载中…", installed:"✅ 已安装", retry:"🔁 重试",
         installStarting:"正在连接 unpkg.com…" },
-  hi: { heading:"स्प्रेडशीट", searchPh:"स्प्रेडशीट खोजें…", exportCsv:"शीट को CSV के रूप में निर्यात करें (.csv)", duplicatedToast:"स्प्रेडशीट डुप्लिकेट हो गई", emptyMsg:"बाईं ओर से एक स्प्रेडशीट चुनें या नई बनाएँ",
+  hi: { expBtn:"निर्यात करें", expTitle:"यह स्प्रेडशीट निर्यात करें", expAs:"निर्यात करें…", expXlsx:"Excel (.xlsx)", expOds:"LibreOffice (.ods)", expPdf:"PDF (प्रिंट)", expCsv:"इस शीट का CSV (.csv)", expHtml:"वेब पेज (.html)", expSaved:"Offlined Exports में सहेजा गया: {name}", expError:"स्प्रेडशीट निर्यात नहीं हो सकी।",
+        impBtn:"आयात करें", impTitle:"स्प्रेडशीट आयात करें (.xlsx, .ods, .csv)", impDrop:"आयात करने के लिए यहाँ छोड़ें", impBusy:"«{name}» आयात हो रहा है…", impDone:"आयात किया गया: {name}", impDoneN:"{n} स्प्रेडशीट आयात की गईं", impError:"«{name}» आयात नहीं हो सका।", impLegacy:"«{name}» पुराना प्रारूप है: Excel या LibreOffice में इसे .xlsx या .ods के रूप में सहेजें और फिर से आयात करें।", impUnsupported:"«{name}» आयात नहीं किया जा सकता (.xlsx, .ods या .csv का उपयोग करें)।", impLost:"आयात नहीं हुआ: {what}", lostImages:"चित्र और चार्ट", lostCf:"सशर्त फ़ॉर्मेटिंग",
+        extrasMsg:"स्प्रेडशीट के लिए नई सुविधाएँ उपलब्ध हैं: फ़िल्टर, क्रमबद्ध करना, सशर्त फ़ॉर्मेटिंग, ड्रॉप-डाउन सूचियाँ, खोजें और बदलें, लिंक, चित्र, नोट्स और तालिकाएँ।", extrasBtn:"डाउनलोड करें (≈2 MB)", extrasBusy:"डाउनलोड हो रहा है…", extrasDone:"हो गया। फिर से लोड हो रहा है…", extrasDoneSave:"डाउनलोड हो गया। उपयोग करने के लिए शीट सहेजें और फिर से खोलें।", extrasError:"डाउनलोड नहीं हो सका। क्या इंटरनेट कनेक्शन है?",
+        heading:"स्प्रेडशीट", searchPh:"स्प्रेडशीट खोजें…", exportCsv:"शीट को CSV के रूप में निर्यात करें (.csv)", duplicatedToast:"स्प्रेडशीट डुप्लिकेट हो गई", emptyMsg:"बाईं ओर से एक स्प्रेडशीट चुनें या नई बनाएँ",
         newTitle:"नई स्प्रेडशीट", save:"सहेजें", filenamePh:"स्प्रेडशीट का नाम…", untitled:"शीर्षकहीन",
         empty:"अभी तक कोई स्प्रेडशीट नहीं।", noSheets:"कोई शीट नहीं", savedToast:"सहेजा गया:", deletedToast:"हटाया गया", createFirst:"पहले एक शीट बनाएं", saveFirst:"पहले सहेजें",
         deleteTitle:"स्प्रेडशीट हटाएं?", deleteMsg:'"{name}" हटाएं?', cancel:"रद्द करें", ok:"हटाएं",
@@ -192,7 +247,10 @@ const I18N = {
         installTitle:"स्प्रेडशीट संपादक (Univer)", installDesc:"स्प्रेडशीट मॉड्यूल Univer पर आधारित है और पूरी तरह ऑफ़लाइन काम करता है। अनुमानित आकार: ~50 MB।",
         installBtn:"डाउनलोड करें और इंस्टॉल करें", installing:"⏳ डाउनलोड हो रहा है…", installed:"✅ इंस्टॉल हो गया", retry:"🔁 पुनः प्रयास करें",
         installStarting:"unpkg.com से जुड़ रहे हैं…" },
-  ar: { heading:"جداول البيانات", searchPh:"البحث في الجداول…", exportCsv:"تصدير الورقة كـ CSV (.csv)", duplicatedToast:"تم تكرار جدول البيانات", emptyMsg:"اختر جدولاً من الشريط الجانبي أو أنشئ جدولاً جديدًا",
+  ar: { expBtn:"تصدير", expTitle:"تصدير جدول البيانات هذا", expAs:"تصدير…", expXlsx:"Excel (.xlsx)", expOds:"LibreOffice (.ods)", expPdf:"PDF (طباعة)", expCsv:"CSV لهذه الورقة (.csv)", expHtml:"صفحة ويب (.html)", expSaved:"حُفظ في Offlined Exports: {name}", expError:"تعذّر تصدير جدول البيانات.",
+        impBtn:"استيراد", impTitle:"استيراد جداول بيانات (.xlsx و.ods و.csv)", impDrop:"أفلِت هنا للاستيراد", impBusy:"جارٍ استيراد «{name}»…", impDone:"تم الاستيراد: {name}", impDoneN:"تم استيراد {n} جداول", impError:"تعذّر استيراد «{name}».", impLegacy:"«{name}» بتنسيق قديم: احفظه بصيغة .xlsx أو .ods في Excel أو LibreOffice ثم استورده من جديد.", impUnsupported:"لا يمكن استيراد «{name}» (استخدم .xlsx أو .ods أو .csv).", impLost:"لم يُستورد: {what}", lostImages:"الصور والمخططات", lostCf:"التنسيق الشرطي",
+        extrasMsg:"تتوفر ميزات جديدة لجداول البيانات: التصفية والفرز والتنسيق الشرطي والقوائم المنسدلة والبحث والاستبدال والروابط والصور والملاحظات والجداول.", extrasBtn:"تنزيل (≈2 ميجابايت)", extrasBusy:"جارٍ التنزيل…", extrasDone:"تم. جارٍ إعادة التحميل…", extrasDoneSave:"تم التنزيل. احفظ الجدول وافتحه من جديد لاستخدامها.", extrasError:"تعذّر التنزيل. هل يوجد اتصال بالإنترنت؟",
+        heading:"جداول البيانات", searchPh:"البحث في الجداول…", exportCsv:"تصدير الورقة كـ CSV (.csv)", duplicatedToast:"تم تكرار جدول البيانات", emptyMsg:"اختر جدولاً من الشريط الجانبي أو أنشئ جدولاً جديدًا",
         newTitle:"جدول بيانات جديد", save:"حفظ", filenamePh:"اسم جدول البيانات…", untitled:"بلا عنوان",
         empty:"لا توجد جداول بيانات بعد.", noSheets:"لا توجد أوراق", savedToast:"تم الحفظ:", deletedToast:"تم الحذف", createFirst:"أنشئ جدولاً أولاً", saveFirst:"احفظ أولاً",
         deleteTitle:"حذف جدول البيانات؟", deleteMsg:'حذف "{name}"؟', cancel:"إلغاء", ok:"حذف",
@@ -200,7 +258,10 @@ const I18N = {
         installTitle:"محرر جداول البيانات (Univer)", installDesc:"وحدة جداول البيانات مبنية على Univer وتعمل دون اتصال بالكامل. الحجم التقديري: ~50 ميجابايت.",
         installBtn:"تنزيل وتثبيت", installing:"⏳ جارٍ التنزيل…", installed:"✅ تم التثبيت", retry:"🔁 إعادة المحاولة",
         installStarting:"جارٍ الاتصال بـ unpkg.com…" },
-  ru: { heading:"Таблицы", searchPh:"Поиск таблиц…", exportCsv:"Экспорт листа в CSV (.csv)", duplicatedToast:"Таблица продублирована", emptyMsg:"Выберите таблицу слева или создайте новую",
+  ru: { expBtn:"Экспорт", expTitle:"Экспортировать эту таблицу", expAs:"Экспорт…", expXlsx:"Excel (.xlsx)", expOds:"LibreOffice (.ods)", expPdf:"PDF (печать)", expCsv:"CSV этого листа (.csv)", expHtml:"Веб-страница (.html)", expSaved:"Сохранено в Offlined Exports: {name}", expError:"Не удалось экспортировать таблицу.",
+        impBtn:"Импорт", impTitle:"Импортировать таблицы (.xlsx, .ods, .csv)", impDrop:"Отпустите здесь, чтобы импортировать", impBusy:"Импорт «{name}»…", impDone:"Импортировано: {name}", impDoneN:"Импортировано таблиц: {n}", impError:"Не удалось импортировать «{name}».", impLegacy:"«{name}» — старый формат: сохраните его как .xlsx или .ods в Excel или LibreOffice и импортируйте снова.", impUnsupported:"«{name}» нельзя импортировать (используйте .xlsx, .ods или .csv).", impLost:"не импортировано: {what}", lostImages:"изображения и диаграммы", lostCf:"условное форматирование",
+        extrasMsg:"Для таблиц доступны новые функции: фильтры, сортировка, условное форматирование, раскрывающиеся списки, поиск и замена, ссылки, изображения, примечания и таблицы.", extrasBtn:"Скачать (≈2 МБ)", extrasBusy:"Загрузка…", extrasDone:"Готово. Перезагрузка…", extrasDoneSave:"Загружено. Сохраните таблицу и откройте её снова, чтобы ими пользоваться.", extrasError:"Не удалось скачать. Есть ли подключение к интернету?",
+        heading:"Таблицы", searchPh:"Поиск таблиц…", exportCsv:"Экспорт листа в CSV (.csv)", duplicatedToast:"Таблица продублирована", emptyMsg:"Выберите таблицу слева или создайте новую",
         newTitle:"Новая таблица", save:"Сохранить", filenamePh:"Название таблицы…", untitled:"Без названия",
         empty:"Пока нет таблиц.", noSheets:"Нет листов", savedToast:"Сохранено:", deletedToast:"Удалено", createFirst:"Сначала создайте таблицу", saveFirst:"Сначала сохраните",
         deleteTitle:"Удалить таблицу?", deleteMsg:'Удалить "{name}"?', cancel:"Отмена", ok:"Удалить",
@@ -259,12 +320,31 @@ function showUnsavedConfirm() {
   let _dirty = false;
   let _dirtyListenerAttached = false;
   let _pendingFolder = null;   // carpeta donde irá una hoja nueva al guardarla
+  let _quietUntil = 0;         // hasta cuándo se ignoran las mutaciones (recién abierta)
   function setDirty(v) { _dirty = !!v; sb.setDirty(_dirty); }
 
   // ══════════════════════════════════════════════════════════
   // Carga de scripts Univer (offline-first, vendor/univer/presets)
   // ══════════════════════════════════════════════════════════
   let _univerLoaded = false, _univerLoadPromise = null;
+
+  // Plugins libres de Univer (Apache-2.0) que Offlined descarga junto al editor
+  // (backend/main.py, _UNIVER_PLUGINS; mismo orden). Si alguno falta (Univer bajado
+  // con un Offlined anterior), la hoja funciona igual sin esa función.
+  const UV_PLUGINS = [
+    "data-validation", "sheets-data-validation", "sheets-filter", "sheets-sort", "sheets-conditional-formatting",
+    "find-replace", "sheets-find-replace", "sheets-hyper-link", "drawing-ui", "docs-drawing", "sheets-drawing",
+    "sheets-note", "sheets-table", "sheets-crosshair-highlight",
+    "sheets-filter-ui", "sheets-sort-ui", "sheets-conditional-formatting-ui", "sheets-data-validation-ui",
+    "sheets-hyper-link-ui", "sheets-drawing-ui", "sheets-note-ui", "sheets-table-ui", "sheets-zen-editor",
+  ];
+  const UV_PLUGIN_CSS = ["find-replace", "drawing-ui", "sheets-crosshair-highlight", "sheets-filter-ui", "sheets-sort-ui",
+    "sheets-conditional-formatting-ui", "sheets-data-validation-ui", "sheets-hyper-link-ui", "sheets-drawing-ui",
+    "sheets-note-ui", "sheets-table-ui", "sheets-zen-editor"];
+  const UV_PLUGIN_LOCALES = ["sheets-sort", "find-replace", "sheets-find-replace", ...UV_PLUGIN_CSS.filter(x => x !== "find-replace")];
+  const UV_BASE_LOCALES = ["design", "ui", "sheets", "sheets-ui", "docs-ui", "sheets-formula-ui", "sheets-numfmt-ui"];
+  // Idiomas que Univer trae; los demás de Offlined se quedan en inglés
+  const UV_LANG = { es: "es-ES", fr: "fr-FR", ru: "ru-RU", zh: "zh-CN" }[_LANG] || null;
 
   function _loadUniverScripts() {
     if (_univerLoaded) return Promise.resolve();
@@ -284,6 +364,7 @@ function showUnsavedConfirm() {
     ];
     const CSS_FILES = ["design.css", "ui.css", "docs-ui.css", "sheets-ui.css", "sheets-formula-ui.css", "sheets-numfmt-ui.css"];
 
+    UV_PLUGIN_CSS.forEach(n => CSS_FILES.push(n + ".css"));
     CSS_FILES.forEach(name => {
       const href = BASE + "/" + name;
       if (!document.querySelector(`link[data-univer-css="${name}"]`)) {
@@ -304,6 +385,8 @@ function showUnsavedConfirm() {
         document.head.appendChild(s);
       });
     }
+    // opcional: si no está, sigue sin él
+    const _jsOpt = src => _js(src).then(() => true, () => { console.info("[Sheets] sin", src); return false; });
 
     function _injectReactPolyfills() {
       if (window.ReactDOM && !window.ReactDOM.createRoot) {
@@ -337,32 +420,36 @@ function showUnsavedConfirm() {
 
     _univerLoadPromise = JS_FILES.reduce((p, name) => {
       return p.then(() => _js(BASE + "/" + name).then(() => { if (name === "react-dom.js") _injectReactPolyfills(); }));
-    }, Promise.resolve()).then(() => {
+    }, Promise.resolve()).then(async () => {
       if (!window.UniverCore || !window.UniverCore.Univer) {
         throw new Error("UniverCore.Univer no disponible.");
       }
+      for (const n of UV_PLUGINS) await _jsOpt(`${BASE}/${n}.js`);
+      for (const n of UV_PLUGIN_LOCALES) await _jsOpt(`${BASE}/locale-${n}.js`);
+      if (UV_LANG) for (const n of [...UV_BASE_LOCALES, ...UV_PLUGIN_LOCALES]) await _jsOpt(`${BASE}/locale-${n}.${UV_LANG}.js`);
       _univerLoaded = true;
     });
 
     return _univerLoadPromise;
   }
 
+  // Textos de Univer: inglés de base y, encima, el idioma de Offlined si Univer lo tiene.
+  // Cada archivo deja un global Univer<Paquete><Idioma> (p. ej. UniverSheetsFilterUiEsES).
   function _buildLocales() {
     const C = window.UniverCore;
-    const merge = (C && C.mergeLocales) ? C.mergeLocales : function() {
+    const merge = (C && C.mergeLocales) ? C.mergeLocales : function () {
+      const deep = (t, s) => { for (const k in s) { if (s[k] && typeof s[k] === "object" && !Array.isArray(s[k])) deep(t[k] = (t[k] && typeof t[k] === "object") ? t[k] : {}, s[k]); else t[k] = s[k]; } return t; };
       const r = {};
-      for (let i = 0; i < arguments.length; i++) { if (arguments[i] && typeof arguments[i] === "object") Object.assign(r, arguments[i]); }
+      for (let i = 0; i < arguments.length; i++) if (arguments[i] && typeof arguments[i] === "object") deep(r, arguments[i]);
       return r;
     };
-    return merge(
-      window.UniverDesignEnUS          || {},
-      window.UniverUiEnUS              || {},
-      window.UniverSheetsEnUS          || {},
-      window.UniverSheetsUiEnUS        || {},
-      window.UniverDocsUiEnUS          || {},
-      window.UniverSheetsFormulaUiEnUS || {},
-      window.UniverSheetsNumfmtUiEnUS  || {}
-    );
+    const camel = x => x.split("-").map(w => w.charAt(0).toUpperCase() + w.slice(1)).join("");
+    const pkgs = [...UV_BASE_LOCALES, ...UV_PLUGIN_LOCALES];
+    const pick = lang => pkgs.map(p => window["Univer" + camel(p) + camel(lang)]).filter(Boolean);
+    const en = pick("en-US");
+    const type = UV_LANG && C.LocaleType[UV_LANG.replace("-", "_").toUpperCase()];
+    if (type) return { type, locales: { [type]: merge(...en, ...pick(UV_LANG)) } };
+    return { type: C.LocaleType.EN_US, locales: { [C.LocaleType.EN_US]: merge(...en) } };
   }
 
   function _isDark() { return (document.documentElement.getAttribute("data-theme") || "light") === "dark"; }
@@ -384,11 +471,12 @@ function showUnsavedConfirm() {
     const UniverSheetsNumfmtPlugin    = window.UniverSheetsNumfmt    && window.UniverSheetsNumfmt.UniverSheetsNumfmtPlugin;
     const UniverSheetsNumfmtUIPlugin  = window.UniverSheetsNumfmtUi  && window.UniverSheetsNumfmtUi.UniverSheetsNumfmtUIPlugin;
 
+    const loc = _buildLocales();
     const univer = new C.Univer({
       theme: D && D.defaultTheme,
       darkMode: _isDark(),
-      locale: C.LocaleType.EN_US,
-      locales: _buildLocales(),
+      locale: loc.type,
+      locales: loc.locales,
     });
 
     if (UniverRenderEnginePlugin)    univer.registerPlugin(UniverRenderEnginePlugin);
@@ -403,6 +491,39 @@ function showUnsavedConfirm() {
     if (UniverSheetsNumfmtPlugin)    univer.registerPlugin(UniverSheetsNumfmtPlugin);
     if (UniverSheetsNumfmtUIPlugin)  univer.registerPlugin(UniverSheetsNumfmtUIPlugin);
 
+    // Plugins opcionales: el de interfaz solo si su base quedó registrada
+    const done = new Set();
+    const reg = (glob, cls, needs = []) => {
+      const mod = window[glob];
+      if (!mod || !mod[cls] || !needs.every(n => done.has(n))) return;
+      try { univer.registerPlugin(mod[cls]); done.add(glob); }
+      catch (e) { console.warn("[Sheets] plugin", cls, e); }
+    };
+    reg("UniverDataValidation", "UniverDataValidationPlugin");
+    reg("UniverSheetsDataValidation", "UniverSheetsDataValidationPlugin", ["UniverDataValidation"]);
+    reg("UniverSheetsDataValidationUi", "UniverSheetsDataValidationUIPlugin", ["UniverSheetsDataValidation"]);
+    reg("UniverSheetsFilter", "UniverSheetsFilterPlugin");
+    reg("UniverSheetsFilterUi", "UniverSheetsFilterUIPlugin", ["UniverSheetsFilter"]);
+    reg("UniverSheetsSort", "UniverSheetsSortPlugin");
+    reg("UniverSheetsSortUi", "UniverSheetsSortUIPlugin", ["UniverSheetsSort"]);
+    reg("UniverSheetsConditionalFormatting", "UniverSheetsConditionalFormattingPlugin");
+    reg("UniverSheetsConditionalFormattingUi", "UniverSheetsConditionalFormattingUIPlugin", ["UniverSheetsConditionalFormatting"]);
+    reg("UniverFindReplace", "UniverFindReplacePlugin");
+    reg("UniverSheetsFindReplace", "UniverSheetsFindReplacePlugin", ["UniverFindReplace"]);
+    reg("UniverSheetsHyperLink", "UniverSheetsHyperLinkPlugin");
+    reg("UniverSheetsHyperLinkUi", "UniverSheetsHyperLinkUIPlugin", ["UniverSheetsHyperLink", "UniverSheetsDataValidation"]);
+    reg("UniverDrawing", "UniverDrawingPlugin");
+    reg("UniverDrawingUi", "UniverDrawingUIPlugin", ["UniverDrawing"]);
+    reg("UniverDocsDrawing", "UniverDocsDrawingPlugin", ["UniverDrawing"]);
+    reg("UniverSheetsDrawing", "UniverSheetsDrawingPlugin", ["UniverDrawing"]);
+    reg("UniverSheetsDrawingUi", "UniverSheetsDrawingUIPlugin", ["UniverSheetsDrawing", "UniverDrawingUi", "UniverDocsDrawing"]);
+    reg("UniverSheetsNote", "UniverSheetsNotePlugin");
+    reg("UniverSheetsNoteUi", "UniverSheetsNoteUIPlugin", ["UniverSheetsNote"]);
+    reg("UniverSheetsTable", "UniverSheetsTablePlugin");
+    reg("UniverSheetsTableUi", "UniverSheetsTableUIPlugin", ["UniverSheetsTable", "UniverSheetsSort"]);
+    reg("UniverSheetsZenEditor", "UniverSheetsZenEditorPlugin");
+    reg("UniverSheetsCrosshairHighlight", "UniverSheetsCrosshairHighlightPlugin");
+
     const univerAPI = (F && F.FUniver) ? F.FUniver.newAPI(univer) : null;
     return { univer, univerAPI };
   }
@@ -410,11 +531,39 @@ function showUnsavedConfirm() {
   // ══════════════════════════════════════════════════════════
   // Instalación (descarga de Univer bajo demanda)
   // ══════════════════════════════════════════════════════════
+  let _univerStatus = null;
   async function _univerReady() {
     try {
       const r = await fetch("/api/univer/status");
-      return (await r.json()).ready === true;
+      _univerStatus = await r.json();
+      return _univerStatus.ready === true;
     } catch (_) { return false; }
+  }
+  // Univer bajado con un Offlined anterior: faltan los plugins/idiomas nuevos → aviso para bajarlos
+  function _showExtrasBar() {
+    if (!_univerStatus || _univerStatus.complete !== false || document.getElementById("spExtras")) return;
+    const bar = document.createElement("div");
+    bar.id = "spExtras"; bar.className = "sp-extras";
+    bar.innerHTML = `<span class="sp-extras-msg"></span><button type="button" class="sp-action-btn"></button><button type="button" class="sp-extras-x" aria-label="×">×</button>`;
+    bar.querySelector(".sp-extras-msg").textContent = t("extrasMsg");
+    const btn = bar.querySelectorAll("button")[0];
+    btn.textContent = t("extrasBtn");
+    bar.querySelector(".sp-extras-x").addEventListener("click", () => bar.remove());
+    btn.addEventListener("click", async () => {
+      btn.disabled = true; btn.textContent = t("extrasBusy");
+      try {
+        const r = await fetch("/api/univer/download?missing=1", { method: "POST" });
+        const d = await r.json();
+        if (!r.ok || d.ok === false || (d.results || []).some(x => !x.ok)) throw new Error("download");
+        if (_dirty) { bar.querySelector(".sp-extras-msg").textContent = t("extrasDoneSave"); btn.remove(); return; }
+        btn.textContent = t("extrasDone");
+        setTimeout(() => location.reload(), 600);
+      } catch (_) {
+        btn.disabled = false; btn.textContent = t("extrasBtn");
+        bar.querySelector(".sp-extras-msg").textContent = t("extrasError");
+      }
+    });
+    document.querySelector(".sp-topbar").after(bar);
   }
 
   function _showInstallPanel() {
@@ -510,7 +659,12 @@ function showUnsavedConfirm() {
     if (_sheetAPI && typeof _sheetAPI.onCommandExecuted === "function" && !_dirtyListenerAttached) {
       // Solo cuentan los cambios de datos (mutaciones), no mover la selección
       const MUT = (window.UniverCore && UniverCore.CommandType && UniverCore.CommandType.MUTATION != null) ? UniverCore.CommandType.MUTATION : 2;
-      _sheetAPI.onCommandExecuted(cmd => { if (cmd && (cmd.type == null || cmd.type === MUT) && !_dirty) setDirty(true); });
+      // Al abrir una hoja, varios plugins (filtros, validación, tablas…) hacen sus propias
+      // mutaciones al prepararse: esos primeros instantes no cuentan como cambios.
+      _sheetAPI.onCommandExecuted(cmd => {
+        if (!cmd || Date.now() < _quietUntil) return;
+        if ((cmd.type == null || cmd.type === MUT) && !_dirty) setDirty(true);
+      });
       _dirtyListenerAttached = true;
     }
   }
@@ -521,6 +675,7 @@ function showUnsavedConfirm() {
     try { await _sheetEnsure(); } catch (e) { if (e.message !== "not_ready") console.error(e); return; }
     try {
       if (_sheetUnit) { try { _sheetUniver.disposeUnit(_sheetUnit.getUnitId()); } catch (_) {} }
+      _quietUntil = Date.now() + 1500;
       _sheetUnit = _sheetUniver.createUnit(UniverCore.UniverInstanceType.UNIVER_SHEET, _sheetSnap("Sheet1"));
       _sheetCurrentName = null;
       _pendingFolder = folderId || null;
@@ -543,6 +698,7 @@ function showUnsavedConfirm() {
       if (_sheetUnit) { try { _sheetUniver.disposeUnit(_sheetUnit.getUnitId()); } catch (_) {} _sheetUnit = null; }
 
       const snapshot = Object.assign({}, d.data, { id: "sheet-" + Date.now() });
+      _quietUntil = Date.now() + 1500;
       _sheetUnit = _sheetUniver.createUnit(UniverCore.UniverInstanceType.UNIVER_SHEET, snapshot);
       _sheetCurrentName = d.name;
       _pendingFolder = null;
@@ -556,6 +712,16 @@ function showUnsavedConfirm() {
     }
   }
 
+  // Hoja abierta con los datos de los plugins (filtros, formato condicional, validación,
+  // notas, imágenes, enlaces, tablas): van en «resources», que getSnapshot() no incluye.
+  function _snapshotNow() {
+    try {
+      const wb = _sheetAPI && _sheetAPI.getActiveWorkbook && _sheetAPI.getActiveWorkbook();
+      if (wb && typeof wb.save === "function") { const snap = wb.save(); if (snap && snap.sheets) return snap; }
+    } catch (e) { console.warn("[Sheets] save() de Univer falló, guardo solo las celdas:", e); }
+    return _sheetUnit.getSnapshot();
+  }
+
   async function sheetSave() {
     if (!_sheetUniver || !_sheetUnit) { toast("⚠️ " + t("createFirst")); return; }
     const name = (spFilenameInput?.value || "").trim() || t("untitled");
@@ -563,7 +729,7 @@ function showUnsavedConfirm() {
     try {
       const r = await fetch(`${API}/save`, {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, data: _sheetUnit.getSnapshot() })
+        body: JSON.stringify({ name, data: _snapshotNow() })
       });
       if (!r.ok) throw new Error(await r.text());
       const saved = await r.json().catch(() => ({}));
@@ -590,33 +756,8 @@ function showUnsavedConfirm() {
     sb.setActive(_sheetCurrentName);
   }
 
-  // CSV de la primera hoja (o de la activa si es la abierta)
-  function snapshotToCsv(snap) {
-    const sheetId = (snap.sheetOrder && snap.sheetOrder[0]) || Object.keys(snap.sheets || {})[0];
-    const sh = (snap.sheets || {})[sheetId] || {};
-    const cells = sh.cellData || {};
-    const rows = Object.keys(cells).map(Number).filter(n => !isNaN(n));
-    if (!rows.length) return "";
-    const maxR = Math.max(...rows);
-    let maxC = 0;
-    rows.forEach(r => Object.keys(cells[r] || {}).forEach(c => { maxC = Math.max(maxC, Number(c)); }));
-    const q = v => {
-      const s = v == null ? "" : String(v);
-      return /[",\n;]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
-    };
-    const out = [];
-    for (let r = 0; r <= maxR; r++) {
-      const line = [];
-      for (let c = 0; c <= maxC; c++) {
-        const cell = cells[r] && cells[r][c];
-        line.push(q(cell ? (cell.v != null ? cell.v : (cell.p && cell.p.body ? String(cell.p.body.dataStream || "").replace(/\r?\n$/, "") : "")) : ""));
-      }
-      out.push(line.join(","));
-    }
-    return out.join("\r\n");
-  }
   async function getSnapshot(name) {
-    if (name === _sheetCurrentName && _sheetUnit) return _sheetUnit.getSnapshot();
+    if (name === _sheetCurrentName && _sheetUnit) return _snapshotNow();
     const d = await (await fetch(`${API}/load?name=${encodeURIComponent(name)}`)).json();
     return d.data;
   }
@@ -665,16 +806,7 @@ function showUnsavedConfirm() {
       }
     },
     exportItems: n => [
-      { icon: "file-text", label: t("exportCsv"), onClick: async () => {
-          try {
-            const csv = snapshotToCsv(await getSnapshot(n.id));
-            const url = URL.createObjectURL(new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8" }));
-            const a = document.createElement("a");
-            a.href = url; a.download = `${n.title}.csv`;
-            document.body.append(a); a.click(); a.remove();
-            setTimeout(() => URL.revokeObjectURL(url), 4000);
-          } catch (e) { toast("❌ " + e.message); }
-        } },
+      { icon: "download", label: t("expAs"), onClick: () => exportMenu(n.id) },
     ],
   });
 
@@ -689,14 +821,174 @@ function showUnsavedConfirm() {
     e.preventDefault(); e.returnValue = "";
   });
 
+  // ── Exportar (.xlsx, .ods, .csv, .html, PDF) ─────────────────
+  // El iframe del addon no puede descargar (sandbox sin allow-downloads): se guarda en
+  // «Offlined Exports» a través de Offlined; fuera de Offlined, descarga normal.
+  async function saveExport(blob, filename) {
+    try {
+      const fd = new FormData();
+      fd.append("file", blob, filename);
+      fd.append("filename", filename);
+      const r = await fetch("/api/exports/save-file", { method: "POST", body: fd });
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      const d = await r.json();
+      toast(t("expSaved").replace("{name}", d.name || filename));
+    } catch (e) {
+      console.warn("[Sheets] Offlined no guardó el archivo, se descarga:", e);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url; a.download = filename;
+      document.body.append(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 4000);
+    }
+  }
+  function activeSheetId() {
+    try { return _sheetAPI.getActiveWorkbook().getActiveSheet().getSheetId(); } catch (_) { return null; }
+  }
+  async function exportSheet(name, kind) {
+    try {
+      const isOpen = name === _sheetCurrentName && _sheetUnit;
+      const snap = await getSnapshot(name);
+      if (!snap) throw new Error("no data");
+      const title = name || t("untitled");
+      const base = title.replace(/[\\/:*?"<>|\u0000-\u001f]+/g, "_").trim() || "hoja";
+      if ((kind === "html" || kind === "pdf") && !(window.UniverCore && window.UniverCore.numfmt)) {
+        try { if (await _univerReady()) await _loadUniverScripts(); } catch (_) {}      // para formatear los números
+      }
+      if (kind === "xlsx") await saveExport(await OflSheetExport.toXlsx(snap, title), base + ".xlsx");
+      else if (kind === "ods") await saveExport(await OflSheetExport.toOds(snap, title, _LANG), base + ".ods");
+      else if (kind === "csv") {
+        const sid = (isOpen && activeSheetId()) || (snap.sheetOrder || [])[0];
+        const sheetName = snap.sheets[sid] && snap.sheets[sid].name;
+        const multi = (snap.sheetOrder || []).length > 1;
+        await saveExport(new Blob([OflSheetExport.toCsv(snap, sid, _LANG)], { type: "text/csv;charset=utf-8" }), base + (multi && sheetName ? " - " + sheetName.replace(/[\\/:*?"<>|]+/g, "_") : "") + ".csv");
+      }
+      else if (kind === "html") await saveExport(new Blob([OflSheetExport.toHtml(snap, title, _LANG)], { type: "text/html;charset=utf-8" }), base + ".html");
+      else if (kind === "pdf") await OflSheetExport.printPdf(snap, title, _LANG);
+    } catch (e) {
+      console.error("[Sheets] Error exportando:", e);
+      toast("❌ " + t("expError"));
+    }
+  }
+  let _expPop = null;
+  function closeExportMenu() { if (_expPop) { _expPop.remove(); _expPop = null; document.getElementById("spExportBtn").classList.remove("open"); } }
+  function exportMenu(name) {
+    const again = !!_expPop;
+    closeExportMenu();
+    if (again && name === _sheetCurrentName) return;
+    if (!name) { toast("⚠️ " + t("saveFirst")); return; }
+    const anchor = document.getElementById("spExportBtn");
+    const el = document.createElement("div");
+    el.className = "sp-pop ofs-root"; el.setAttribute("role", "menu");
+    if (name !== _sheetCurrentName) { const l = document.createElement("div"); l.className = "sp-pop-label"; l.textContent = name; el.append(l); }
+    [["sheet", "expXlsx", "xlsx"], ["sheet", "expOds", "ods"], ["printer", "expPdf", "pdf"], "-", ["file-text", "expCsv", "csv"], ["file-code", "expHtml", "html"]].forEach(it => {
+      if (it === "-") { const sp = document.createElement("div"); sp.className = "sp-pop-sep"; el.append(sp); return; }
+      const [ic, key, kind] = it;
+      const b = document.createElement("button");
+      b.type = "button"; b.className = "sp-pop-item"; b.setAttribute("role", "menuitem");
+      b.innerHTML = OflSidebar.ic(ic) + "<span></span>";
+      b.querySelector("span").textContent = t(key);
+      b.addEventListener("click", () => { closeExportMenu(); exportSheet(name, kind); });
+      el.append(b);
+    });
+    document.body.append(el);
+    _expPop = el;
+    anchor.classList.add("open");
+    const r = anchor.getBoundingClientRect();
+    let x = document.documentElement.dir === "rtl" ? r.left : r.right - el.offsetWidth;
+    x = Math.max(6, Math.min(x, innerWidth - el.offsetWidth - 6));
+    el.style.left = x + "px"; el.style.top = (r.bottom + 4) + "px";
+    el.querySelector(".sp-pop-item")?.focus();
+  }
+  document.addEventListener("mousedown", e => { if (_expPop && !_expPop.contains(e.target) && !document.getElementById("spExportBtn").contains(e.target)) closeExportMenu(); });
+  document.addEventListener("keydown", e => { if (e.key === "Escape") closeExportMenu(); });
+  window.addEventListener("resize", closeExportMenu);
+  document.getElementById("spExportBtn").addEventListener("click", () => {
+    if (!_sheetCurrentName) { toast("⚠️ " + t("saveFirst")); return; }
+    exportMenu(_sheetCurrentName);
+  });
+
+  // ── Importar (.xlsx, .ods, .csv) ──────────────────────────────
+  const importInput = document.getElementById("spImportInput");
+  importInput.accept = OflSheetImport.ACCEPT;
+  document.getElementById("spImportBtn").addEventListener("click", () => { importInput.value = ""; importInput.click(); });
+  importInput.addEventListener("change", () => importFiles([...importInput.files]));
+  let _importing = false;
+  const uniqueName = base => {
+    const clean = (base || t("untitled")).replace(/[\\/:*?"<>|\u0000-\u001f]+/g, "_").trim() || t("untitled");
+    if (!sb.getItem(clean)) return clean;
+    let k = 2; while (sb.getItem(`${clean} (${k})`)) k++;
+    return `${clean} (${k})`;
+  };
+  async function importFiles(files) {
+    if (!files.length || _importing) return;
+    files.filter(f => !OflSheetImport.kindOf(f)).forEach(f => toast(t("impUnsupported").replace("{name}", f.name)));
+    const docs = files.filter(f => OflSheetImport.kindOf(f));
+    if (!docs.length) return;
+    if (_dirty && !(await showUnsavedConfirm())) return;
+    _importing = true;
+    let last = null, ok = 0;
+    const lost = new Set();
+    try {
+      for (const f of docs) {
+        if (OflSheetImport.kindOf(f) === "legacy") { toast(t("impLegacy").replace("{name}", f.name)); continue; }
+        toast(t("impBusy").replace("{name}", f.name));
+        try {
+          const { snapshot, title, warnings } = await OflSheetImport.toSnapshot(f);
+          (warnings || []).forEach(w => lost.add(w));
+          const name = uniqueName(title);
+          snapshot.name = name;
+          const r = await fetch(`${API}/save`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name, data: snapshot }) });
+          if (!r.ok) throw new Error(await r.text());
+          const saved = await r.json().catch(() => ({}));
+          last = (saved.filename || name).replace(/\.usheet$/, ""); ok++;
+          await refreshList();
+        } catch (e) {
+          console.error("[Sheets] Error importando", f.name, e);
+          toast(t("impError").replace("{name}", f.name));
+        }
+      }
+    } finally { _importing = false; }
+    if (last) {
+      setDirty(false);
+      await sheetOpenFile(last);
+      let msg = ok > 1 ? t("impDoneN").replace("{n}", ok) : t("impDone").replace("{name}", last);
+      if (lost.size) msg += " · " + t("impLost").replace("{what}", [...lost].map(w => t(w === "cf" ? "lostCf" : "lostImages")).join(", "));
+      toast(msg);
+    }
+  }
+  const dropEl = document.getElementById("spDrop");
+  const isFileDrag = e => [...((e.dataTransfer && e.dataTransfer.items) || [])].some(i => i.kind === "file");
+  let dragDepth = 0;
+  window.addEventListener("dragenter", e => { if (isFileDrag(e)) { dragDepth++; dropEl.classList.remove("hidden"); } }, true);
+  window.addEventListener("dragleave", () => { if (dropEl.classList.contains("hidden")) return; dragDepth = Math.max(0, dragDepth - 1); if (!dragDepth) dropEl.classList.add("hidden"); }, true);
+  window.addEventListener("dragover", e => { if (isFileDrag(e)) { e.preventDefault(); e.dataTransfer.dropEffect = "copy"; } }, true);
+  window.addEventListener("drop", e => {
+    const files = [...((e.dataTransfer && e.dataTransfer.files) || [])];
+    dragDepth = 0; dropEl.classList.add("hidden");
+    if (!files.length) return;
+    // imágenes soltadas sobre la hoja: las recibe Univer (imágenes en celdas)
+    if (files.every(f => /^image\//.test(f.type)) && e.target.closest && e.target.closest("#spContainer")) return;
+    e.preventDefault(); e.stopPropagation();
+    importFiles(files.filter(f => !/^image\//.test(f.type)));
+  }, true);
+
   async function init() {
+    OflSidebar.ICONS["printer"] = '<path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 9V3a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v6"/><rect x="6" y="14" width="12" height="8" rx="1"/>';
+    OflSidebar.ICONS["file-up"] = '<path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M12 12v6"/><path d="m15 15-3-3-3 3"/>';
     OflSidebar.hydrateIcons();
+    document.getElementById("spImportLbl").textContent = t("impBtn");
+    document.getElementById("spExportLbl").textContent = t("expBtn");
+    document.getElementById("spExportBtn").title = t("expTitle");
+    document.getElementById("spImportBtn").title = t("impTitle");
+    document.getElementById("spDropLbl").textContent = t("impDrop");
     document.getElementById("spSaveLbl").textContent = t("save");
     spSaveBtn.title = t("save") + " (Ctrl+S)";
     if (spFilenameInput) spFilenameInput.placeholder = t("filenamePh");
 
     await Promise.all([refreshList(), sb.ready]);
     if (!(await _univerReady())) { _showInstallPanel(); return; }
+    _showExtrasBar();
 
     const deepLinkSheet = new URLSearchParams(location.search).get("sheet");
     if (deepLinkSheet) {
