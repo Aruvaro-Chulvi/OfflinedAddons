@@ -8,7 +8,9 @@ Write and organise rich-text documents inside Offlined — fully offline.
 
 - Rich text with [Quill](https://quilljs.com) (BSD-3-Clause, shipped with Offlined): headings, bold, lists,
   links, colours.
-- A searchable list of your documents: new, save, duplicate and delete.
+- **Sidebar** like the one in Offlined's chat: pinned items, **folders** (drag and drop, collapsible), the rest
+  grouped by date, search, sort by recent or A–Z, and a «…» menu on each row (rename, pin, move, duplicate, read aloud, place on the map, export to .txt or .html, delete). It folds into a thin
+  bar of icons and opens over the editor on small screens. Pins and folders are kept per Offlined user.
 - **Read aloud** a document with the computer's voices.
 - **Tag a place**: link a document to a location and find it later on Offlined's maps.
 - Asks before discarding unsaved changes.
@@ -21,4 +23,5 @@ the addon never deletes them.
 
 ## Requirements
 
-Offlined 3.0 or later. Uses Offlined's notes service (`/api/addon-notes/*`) and its copy of Quill in `/vendor/`.
+Offlined 3.0 or later. Uses Offlined's notes service (`/api/addon-notes/*`) and its copy of Quill in `/vendor/`. It also reads `/api/users/session` (only the active user's id) to keep each user's pins and folders
+apart, in the addon's own storage. With the next version of Offlined the sidebar also shows each document's date and first words.

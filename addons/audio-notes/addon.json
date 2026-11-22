@@ -1,7 +1,7 @@
 {
   "id": "audio-notes",
   "name": "Audio Notes",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "author": "Álvaro C. Chulvi",
   "description": "Record, filter and play back voice notes — with a live visualizer and a custom player, fully offline.",
   "icon": "🎙️",

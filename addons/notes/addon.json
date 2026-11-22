@@ -1,7 +1,7 @@
 {
   "id": "notes",
   "name": "Notes",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "author": "Álvaro C. Chulvi",
   "description": "Write and organize rich-text notes — with formatting, search and location tagging, fully offline.",
   "icon": "🗒️",

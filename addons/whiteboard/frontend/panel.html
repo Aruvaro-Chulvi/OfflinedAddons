@@ -4,23 +4,24 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Whiteboard</title>
+<script src="sidebar.js"></script>
 <style>
 :root {
   --bg: #f6f6f6;
   --panel: #ffffff;
   --ink: #1f1f1f;
-  --muted: #6f6f6f;
+  --muted: #d6d6d6;
   --soft: #e9e9e9;
-  --border: #d6d6d6;
+  --subtle: #6b7280;
   --accent: #2d2d2d;
 }
 [data-theme="dark"] {
   --bg: #0f0f10;
   --panel: #17181a;
   --ink: #e9e9ea;
-  --muted: #9a9a9a;
+  --muted: #2b2c31;
   --soft: #222327;
-  --border: #2b2c31;
+  --subtle: #9a9a9a;
   --accent: #dedede;
 }
 *, *::before, *::after { box-sizing: border-box; }
@@ -35,101 +36,40 @@ button, input { font-family: inherit; }
 
 .wb-view { display: flex; width: 100%; height: 100%; background: var(--panel); }
 
-/* ── Sidebar: dibujos guardados ── */
-.wb-sidebar {
-  flex: 0 0 220px; display: flex; flex-direction: column;
-  border-right: 1px solid var(--border); background: var(--panel); min-width: 0;
-}
-.wb-sidebar-head {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 10px 12px; border-bottom: 1px solid var(--border); gap: 8px;
-}
-.wb-sidebar-title { font-weight: 600; font-size: .85rem; }
-.wb-new-btn {
-  border: 1px solid var(--border); border-radius: 8px; background: var(--panel);
-  color: var(--ink); cursor: pointer; padding: 4px 8px; font-size: .8rem;
-}
-.wb-new-btn:hover { background: var(--soft); }
-.wb-list { flex: 1; overflow-y: auto; padding: 6px; }
-.wb-list-empty { padding: 16px 10px; color: var(--muted); font-size: .8rem; text-align: center; }
-.wb-item {
-  display: flex; align-items: center; gap: 6px; padding: 7px 8px; border-radius: 8px;
-  cursor: pointer; margin-bottom: 2px; font-size: .82rem;
-}
-.wb-item:hover { background: var(--soft); }
-.wb-item.active { background: var(--soft); font-weight: 600; }
-.wb-item-name {
-  flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-}
-.wb-item-del {
-  border: none; background: none; color: var(--muted); cursor: pointer;
-  padding: 2px 5px; border-radius: 5px; opacity: 0; font-size: .8rem;
-}
-.wb-item:hover .wb-item-del { opacity: 1; }
-.wb-item-del:hover { background: color-mix(in srgb, #ef4444 16%, transparent); color: #ef4444; }
-
 /* ── Main area ── */
 .wb-main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
-.wb-toolbar {
-  display: flex; align-items: center; gap: .75rem; padding: 8px 12px;
-  border-bottom: 1px solid var(--border);
-}
+.wb-toolbar { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-bottom: 1px solid var(--muted); }
 .wb-name-input {
-  flex: 1; min-width: 0; font-size: .85rem; padding: 5px 8px; border-radius: 6px;
-  border: 1px solid var(--border); background: var(--bg); color: var(--ink);
+  flex: 1; min-width: 0; padding: 7px 12px; border-radius: 10px; border: 1px solid var(--muted);
+  background: var(--bg); color: var(--ink); font-size: .9rem; outline: none; transition: border-color .15s;
 }
-.wb-actions { display: flex; gap: 8px; flex: 0 0 auto; }
+.wb-name-input:focus { border-color: var(--accent); }
 .wb-btn {
-  border: 1px solid var(--border); border-radius: 8px; background: var(--panel);
-  color: var(--ink); cursor: pointer; padding: 5px 10px; font-size: .85rem;
+  padding: 6px 14px; border-radius: 8px; border: 1px solid var(--muted); background: var(--soft);
+  color: var(--ink); font-size: .82rem; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center;
+  gap: 6px; white-space: nowrap; transition: background .15s;
 }
-.wb-btn:hover { background: var(--soft); }
-.wb-btn.primary { background: var(--accent); color: var(--panel); border-color: var(--accent); }
-.wb-btn.primary:hover { opacity: .9; }
+.wb-btn .ofs-ic { width: 16px; height: 16px; }
+.wb-btn:hover { background: var(--muted); }
 
 .wb-body { flex: 1; min-height: 0; position: relative; }
 .wb-frame { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; background: var(--bg); }
 
-/* ── Toast ── */
 #wbToast {
   position: fixed; left: 50%; bottom: 22px; transform: translate(-50%, 12px);
-  background: var(--accent); color: var(--panel); padding: 8px 16px; border-radius: 10px;
-  font-size: .85rem; opacity: 0; pointer-events: none; transition: opacity .2s ease, transform .2s ease;
-  z-index: 50;
+  background: var(--accent); color: var(--bg); padding: 8px 16px; border-radius: 10px;
+  font-size: .85rem; opacity: 0; pointer-events: none; transition: opacity .2s ease, transform .2s ease; z-index: 500;
 }
 #wbToast.show { opacity: 1; transform: translate(-50%, 0); }
-
-/* ── Confirm dialog ── */
-.wb-confirm-overlay {
-  position: fixed; inset: 0; background: rgba(0,0,0,.35);
-  display: flex; align-items: center; justify-content: center; z-index: 100;
-}
-.wb-confirm-card {
-  background: var(--panel); border-radius: 12px; padding: 18px; width: 320px;
-  box-shadow: 0 10px 30px rgba(0,0,0,.25);
-}
-.wb-confirm-title { font-weight: 700; margin: 0 0 6px; }
-.wb-confirm-msg { margin: 0 0 16px; color: var(--muted); font-size: .88rem; }
-.wb-confirm-actions { display: flex; justify-content: flex-end; gap: 8px; }
 </style>
 </head>
 <body>
 
 <div class="wb-view">
-  <aside class="wb-sidebar">
-    <div class="wb-sidebar-head">
-      <span class="wb-sidebar-title" id="wbSidebarTitle">Saved drawings</span>
-      <button class="wb-new-btn" id="wbNewBtn" title="New">🆕</button>
-    </div>
-    <div class="wb-list" id="wbList"></div>
-  </aside>
-
   <div class="wb-main">
     <div class="wb-toolbar">
       <input id="wbNameInput" class="wb-name-input" type="text" placeholder="Drawing name…" autocomplete="off">
-      <div class="wb-actions">
-        <button class="wb-btn primary" id="wbSaveBtn">💾 Save</button>
-      </div>
+      <button class="wb-btn" id="wbSaveBtn"><svg data-ic="save"></svg><span id="wbSaveLbl">Save</span></button>
     </div>
     <div class="wb-body">
       <iframe id="wbFrame" class="wb-frame" src="about:blank" title="Whiteboard" loading="lazy"></iframe>
@@ -141,89 +81,78 @@ button, input { font-family: inherit; }
 
 <script>
 const I18N = {
-  en: { title: "Whiteboard", saved: "Saved drawings", newBtn: "New", save: "Save",
-        namePh: "Drawing name…", empty: "No saved drawings yet.",
-        savedToast: "Whiteboard saved", confirmNewTitle: "Start a new whiteboard?",
-        confirmNewMsg: "The current whiteboard will be cleared. Make sure you saved it first.",
-        confirmSaveTitle: "Save whiteboard?", confirmSaveMsg: "Do you want to save this whiteboard?",
-        confirmOverwriteMsg: "A drawing with this name already exists. Overwrite it?",
-        confirmDeleteTitle: "Delete drawing?", confirmDeleteMsg: "This can't be undone.",
-        cancel: "Cancel", ok: "OK", del: "Delete" },
-  es: { title: "Pizarra", saved: "Dibujos guardados", newBtn: "Nuevo", save: "Guardar",
-        namePh: "Nombre del dibujo…", empty: "Todavía no hay dibujos guardados.",
-        savedToast: "Pizarra guardada", confirmNewTitle: "¿Empezar una pizarra nueva?",
-        confirmNewMsg: "Se borrará la pizarra actual. Asegúrate de haberla guardado antes.",
-        confirmSaveTitle: "¿Guardar pizarra?", confirmSaveMsg: "¿Quieres guardar esta pizarra?",
-        confirmOverwriteMsg: "Ya existe un dibujo con este nombre. ¿Sobrescribirlo?",
-        confirmDeleteTitle: "¿Eliminar dibujo?", confirmDeleteMsg: "Esto no se puede deshacer.",
-        cancel: "Cancelar", ok: "Aceptar", del: "Eliminar" },
-  fr: { title: "Tableau blanc", saved: "Dessins enregistrés", newBtn: "Nouveau", save: "Enregistrer",
-        namePh: "Nom du dessin…", empty: "Aucun dessin enregistré.",
-        savedToast: "Tableau enregistré", confirmNewTitle: "Nouveau tableau blanc ?",
-        confirmNewMsg: "Le tableau actuel sera effacé. Assurez-vous de l'avoir enregistré.",
-        confirmSaveTitle: "Enregistrer ?", confirmSaveMsg: "Voulez-vous enregistrer ce tableau ?",
-        confirmOverwriteMsg: "Un dessin porte déjà ce nom. L'écraser ?",
-        confirmDeleteTitle: "Supprimer ce dessin ?", confirmDeleteMsg: "Action irréversible.",
-        cancel: "Annuler", ok: "OK", del: "Supprimer" },
-  pt: { title: "Quadro branco", saved: "Desenhos guardados", newBtn: "Novo", save: "Guardar",
-        namePh: "Nome do desenho…", empty: "Ainda sem desenhos guardados.",
-        savedToast: "Quadro guardado", confirmNewTitle: "Começar um novo quadro?",
-        confirmNewMsg: "O quadro atual será limpo. Garante que já o guardaste.",
-        confirmSaveTitle: "Guardar quadro?", confirmSaveMsg: "Queres guardar este quadro?",
-        confirmOverwriteMsg: "Já existe um desenho com este nome. Substituir?",
-        confirmDeleteTitle: "Eliminar desenho?", confirmDeleteMsg: "Não é possível desfazer.",
-        cancel: "Cancelar", ok: "OK", del: "Eliminar" },
-  it: { title: "Lavagna", saved: "Disegni salvati", newBtn: "Nuovo", save: "Salva",
-        namePh: "Nome del disegno…", empty: "Ancora nessun disegno salvato.",
-        savedToast: "Lavagna salvata", confirmNewTitle: "Iniziare una nuova lavagna?",
-        confirmNewMsg: "La lavagna attuale verrà cancellata. Assicurati di averla salvata.",
-        confirmSaveTitle: "Salvare la lavagna?", confirmSaveMsg: "Vuoi salvare questa lavagna?",
-        confirmOverwriteMsg: "Esiste già un disegno con questo nome. Sovrascriverlo?",
-        confirmDeleteTitle: "Eliminare il disegno?", confirmDeleteMsg: "Non può essere annullato.",
-        cancel: "Annulla", ok: "OK", del: "Elimina" },
-  de: { title: "Whiteboard", saved: "Gespeicherte Zeichnungen", newBtn: "Neu", save: "Speichern",
-        namePh: "Name der Zeichnung…", empty: "Noch keine gespeicherten Zeichnungen.",
-        savedToast: "Whiteboard gespeichert", confirmNewTitle: "Neues Whiteboard starten?",
-        confirmNewMsg: "Das aktuelle Whiteboard wird gelöscht. Stelle sicher, dass du es gespeichert hast.",
-        confirmSaveTitle: "Whiteboard speichern?", confirmSaveMsg: "Möchtest du dieses Whiteboard speichern?",
-        confirmOverwriteMsg: "Eine Zeichnung mit diesem Namen existiert bereits. Überschreiben?",
-        confirmDeleteTitle: "Zeichnung löschen?", confirmDeleteMsg: "Kann nicht rückgängig gemacht werden.",
-        cancel: "Abbrechen", ok: "OK", del: "Löschen" },
-  zh: { title: "白板", saved: "已保存的绘图", newBtn: "新建", save: "保存",
-        namePh: "绘图名称…", empty: "还没有已保存的绘图。",
-        savedToast: "白板已保存", confirmNewTitle: "开始新的白板？",
-        confirmNewMsg: "当前白板将被清空，请确认已保存。",
-        confirmSaveTitle: "保存白板？", confirmSaveMsg: "要保存这个白板吗？",
-        confirmOverwriteMsg: "已存在同名绘图，要覆盖吗？",
-        confirmDeleteTitle: "删除绘图？", confirmDeleteMsg: "此操作无法撤销。",
-        cancel: "取消", ok: "确定", del: "删除" },
-  hi: { title: "व्हाइटबोर्ड", saved: "सहेजे गए चित्र", newBtn: "नया", save: "सहेजें",
-        namePh: "चित्र का नाम…", empty: "अभी तक कोई सहेजा गया चित्र नहीं।",
-        savedToast: "व्हाइटबोर्ड सहेजा गया", confirmNewTitle: "नया व्हाइटबोर्ड शुरू करें?",
-        confirmNewMsg: "वर्तमान व्हाइटबोर्ड साफ़ हो जाएगा। सुनिश्चित करें कि आपने इसे पहले सहेजा है।",
-        confirmSaveTitle: "व्हाइटबोर्ड सहेजें?", confirmSaveMsg: "क्या आप इसे सहेजना चाहते हैं?",
-        confirmOverwriteMsg: "इस नाम से पहले से एक चित्र मौजूद है। अधिलेखित करें?",
-        confirmDeleteTitle: "चित्र हटाएं?", confirmDeleteMsg: "यह पूर्ववत नहीं किया जा सकता।",
-        cancel: "रद्द करें", ok: "ठीक है", del: "हटाएं" },
-  ar: { title: "السبورة", saved: "الرسومات المحفوظة", newBtn: "جديد", save: "حفظ",
-        namePh: "اسم الرسم…", empty: "لا توجد رسومات محفوظة بعد.",
-        savedToast: "تم حفظ السبورة", confirmNewTitle: "بدء سبورة جديدة؟",
-        confirmNewMsg: "سيتم مسح السبورة الحالية. تأكد من حفظها أولاً.",
-        confirmSaveTitle: "حفظ السبورة؟", confirmSaveMsg: "هل تريد حفظ هذه السبورة؟",
-        confirmOverwriteMsg: "يوجد رسم بهذا الاسم بالفعل. استبداله؟",
-        confirmDeleteTitle: "حذف الرسم؟", confirmDeleteMsg: "لا يمكن التراجع عن هذا.",
-        cancel: "إلغاء", ok: "موافق", del: "حذف" },
-  ru: { title: "Доска", saved: "Сохранённые рисунки", newBtn: "Новый", save: "Сохранить",
-        namePh: "Название рисунка…", empty: "Пока нет сохранённых рисунков.",
-        savedToast: "Доска сохранена", confirmNewTitle: "Начать новую доску?",
-        confirmNewMsg: "Текущая доска будет очищена. Убедитесь, что вы её сохранили.",
-        confirmSaveTitle: "Сохранить доску?", confirmSaveMsg: "Сохранить эту доску?",
-        confirmOverwriteMsg: "Рисунок с таким именем уже существует. Перезаписать?",
-        confirmDeleteTitle: "Удалить рисунок?", confirmDeleteMsg: "Это нельзя отменить.",
-        cancel: "Отмена", ok: "ОК", del: "Удалить" },
+  en: { heading: "Drawings", newItem: "New drawing", searchPh: "Search drawings…", empty: "No saved drawings yet.",
+        untitled: "Untitled drawing", deleteTitle: "Delete drawing?", deleteMsg: 'Delete the drawing "{name}"? This can\'t be undone.',
+        save: "Save", namePh: "Drawing name…", savedToast: "Whiteboard saved",
+        confirmNewTitle: "Unsaved changes", confirmNewMsg: "The current whiteboard has unsaved changes. Discard them?",
+        confirmSaveTitle: "Overwrite drawing?", confirmOverwriteMsg: "A drawing with this name already exists. Overwrite it?",
+        exportPng: "Download image (.png)", exportJson: "Download Excalidraw file (.excalidraw)",
+        duplicatedToast: "Drawing duplicated", noImage: "This drawing has no saved image yet." },
+  es: { heading: "Dibujos", newItem: "Nuevo dibujo", searchPh: "Buscar dibujos…", empty: "Todavía no hay dibujos guardados.",
+        untitled: "Dibujo sin título", deleteTitle: "¿Eliminar dibujo?", deleteMsg: "¿Eliminar el dibujo «{name}»? Esto no se puede deshacer.",
+        save: "Guardar", namePh: "Nombre del dibujo…", savedToast: "Pizarra guardada",
+        confirmNewTitle: "Cambios sin guardar", confirmNewMsg: "La pizarra actual tiene cambios sin guardar. ¿Descartarlos?",
+        confirmSaveTitle: "¿Sobrescribir dibujo?", confirmOverwriteMsg: "Ya existe un dibujo con este nombre. ¿Sobrescribirlo?",
+        exportPng: "Descargar imagen (.png)", exportJson: "Descargar archivo de Excalidraw (.excalidraw)",
+        duplicatedToast: "Dibujo duplicado", noImage: "Este dibujo todavía no tiene imagen guardada." },
+  fr: { heading: "Dessins", newItem: "Nouveau dessin", searchPh: "Rechercher des dessins…", empty: "Aucun dessin enregistré.",
+        untitled: "Dessin sans titre", deleteTitle: "Supprimer ce dessin ?", deleteMsg: "Supprimer le dessin « {name} » ? Action irréversible.",
+        save: "Enregistrer", namePh: "Nom du dessin…", savedToast: "Tableau enregistré",
+        confirmNewTitle: "Modifications non enregistrées", confirmNewMsg: "Le tableau actuel a des modifications non enregistrées. Les abandonner ?",
+        confirmSaveTitle: "Écraser le dessin ?", confirmOverwriteMsg: "Un dessin porte déjà ce nom. L'écraser ?",
+        exportPng: "Télécharger l'image (.png)", exportJson: "Télécharger le fichier Excalidraw (.excalidraw)",
+        duplicatedToast: "Dessin dupliqué", noImage: "Ce dessin n'a pas encore d'image enregistrée." },
+  pt: { heading: "Desenhos", newItem: "Novo desenho", searchPh: "Pesquisar desenhos…", empty: "Ainda sem desenhos guardados.",
+        untitled: "Desenho sem título", deleteTitle: "Eliminar desenho?", deleteMsg: "Eliminar o desenho «{name}»? Não é possível desfazer.",
+        save: "Guardar", namePh: "Nome do desenho…", savedToast: "Quadro guardado",
+        confirmNewTitle: "Alterações não guardadas", confirmNewMsg: "O quadro atual tem alterações não guardadas. Descartá-las?",
+        confirmSaveTitle: "Substituir desenho?", confirmOverwriteMsg: "Já existe um desenho com este nome. Substituir?",
+        exportPng: "Descarregar imagem (.png)", exportJson: "Descarregar ficheiro Excalidraw (.excalidraw)",
+        duplicatedToast: "Desenho duplicado", noImage: "Este desenho ainda não tem imagem guardada." },
+  it: { heading: "Disegni", newItem: "Nuovo disegno", searchPh: "Cerca disegni…", empty: "Ancora nessun disegno salvato.",
+        untitled: "Disegno senza titolo", deleteTitle: "Eliminare il disegno?", deleteMsg: "Eliminare il disegno «{name}»? Non può essere annullato.",
+        save: "Salva", namePh: "Nome del disegno…", savedToast: "Lavagna salvata",
+        confirmNewTitle: "Modifiche non salvate", confirmNewMsg: "La lavagna attuale ha modifiche non salvate. Scartarle?",
+        confirmSaveTitle: "Sovrascrivere il disegno?", confirmOverwriteMsg: "Esiste già un disegno con questo nome. Sovrascriverlo?",
+        exportPng: "Scarica immagine (.png)", exportJson: "Scarica file Excalidraw (.excalidraw)",
+        duplicatedToast: "Disegno duplicato", noImage: "Questo disegno non ha ancora un'immagine salvata." },
+  de: { heading: "Zeichnungen", newItem: "Neue Zeichnung", searchPh: "Zeichnungen durchsuchen…", empty: "Noch keine gespeicherten Zeichnungen.",
+        untitled: "Unbenannte Zeichnung", deleteTitle: "Zeichnung löschen?", deleteMsg: "Die Zeichnung „{name}“ löschen? Kann nicht rückgängig gemacht werden.",
+        save: "Speichern", namePh: "Name der Zeichnung…", savedToast: "Whiteboard gespeichert",
+        confirmNewTitle: "Nicht gespeicherte Änderungen", confirmNewMsg: "Das aktuelle Whiteboard hat nicht gespeicherte Änderungen. Verwerfen?",
+        confirmSaveTitle: "Zeichnung überschreiben?", confirmOverwriteMsg: "Eine Zeichnung mit diesem Namen existiert bereits. Überschreiben?",
+        exportPng: "Bild herunterladen (.png)", exportJson: "Excalidraw-Datei herunterladen (.excalidraw)",
+        duplicatedToast: "Zeichnung dupliziert", noImage: "Diese Zeichnung hat noch kein gespeichertes Bild." },
+  zh: { heading: "绘图", newItem: "新建绘图", searchPh: "搜索绘图…", empty: "还没有已保存的绘图。",
+        untitled: "未命名绘图", deleteTitle: "删除绘图？", deleteMsg: "删除绘图“{name}”？此操作无法撤销。",
+        save: "保存", namePh: "绘图名称…", savedToast: "白板已保存",
+        confirmNewTitle: "未保存的更改", confirmNewMsg: "当前白板有未保存的更改，要放弃吗？",
+        confirmSaveTitle: "覆盖绘图？", confirmOverwriteMsg: "已存在同名绘图，要覆盖吗？",
+        exportPng: "下载图片 (.png)", exportJson: "下载 Excalidraw 文件 (.excalidraw)",
+        duplicatedToast: "绘图已复制", noImage: "此绘图还没有保存的图片。" },
+  hi: { heading: "चित्र", newItem: "नया चित्र", searchPh: "चित्र खोजें…", empty: "अभी तक कोई सहेजा गया चित्र नहीं।",
+        untitled: "शीर्षकहीन चित्र", deleteTitle: "चित्र हटाएँ?", deleteMsg: 'चित्र "{name}" हटाएँ? यह पूर्ववत नहीं किया जा सकता।',
+        save: "सहेजें", namePh: "चित्र का नाम…", savedToast: "व्हाइटबोर्ड सहेजा गया",
+        confirmNewTitle: "असहेजे परिवर्तन", confirmNewMsg: "वर्तमान व्हाइटबोर्ड में असहेजे परिवर्तन हैं। उन्हें छोड़ दें?",
+        confirmSaveTitle: "चित्र अधिलेखित करें?", confirmOverwriteMsg: "इस नाम से पहले से एक चित्र मौजूद है। अधिलेखित करें?",
+        exportPng: "छवि डाउनलोड करें (.png)", exportJson: "Excalidraw फ़ाइल डाउनलोड करें (.excalidraw)",
+        duplicatedToast: "चित्र डुप्लिकेट हो गया", noImage: "इस चित्र की अभी कोई सहेजी गई छवि नहीं है।" },
+  ar: { heading: "الرسومات", newItem: "رسم جديد", searchPh: "البحث في الرسومات…", empty: "لا توجد رسومات محفوظة بعد.",
+        untitled: "رسم بلا عنوان", deleteTitle: "حذف الرسم؟", deleteMsg: "حذف الرسم «{name}»؟ لا يمكن التراجع عن هذا.",
+        save: "حفظ", namePh: "اسم الرسم…", savedToast: "تم حفظ السبورة",
+        confirmNewTitle: "تغييرات غير محفوظة", confirmNewMsg: "في السبورة الحالية تغييرات غير محفوظة. هل تريد تجاهلها؟",
+        confirmSaveTitle: "استبدال الرسم؟", confirmOverwriteMsg: "يوجد رسم بهذا الاسم بالفعل. استبداله؟",
+        exportPng: "تنزيل الصورة (.png)", exportJson: "تنزيل ملف Excalidraw (.excalidraw)",
+        duplicatedToast: "تم تكرار الرسم", noImage: "لا توجد صورة محفوظة لهذا الرسم بعد." },
+  ru: { heading: "Рисунки", newItem: "Новый рисунок", searchPh: "Поиск рисунков…", empty: "Пока нет сохранённых рисунков.",
+        untitled: "Рисунок без названия", deleteTitle: "Удалить рисунок?", deleteMsg: "Удалить рисунок «{name}»? Это нельзя отменить.",
+        save: "Сохранить", namePh: "Название рисунка…", savedToast: "Доска сохранена",
+        confirmNewTitle: "Несохранённые изменения", confirmNewMsg: "На текущей доске есть несохранённые изменения. Отменить их?",
+        confirmSaveTitle: "Перезаписать рисунок?", confirmOverwriteMsg: "Рисунок с таким именем уже существует. Перезаписать?",
+        exportPng: "Скачать изображение (.png)", exportJson: "Скачать файл Excalidraw (.excalidraw)",
+        duplicatedToast: "Рисунок продублирован", noImage: "У этого рисунка ещё нет сохранённого изображения." },
 };
 
-// ── Theme (from ?theme=, then live via postMessage) ──
 (function () {
   const p = new URLSearchParams(location.search);
   const th = p.get("theme");
@@ -234,7 +163,6 @@ window.addEventListener("message", e => {
   if (e.data?.type === "theme") document.documentElement.setAttribute("data-theme", e.data.value);
 });
 
-// ── Language (from ?lang=) ──
 const _LANG = (() => {
   const l = (new URLSearchParams(location.search).get("lang") || "en").slice(0, 2).toLowerCase();
   return I18N[l] ? l : "en";
@@ -242,10 +170,6 @@ const _LANG = (() => {
 document.documentElement.setAttribute("lang", _LANG);
 if (_LANG === "ar") document.documentElement.setAttribute("dir", "rtl");
 function t(key) { return I18N[_LANG]?.[key] || I18N.en[key] || key; }
-
-function escapeHTML(s = "") {
-  return String(s).replace(/[&<>"']/g, ch => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[ch]));
-}
 
 let _toastT = null;
 function toast(msg) {
@@ -256,67 +180,29 @@ function toast(msg) {
   _toastT = setTimeout(() => el.classList.remove("show"), 2400);
 }
 
-function showConfirm({ title, message, confirmLabel, cancelLabel, danger }) {
-  return new Promise(resolve => {
-    const ov = document.createElement("div");
-    ov.className = "wb-confirm-overlay";
-    const card = document.createElement("div");
-    card.className = "wb-confirm-card";
-    const h = document.createElement("p");
-    h.className = "wb-confirm-title";
-    h.textContent = title || "";
-    const m = document.createElement("p");
-    m.className = "wb-confirm-msg";
-    m.textContent = message || "";
-    const acts = document.createElement("div");
-    acts.className = "wb-confirm-actions";
-    const cancel = document.createElement("button");
-    cancel.className = "wb-btn";
-    cancel.textContent = cancelLabel || t("cancel");
-    const ok = document.createElement("button");
-    ok.className = danger ? "wb-btn primary" : "wb-btn primary";
-    ok.textContent = confirmLabel || t("ok");
-    acts.append(cancel, ok);
-    card.append(h, m, acts);
-    ov.append(card);
-    document.body.append(ov);
-    const close = (val) => { ov.remove(); document.removeEventListener("keydown", onKey); resolve(val); };
-    const onKey = e => { if (e.key === "Escape") close(false); };
-    document.addEventListener("keydown", onKey);
-    ov.addEventListener("click", e => { if (e.target === ov) close(false); });
-    cancel.addEventListener("click", () => close(false));
-    ok.addEventListener("click", () => close(true));
-    ok.focus();
-  });
-}
-
 (function () {
   const API = "/api/addon-whiteboard";
+  const BLANK_PNG = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=";
 
-  const wbList       = document.getElementById("wbList");
-  const wbNewBtn      = document.getElementById("wbNewBtn");
-  const wbSaveBtn     = document.getElementById("wbSaveBtn");
-  const wbNameInput   = document.getElementById("wbNameInput");
-  const wbFrame       = document.getElementById("wbFrame");
+  const wbSaveBtn   = document.getElementById("wbSaveBtn");
+  const wbNameInput = document.getElementById("wbNameInput");
+  const wbFrame     = document.getElementById("wbFrame");
 
   let _dirty = false;
   let _ignoreChanges = false;
   let _ignoreTimer = null;
   let _iframeReady = false;
-  let _currentFile = null; // "<name>.excalidraw.json"
-  let _items = [];
+  let _currentFile = null;     // "<name>.excalidraw.json"
+  let _pendingFolder = null;   // carpeta donde irá un dibujo nuevo al guardarlo
 
+  function setDirty(v) { _dirty = !!v; sb.setDirty(_dirty); }
   function _startIgnore(ms) {
     clearTimeout(_ignoreTimer);
     _ignoreChanges = true;
-    _dirty = false;
+    setDirty(false);
     _ignoreTimer = setTimeout(() => { _ignoreChanges = false; }, ms);
   }
-  function _endIgnore() {
-    clearTimeout(_ignoreTimer);
-    _ignoreChanges = false;
-    _dirty = false;
-  }
+  function _endIgnore() { clearTimeout(_ignoreTimer); _ignoreChanges = false; setDirty(false); }
 
   async function _api(path, method = "GET", body = null) {
     const opts = { method };
@@ -326,10 +212,83 @@ function showConfirm({ title, message, confirmLabel, cancelLabel, danger }) {
     const ct = r.headers.get("content-type") || "";
     return ct.includes("application/json") ? r.json() : null;
   }
+  // Mismo criterio que el backend al guardar
+  const sanitizeName = raw => (raw || "").replace(/[^A-Za-z0-9._-]/g, "_").replace(/^[._]+|[._]+$/g, "");
+  const thumbUrl = (file, v) => `${API}/thumb?file=${encodeURIComponent(file)}${v ? "&v=" + v : ""}`;
+  const toItem = it => ({ id: it.filename, title: it.name, time: (it.modified || 0) * 1000,
+                          info: it.size ? `${Math.max(1, Math.round(it.size / 1024))} KB` : "" });
+  const confirmDiscard = () => _dirty ? sb.dialog({ title: t("confirmNewTitle"), message: t("confirmNewMsg") }) : Promise.resolve(true);
 
-  function sanitizeName(raw) {
-    return (raw || "").replace(/[^A-Za-z0-9._-]/g, "_").replace(/^[._]+|[._]+$/g, "");
+  function download(url, filename) {
+    const a = document.createElement("a");
+    a.href = url; a.download = filename;
+    document.body.append(a); a.click(); a.remove();
   }
+
+  // ── Barra lateral común ─────────────────────────────────────
+  const sb = OflSidebar.create({
+    host: document.querySelector(".wb-view"),
+    before: document.querySelector(".wb-main"),
+    addonId: "whiteboard", lang: _LANG, toast,
+    strings: { heading: t("heading"), newItem: t("newItem"), searchPh: t("searchPh"), empty: t("empty"),
+               untitled: t("untitled"), deleteTitle: t("deleteTitle"), deleteMsg: t("deleteMsg") },
+    preview: n => thumbUrl(n.id, Math.round(n.time / 1000)),
+    onOpen: id => openDrawing(id),
+    onNew: fid => newDrawing(fid),
+    async onRename(id, title) {
+      // Mismo criterio que al guardar: si no, guardar después crearía otro archivo
+      const safe = sanitizeName(title);
+      if (!safe) throw new Error("rename");
+      if (sb.items.some(x => x.title === safe && x.id !== id)) throw new Error(sb.t("nameTaken"));
+      const r = await _api("/rename", "POST", { oldName: id, newName: safe });
+      if (!r || !r.newFilename) throw new Error("rename");
+      const n = sb.getItem(id);
+      if (n) n.title = r.newName;
+      if (_currentFile === id) { _currentFile = r.newFilename; wbNameInput.value = r.newName; }
+      return r.newFilename;
+    },
+    async onDuplicate(id) {
+      const n = sb.getItem(id); if (!n) return null;
+      const scene = await _api(`/load?file=${encodeURIComponent(id)}`);
+      let png = BLANK_PNG;
+      try {
+        const res = await fetch(thumbUrl(id, Date.now()));
+        if (res.ok) {
+          const blob = await res.blob();
+          png = await new Promise(ok => { const fr = new FileReader(); fr.onload = () => ok(fr.result); fr.readAsDataURL(blob); });
+        }
+      } catch (_) {}
+      const taken = new Set(sb.items.map(x => x.title));
+      let k = 2, name = `${n.title}-${k}`;
+      while (taken.has(sanitizeName(name))) name = `${n.title}-${++k}`;
+      const saved = await _api("/save", "POST", { name, pngDataUrl: png, excalidraw: typeof scene === "string" ? JSON.parse(scene) : scene });
+      await loadList();
+      toast(t("duplicatedToast"));
+      return saved?.jsonFile || null;
+    },
+    async onDelete(id) {
+      await _api(`/delete?file=${encodeURIComponent(id)}`, "DELETE");
+      if (_currentFile === id) { _currentFile = null; wbNameInput.value = ""; resetCanvas(); }
+    },
+    exportItems: n => [
+      { icon: "image", label: t("exportPng"), onClick: async () => {
+          const r = await fetch(thumbUrl(n.id, Date.now())).catch(() => null);
+          if (!r || !r.ok) { toast(t("noImage")); return; }
+          const url = URL.createObjectURL(await r.blob());
+          download(url, `${n.title}.png`);
+          setTimeout(() => URL.revokeObjectURL(url), 4000);
+        } },
+      { icon: "download", label: t("exportJson"), onClick: async () => {
+          try {
+            const scene = await _api(`/load?file=${encodeURIComponent(n.id)}`);
+            const blob = new Blob([typeof scene === "string" ? scene : JSON.stringify(scene)], { type: "application/json" });
+            const url = URL.createObjectURL(blob);
+            download(url, `${n.title}.excalidraw`);
+            setTimeout(() => URL.revokeObjectURL(url), 4000);
+          } catch (e) { toast("❌ " + e.message); }
+        } },
+    ],
+  });
 
   function ensureFrame() {
     if (wbFrame.dataset.loaded === "1") return;
@@ -340,50 +299,19 @@ function showConfirm({ title, message, confirmLabel, cancelLabel, danger }) {
   }
 
   async function loadList() {
-    try { _items = await _api("/list"); } catch { _items = []; }
-    renderList();
+    try { sb.setItems(((await _api("/list")) || []).map(toItem)); }
+    catch { sb.setItems([]); }
+    sb.setActive(_currentFile);
   }
 
-  function renderList() {
-    wbList.innerHTML = "";
-    if (!_items.length) {
-      wbList.innerHTML = `<div class="wb-list-empty">${escapeHTML(t("empty"))}</div>`;
-      return;
-    }
-    _items.forEach(it => {
-      const row = document.createElement("div");
-      row.className = "wb-item" + (it.filename === _currentFile ? " active" : "");
-      row.innerHTML = `
-        <span class="wb-item-name">${escapeHTML(it.name)}</span>
-        <button class="wb-item-del" title="${escapeHTML(t("del"))}">✕</button>
-      `;
-      row.addEventListener("click", (e) => {
-        if (e.target.closest(".wb-item-del")) return;
-        openDrawing(it);
-      });
-      row.querySelector(".wb-item-del").addEventListener("click", async (e) => {
-        e.stopPropagation();
-        const ok = await showConfirm({ title: t("confirmDeleteTitle"), message: t("confirmDeleteMsg"), confirmLabel: t("del") });
-        if (!ok) return;
-        try {
-          await _api(`/delete?file=${encodeURIComponent(it.filename)}`, "DELETE");
-          if (_currentFile === it.filename) { _currentFile = null; wbNameInput.value = ""; }
-          await loadList();
-        } catch (err) { toast("❌ " + err.message); }
-      });
-      wbList.appendChild(row);
-    });
-  }
-
-  async function openDrawing(it) {
-    if (_dirty) {
-      const ok = await showConfirm({ title: t("confirmNewTitle"), message: t("confirmNewMsg"), confirmLabel: t("ok") });
-      if (!ok) return;
-    }
-    _currentFile = it.filename;
-    wbNameInput.value = it.name;
+  async function openDrawing(file) {
+    if (file !== _currentFile && !(await confirmDiscard())) return;
+    const n = sb.getItem(file); if (!n) return;
+    _currentFile = file;
+    _pendingFolder = null;
+    wbNameInput.value = n.title;
+    sb.setActive(file);
     ensureFrame();
-    renderList();
     if (_iframeReady) await loadCurrentFile();
   }
 
@@ -399,90 +327,88 @@ function showConfirm({ title, message, confirmLabel, cancelLabel, danger }) {
     } catch (err) { console.error("[whiteboard] load error", err); }
   }
 
-  wbNewBtn.addEventListener("click", async () => {
-    if (_dirty) {
-      const ok = await showConfirm({ title: t("confirmNewTitle"), message: t("confirmNewMsg"), confirmLabel: t("ok") });
-      if (!ok) return;
-    }
+  function resetCanvas() {
     ensureFrame();
-    if (!wbFrame.contentWindow) return;
-    wbFrame.contentWindow.postMessage({ type: "OFFLINED_WHITEBOARD_REQUEST_RESET" }, "*");
+    wbFrame.contentWindow?.postMessage({ type: "OFFLINED_WHITEBOARD_REQUEST_RESET" }, "*");
     _startIgnore(2000);
-    _currentFile = null;
-    wbNameInput.value = "";
-    renderList();
-  });
+  }
 
-  wbSaveBtn.addEventListener("click", async () => {
+  async function newDrawing(folderId = null) {
+    if (!(await confirmDiscard())) return;
+    resetCanvas();
+    _currentFile = null;
+    _pendingFolder = folderId || null;
+    wbNameInput.value = "";
+    sb.setActive(null);
+    wbNameInput.focus();
+  }
+
+  async function save() {
     ensureFrame();
     if (!wbFrame.contentWindow) return;
-
     let finalName = (wbNameInput.value || "").trim();
     if (!finalName) {
-      const now = new Date();
-      finalName = new Intl.DateTimeFormat(_LANG, { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" }).format(now);
+      finalName = new Intl.DateTimeFormat(_LANG, { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" }).format(new Date());
       wbNameInput.value = finalName;
     }
-
     const safe = sanitizeName(finalName);
-    const exists = _items.some(it => it.name === safe && it.filename !== _currentFile);
-    const ok = await showConfirm({
-      title: t("confirmSaveTitle"),
-      message: exists ? t("confirmOverwriteMsg") : t("confirmSaveMsg"),
-      confirmLabel: t("save")
-    });
-    if (!ok) return;
-
+    const clash = sb.items.find(it => it.title === safe && it.id !== _currentFile);
+    if (clash) {
+      const ok = await sb.dialog({ title: t("confirmSaveTitle"), message: t("confirmOverwriteMsg"), confirmLabel: t("save") });
+      if (!ok) return;
+    }
     wbFrame.contentWindow.postMessage({ type: "OFFLINED_WHITEBOARD_REQUEST_EXPORT", name: finalName }, "*");
+  }
+
+  wbSaveBtn.addEventListener("click", save);
+  document.addEventListener("keydown", ev => {
+    if ((ev.ctrlKey || ev.metaKey) && !ev.shiftKey && !ev.altKey && ev.key.toLowerCase() === "s") { ev.preventDefault(); save(); }
   });
 
   window.addEventListener("message", async (event) => {
     const data = event.data || {};
     if (!data.type) return;
-
-    if (data.type === "OFFLINED_WHITEBOARD_CHANGE") {
-      if (!_ignoreChanges) _dirty = true;
-      return;
-    }
-
+    if (data.type === "OFFLINED_WHITEBOARD_CHANGE") { if (!_ignoreChanges && !_dirty) setDirty(true); return; }
     if (data.type === "OFFLINED_WHITEBOARD_IFRAME_READY") {
       _iframeReady = true;
-      _dirty = false;
+      setDirty(false);
       if (_currentFile) await loadCurrentFile();
       else _startIgnore(2000);
       return;
     }
-
     if (data.type !== "OFFLINED_WHITEBOARD_EXPORT_RESULT") return;
 
     const name = data.name || `drawing-${Date.now()}`;
     try {
+      const prev = _currentFile;
       const json = await _api("/save", "POST", { name, pngDataUrl: data.pngDataUrl, excalidraw: data.excalidraw });
-      if (json?.jsonFile) _currentFile = json.jsonFile;
+      if (json?.jsonFile) {
+        // Guardar con otro nombre crea otro archivo (el anterior se queda): la copia
+        // nueva va a la misma carpeta que el dibujo del que sale.
+        if (prev && prev !== json.jsonFile && !sb.getItem(json.jsonFile) && sb.folderOf(prev)) _pendingFolder = sb.folderOf(prev);
+        _currentFile = json.jsonFile;
+      }
       _endIgnore();
       toast(t("savedToast"));
       await loadList();
+      if (_pendingFolder && _currentFile) { sb.placeIn(_currentFile, _pendingFolder); _pendingFolder = null; }
     } catch (err) {
       console.error("[whiteboard] save error", err);
       toast("❌ " + err.message);
     }
   });
 
-  // Aviso nativo del navegador si se cierra/recarga con cambios sin guardar
-  // (protocolo de confirmación entre iframes queda fuera de alcance).
-  window.addEventListener("beforeunload", (e) => {
-    if (!_dirty) return;
-    e.preventDefault();
-    e.returnValue = "";
-  });
+  window.addEventListener("beforeunload", (e) => { if (!_dirty) return; e.preventDefault(); e.returnValue = ""; });
 
   async function init() {
-    document.getElementById("wbSidebarTitle").textContent = t("saved");
+    OflSidebar.hydrateIcons();
     wbNameInput.placeholder = t("namePh");
-    wbSaveBtn.textContent = "💾 " + t("save");
-    wbNewBtn.title = t("newBtn");
-    await loadList();
+    document.getElementById("wbSaveLbl").textContent = t("save");
+    wbSaveBtn.title = t("save") + " (Ctrl+S)";
+    await Promise.all([loadList(), sb.ready]);
     ensureFrame();
+    const deep = new URLSearchParams(location.search).get("file");
+    if (deep && sb.getItem(deep)) { sb.revealFolderOf(deep); openDrawing(deep); }
   }
   init();
 })();

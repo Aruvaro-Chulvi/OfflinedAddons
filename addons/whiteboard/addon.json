@@ -1,7 +1,7 @@
 {
   "id": "whiteboard",
   "name": "Whiteboard",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "author": "Álvaro C. Chulvi",
   "description": "Draw freely with a full-featured whiteboard — save, rename and reopen your drawings, fully offline.",
   "icon": "✏️",

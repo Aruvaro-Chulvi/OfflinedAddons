@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Spreadsheet</title>
+<script src="sidebar.js"></script>
 <style>
 :root {
   --bg: #f6f6f6;
@@ -51,55 +52,25 @@ button, input { font-family: inherit; }
 
 .sp-shell { display: flex; width: 100%; height: 100%; background: var(--bg); overflow: hidden; }
 
-/* ── Sidebar ── */
-.sp-sidebar {
-  flex: 0 0 240px; display: flex; flex-direction: column;
-  border-right: 1px solid var(--muted); background: var(--panel); min-width: 0;
-}
-.sp-sidebar-header {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: .55rem .75rem; border-bottom: 1px solid var(--muted);
-}
-.sp-sidebar-title {
-  font-size: .8rem; font-weight: 700; color: var(--subtle);
-  text-transform: uppercase; letter-spacing: .05em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-}
-.sp-new-btn {
-  background: var(--univer-accent-bg); color: var(--univer-accent-text);
-  border: none; border-radius: 6px; width: 24px; height: 24px; cursor: pointer;
-  font-size: 1rem; line-height: 1; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
-}
-.sp-new-btn:hover { opacity: .8; }
-.sp-list { list-style: none; margin: 0; padding: .3rem 0; overflow-y: auto; flex: 1; }
-.sp-list-empty { padding: 16px 12px; color: var(--subtle); font-size: .8rem; text-align: center; }
-.sp-item {
-  display: flex; align-items: center; gap: 6px; padding: .38rem .7rem; margin: .1rem .3rem;
-  border-radius: 6px; cursor: pointer; font-size: .85rem; color: var(--ink); user-select: none;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-}
-.sp-item:hover  { background: var(--soft); }
-.sp-item.active { background: var(--univer-active-bg); color: var(--univer-active-text); font-weight: 600; }
-
 /* ── Editor area ── */
-.sp-editor { flex: 1; display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+.sp-editor { flex: 1; display: flex; flex-direction: column; min-width: 0; min-height: 0; background: var(--panel); }
 .sp-topbar {
-  display: flex; align-items: center; gap: .5rem; padding: .35rem .7rem;
+  display: flex; align-items: center; gap: 10px; padding: 10px 14px;
   background: var(--panel); border-bottom: 1px solid var(--muted); flex-shrink: 0;
 }
 .sp-filename-input {
-  flex: 1; background: var(--bg); border: 1px solid var(--muted); border-radius: 6px;
-  color: var(--ink); font-size: .88rem; padding: .28rem .55rem; outline: none; min-width: 0;
-  transition: border-color .15s;
+  flex: 1; min-width: 0; padding: 7px 12px; border-radius: 10px; border: 1px solid var(--muted);
+  background: var(--bg); color: var(--ink); font-size: .9rem; outline: none; transition: border-color .15s;
 }
 .sp-filename-input:focus { border-color: var(--accent); }
-.sp-topbar-actions { display: flex; gap: .35rem; flex-shrink: 0; }
+.sp-topbar-actions { display: flex; gap: 8px; flex-shrink: 0; }
 .sp-action-btn {
-  background: var(--univer-btn-bg); border: 1px solid var(--univer-btn-border); color: var(--univer-btn-text);
-  border-radius: 6px; padding: .3rem .65rem; font-size: .8rem; cursor: pointer; white-space: nowrap;
-  transition: background .12s, color .12s, border-color .12s;
+  padding: 6px 14px; border-radius: 8px; border: 1px solid var(--muted); background: var(--soft);
+  color: var(--ink); font-size: .82rem; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center;
+  gap: 6px; white-space: nowrap; transition: background .15s;
 }
-.sp-action-btn:hover { background: var(--univer-accent-bg); color: var(--univer-accent-text); border-color: var(--univer-accent-bg); }
-.sp-action-btn.danger:hover { background: #c0392b; color: #fff; border-color: #c0392b; }
+.sp-action-btn .ofs-ic { width: 16px; height: 16px; }
+.sp-action-btn:hover { background: var(--muted); }
 
 .sp-container { flex: 1; min-height: 0; height: 100%; width: 100%; position: relative; overflow: hidden; background: var(--univer-grey-area); }
 .sp-container > .univer-app-layout { width: 100%; height: 100%; }
@@ -130,42 +101,23 @@ button, input { font-family: inherit; }
 .sp-install-bar { width: 100%; height: 6px; background: var(--muted); border-radius: 99px; overflow: hidden; }
 .sp-install-bar-fill { height: 100%; width: 0%; background: var(--accent); border-radius: 99px; transition: width .4s ease; }
 
-/* ── Toast / confirm ── */
+/* ── Toast ── */
 #spToast {
   position: fixed; left: 50%; bottom: 22px; transform: translate(-50%, 12px);
   background: var(--accent); color: var(--bg); padding: 8px 16px; border-radius: 10px;
   font-size: .85rem; opacity: 0; pointer-events: none; transition: opacity .2s ease, transform .2s ease; z-index: 50;
 }
 #spToast.show { opacity: 1; transform: translate(-50%, 0); }
-.sp-confirm-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.35); display: flex; align-items: center; justify-content: center; z-index: 100; }
-.sp-confirm-card { background: var(--panel); border-radius: 12px; padding: 18px; width: 320px; box-shadow: 0 10px 30px rgba(0,0,0,.25); }
-.sp-confirm-title { font-weight: 700; margin: 0 0 6px; }
-.sp-confirm-msg { margin: 0 0 16px; color: var(--subtle); font-size: .88rem; }
-.sp-confirm-actions { display: flex; justify-content: flex-end; gap: 8px; }
-.sp-confirm-actions .sp-btn {
-  padding: 6px 14px; border-radius: 8px; border: 1px solid var(--muted); background: var(--soft);
-  color: var(--ink); font-size: .85rem; cursor: pointer;
-}
-.sp-confirm-actions .sp-btn--primary { background: var(--accent); color: var(--bg); border-color: transparent; font-weight: 600; }
 </style>
 </head>
 <body>
 
 <div class="sp-shell">
-  <aside class="sp-sidebar">
-    <div class="sp-sidebar-header">
-      <span class="sp-sidebar-title" id="spSidebarTitle">📊 Spreadsheets</span>
-      <button class="sp-new-btn" id="spNewBtn" title="New spreadsheet">＋</button>
-    </div>
-    <ul id="spFileList" class="sp-list"></ul>
-  </aside>
-
   <div class="sp-editor">
     <div class="sp-topbar">
       <input id="spFilenameInput" class="sp-filename-input" type="text" placeholder="Spreadsheet name…" spellcheck="false" autocomplete="off">
       <div class="sp-topbar-actions">
-        <button class="sp-action-btn" id="spSaveBtn">💾 <span id="spSaveLbl">Save</span></button>
-        <button class="sp-action-btn danger" id="spDeleteBtn" aria-label="Delete sheet">🗑</button>
+        <button class="sp-action-btn" id="spSaveBtn"><svg data-ic="save"></svg><span id="spSaveLbl">Save</span></button>
       </div>
     </div>
     <div id="spContainer" class="sp-container"></div>
@@ -176,81 +128,81 @@ button, input { font-family: inherit; }
 
 <script>
 const I18N = {
-  en: { newTitle:"New spreadsheet", save:"Save", filenamePh:"Spreadsheet name…", untitled:"Untitled",
-        empty:"No spreadsheets yet.", noSheets:"No sheets", emptyMsg:"Press <strong>＋</strong> to create a new spreadsheet",
-        savedToast:"Saved:", deletedToast:"Deleted", createFirst:"Create a spreadsheet first", saveFirst:"Save first",
+  en: { heading:"Spreadsheets", searchPh:"Search spreadsheets…", exportCsv:"Export sheet as CSV (.csv)", duplicatedToast:"Spreadsheet duplicated", emptyMsg:"Choose a spreadsheet on the left or create a new one",
+        newTitle:"New spreadsheet", save:"Save", filenamePh:"Spreadsheet name…", untitled:"Untitled",
+        empty:"No spreadsheets yet.", noSheets:"No sheets", savedToast:"Saved:", deletedToast:"Deleted", createFirst:"Create a spreadsheet first", saveFirst:"Save first",
         deleteTitle:"Delete spreadsheet?", deleteMsg:'Delete "{name}"?', cancel:"Cancel", ok:"Delete",
         unsavedTitle:"Unsaved changes", unsavedMsg:"You have unsaved changes. Discard them?", okGeneric:"OK",
         installTitle:"Spreadsheet editor (Univer)", installDesc:"The spreadsheet module is based on Univer and works fully offline. Estimated additional package size: ~50 MB.",
         installBtn:"Download and install", installing:"⏳ Downloading…", installed:"✅ Installed", retry:"🔁 Retry",
         installStarting:"Connecting to unpkg.com…" },
-  es: { newTitle:"Nueva hoja de cálculo", save:"Guardar", filenamePh:"Nombre de la hoja…", untitled:"Sin título",
-        empty:"Todavía no hay hojas de cálculo.", noSheets:"Sin hojas", emptyMsg:"Pulsa <strong>＋</strong> para crear una hoja nueva",
-        savedToast:"Guardado:", deletedToast:"Eliminado", createFirst:"Crea una hoja primero", saveFirst:"Guarda primero",
+  es: { heading:"Hojas de cálculo", searchPh:"Buscar hojas…", exportCsv:"Exportar hoja como CSV (.csv)", duplicatedToast:"Hoja duplicada", emptyMsg:"Elige una hoja a la izquierda o crea una nueva",
+        newTitle:"Nueva hoja de cálculo", save:"Guardar", filenamePh:"Nombre de la hoja…", untitled:"Sin título",
+        empty:"Todavía no hay hojas de cálculo.", noSheets:"Sin hojas", savedToast:"Guardado:", deletedToast:"Eliminado", createFirst:"Crea una hoja primero", saveFirst:"Guarda primero",
         deleteTitle:"¿Eliminar hoja?", deleteMsg:'¿Eliminar "{name}"?', cancel:"Cancelar", ok:"Eliminar",
         unsavedTitle:"Cambios sin guardar", unsavedMsg:"Tienes cambios sin guardar. ¿Descartarlos?", okGeneric:"Aceptar",
         installTitle:"Editor de hojas de cálculo (Univer)", installDesc:"El módulo de hojas de cálculo está basado en Univer y funciona completamente offline. Tamaño estimado del paquete adicional: ~50 MB.",
         installBtn:"Descargar e instalar", installing:"⏳ Descargando…", installed:"✅ Instalado", retry:"🔁 Reintentar",
         installStarting:"Conectando con unpkg.com…" },
-  fr: { newTitle:"Nouvelle feuille de calcul", save:"Enregistrer", filenamePh:"Nom de la feuille…", untitled:"Sans titre",
-        empty:"Aucune feuille de calcul.", noSheets:"Aucune feuille", emptyMsg:"Appuyez sur <strong>＋</strong> pour créer une nouvelle feuille",
-        savedToast:"Enregistré :", deletedToast:"Supprimé", createFirst:"Créez d'abord une feuille", saveFirst:"Enregistrez d'abord",
+  fr: { heading:"Feuilles de calcul", searchPh:"Rechercher des feuilles…", exportCsv:"Exporter la feuille en CSV (.csv)", duplicatedToast:"Feuille dupliquée", emptyMsg:"Choisissez une feuille à gauche ou créez-en une nouvelle",
+        newTitle:"Nouvelle feuille de calcul", save:"Enregistrer", filenamePh:"Nom de la feuille…", untitled:"Sans titre",
+        empty:"Aucune feuille de calcul.", noSheets:"Aucune feuille", savedToast:"Enregistré :", deletedToast:"Supprimé", createFirst:"Créez d'abord une feuille", saveFirst:"Enregistrez d'abord",
         deleteTitle:"Supprimer la feuille ?", deleteMsg:'Supprimer "{name}" ?', cancel:"Annuler", ok:"Supprimer",
         unsavedTitle:"Modifications non enregistrées", unsavedMsg:"Vous avez des modifications non enregistrées. Les abandonner ?", okGeneric:"OK",
         installTitle:"Éditeur de feuilles de calcul (Univer)", installDesc:"Le module tableur est basé sur Univer et fonctionne entièrement hors ligne. Taille estimée : ~50 Mo.",
         installBtn:"Télécharger et installer", installing:"⏳ Téléchargement…", installed:"✅ Installé", retry:"🔁 Réessayer",
         installStarting:"Connexion à unpkg.com…" },
-  pt: { newTitle:"Nova folha de cálculo", save:"Guardar", filenamePh:"Nome da folha…", untitled:"Sem título",
-        empty:"Ainda sem folhas de cálculo.", noSheets:"Sem folhas", emptyMsg:"Carrega em <strong>＋</strong> para criar uma folha nova",
-        savedToast:"Guardado:", deletedToast:"Eliminado", createFirst:"Cria uma folha primeiro", saveFirst:"Guarda primeiro",
+  pt: { heading:"Folhas de cálculo", searchPh:"Pesquisar folhas…", exportCsv:"Exportar folha como CSV (.csv)", duplicatedToast:"Folha duplicada", emptyMsg:"Escolhe uma folha à esquerda ou cria uma nova",
+        newTitle:"Nova folha de cálculo", save:"Guardar", filenamePh:"Nome da folha…", untitled:"Sem título",
+        empty:"Ainda sem folhas de cálculo.", noSheets:"Sem folhas", savedToast:"Guardado:", deletedToast:"Eliminado", createFirst:"Cria uma folha primeiro", saveFirst:"Guarda primeiro",
         deleteTitle:"Eliminar folha?", deleteMsg:'Eliminar "{name}"?', cancel:"Cancelar", ok:"Eliminar",
         unsavedTitle:"Alterações não guardadas", unsavedMsg:"Tens alterações não guardadas. Descartar?", okGeneric:"OK",
         installTitle:"Editor de folhas de cálculo (Univer)", installDesc:"O módulo de folhas de cálculo é baseado em Univer e funciona totalmente offline. Tamanho estimado: ~50 MB.",
         installBtn:"Descarregar e instalar", installing:"⏳ A descarregar…", installed:"✅ Instalado", retry:"🔁 Repetir",
         installStarting:"A ligar a unpkg.com…" },
-  it: { newTitle:"Nuovo foglio di calcolo", save:"Salva", filenamePh:"Nome del foglio…", untitled:"Senza titolo",
-        empty:"Ancora nessun foglio di calcolo.", noSheets:"Nessun foglio", emptyMsg:"Premi <strong>＋</strong> per creare un nuovo foglio",
-        savedToast:"Salvato:", deletedToast:"Eliminato", createFirst:"Crea prima un foglio", saveFirst:"Salva prima",
+  it: { heading:"Fogli di calcolo", searchPh:"Cerca fogli…", exportCsv:"Esporta foglio come CSV (.csv)", duplicatedToast:"Foglio duplicato", emptyMsg:"Scegli un foglio a sinistra o creane uno nuovo",
+        newTitle:"Nuovo foglio di calcolo", save:"Salva", filenamePh:"Nome del foglio…", untitled:"Senza titolo",
+        empty:"Ancora nessun foglio di calcolo.", noSheets:"Nessun foglio", savedToast:"Salvato:", deletedToast:"Eliminato", createFirst:"Crea prima un foglio", saveFirst:"Salva prima",
         deleteTitle:"Eliminare il foglio?", deleteMsg:'Eliminare "{name}"?', cancel:"Annulla", ok:"Elimina",
         unsavedTitle:"Modifiche non salvate", unsavedMsg:"Hai modifiche non salvate. Scartarle?", okGeneric:"OK",
         installTitle:"Editor fogli di calcolo (Univer)", installDesc:"Il modulo foglio di calcolo è basato su Univer e funziona completamente offline. Dimensione stimata: ~50 MB.",
         installBtn:"Scarica e installa", installing:"⏳ Download…", installed:"✅ Installato", retry:"🔁 Riprova",
         installStarting:"Connessione a unpkg.com…" },
-  de: { newTitle:"Neue Tabelle", save:"Speichern", filenamePh:"Tabellenname…", untitled:"Unbenannt",
-        empty:"Noch keine Tabellen.", noSheets:"Keine Blätter", emptyMsg:"Drücke <strong>＋</strong>, um eine neue Tabelle zu erstellen",
-        savedToast:"Gespeichert:", deletedToast:"Gelöscht", createFirst:"Erstelle zuerst eine Tabelle", saveFirst:"Zuerst speichern",
+  de: { heading:"Tabellen", searchPh:"Tabellen durchsuchen…", exportCsv:"Blatt als CSV exportieren (.csv)", duplicatedToast:"Tabelle dupliziert", emptyMsg:"Wähle links eine Tabelle oder erstelle eine neue",
+        newTitle:"Neue Tabelle", save:"Speichern", filenamePh:"Tabellenname…", untitled:"Unbenannt",
+        empty:"Noch keine Tabellen.", noSheets:"Keine Blätter", savedToast:"Gespeichert:", deletedToast:"Gelöscht", createFirst:"Erstelle zuerst eine Tabelle", saveFirst:"Zuerst speichern",
         deleteTitle:"Tabelle löschen?", deleteMsg:'"{name}" löschen?', cancel:"Abbrechen", ok:"Löschen",
         unsavedTitle:"Nicht gespeicherte Änderungen", unsavedMsg:"Du hast nicht gespeicherte Änderungen. Verwerfen?", okGeneric:"OK",
         installTitle:"Tabellen-Editor (Univer)", installDesc:"Das Tabellenmodul basiert auf Univer und funktioniert komplett offline. Geschätzte Größe: ~50 MB.",
         installBtn:"Herunterladen und installieren", installing:"⏳ Wird heruntergeladen…", installed:"✅ Installiert", retry:"🔁 Erneut versuchen",
         installStarting:"Verbindung zu unpkg.com…" },
-  zh: { newTitle:"新建电子表格", save:"保存", filenamePh:"电子表格名称…", untitled:"未命名",
-        empty:"还没有电子表格。", noSheets:"没有工作表", emptyMsg:"点击 <strong>＋</strong> 创建新的电子表格",
-        savedToast:"已保存：", deletedToast:"已删除", createFirst:"请先创建一个表格", saveFirst:"请先保存",
+  zh: { heading:"电子表格", searchPh:"搜索表格…", exportCsv:"将工作表导出为 CSV (.csv)", duplicatedToast:"表格已复制", emptyMsg:"在左侧选择一个表格，或新建一个",
+        newTitle:"新建电子表格", save:"保存", filenamePh:"电子表格名称…", untitled:"未命名",
+        empty:"还没有电子表格。", noSheets:"没有工作表", savedToast:"已保存：", deletedToast:"已删除", createFirst:"请先创建一个表格", saveFirst:"请先保存",
         deleteTitle:"删除电子表格？", deleteMsg:'删除 "{name}"？', cancel:"取消", ok:"删除",
         unsavedTitle:"未保存的更改", unsavedMsg:"你有未保存的更改，要放弃吗？", okGeneric:"确定",
         installTitle:"电子表格编辑器 (Univer)", installDesc:"电子表格模块基于 Univer，完全离线运行。预计额外大小：约 50 MB。",
         installBtn:"下载并安装", installing:"⏳ 下载中…", installed:"✅ 已安装", retry:"🔁 重试",
         installStarting:"正在连接 unpkg.com…" },
-  hi: { newTitle:"नई स्प्रेडशीट", save:"सहेजें", filenamePh:"स्प्रेडशीट का नाम…", untitled:"शीर्षकहीन",
-        empty:"अभी तक कोई स्प्रेडशीट नहीं।", noSheets:"कोई शीट नहीं", emptyMsg:"नई स्प्रेडशीट बनाने के लिए <strong>＋</strong> दबाएं",
-        savedToast:"सहेजा गया:", deletedToast:"हटाया गया", createFirst:"पहले एक शीट बनाएं", saveFirst:"पहले सहेजें",
+  hi: { heading:"स्प्रेडशीट", searchPh:"स्प्रेडशीट खोजें…", exportCsv:"शीट को CSV के रूप में निर्यात करें (.csv)", duplicatedToast:"स्प्रेडशीट डुप्लिकेट हो गई", emptyMsg:"बाईं ओर से एक स्प्रेडशीट चुनें या नई बनाएँ",
+        newTitle:"नई स्प्रेडशीट", save:"सहेजें", filenamePh:"स्प्रेडशीट का नाम…", untitled:"शीर्षकहीन",
+        empty:"अभी तक कोई स्प्रेडशीट नहीं।", noSheets:"कोई शीट नहीं", savedToast:"सहेजा गया:", deletedToast:"हटाया गया", createFirst:"पहले एक शीट बनाएं", saveFirst:"पहले सहेजें",
         deleteTitle:"स्प्रेडशीट हटाएं?", deleteMsg:'"{name}" हटाएं?', cancel:"रद्द करें", ok:"हटाएं",
         unsavedTitle:"असहेजे परिवर्तन", unsavedMsg:"आपके पास असहेजे परिवर्तन हैं। उन्हें छोड़ दें?", okGeneric:"ठीक है",
         installTitle:"स्प्रेडशीट संपादक (Univer)", installDesc:"स्प्रेडशीट मॉड्यूल Univer पर आधारित है और पूरी तरह ऑफ़लाइन काम करता है। अनुमानित आकार: ~50 MB।",
         installBtn:"डाउनलोड करें और इंस्टॉल करें", installing:"⏳ डाउनलोड हो रहा है…", installed:"✅ इंस्टॉल हो गया", retry:"🔁 पुनः प्रयास करें",
         installStarting:"unpkg.com से जुड़ रहे हैं…" },
-  ar: { newTitle:"جدول بيانات جديد", save:"حفظ", filenamePh:"اسم جدول البيانات…", untitled:"بلا عنوان",
-        empty:"لا توجد جداول بيانات بعد.", noSheets:"لا توجد أوراق", emptyMsg:"اضغط <strong>＋</strong> لإنشاء جدول بيانات جديد",
-        savedToast:"تم الحفظ:", deletedToast:"تم الحذف", createFirst:"أنشئ جدولاً أولاً", saveFirst:"احفظ أولاً",
+  ar: { heading:"جداول البيانات", searchPh:"البحث في الجداول…", exportCsv:"تصدير الورقة كـ CSV (.csv)", duplicatedToast:"تم تكرار جدول البيانات", emptyMsg:"اختر جدولاً من الشريط الجانبي أو أنشئ جدولاً جديدًا",
+        newTitle:"جدول بيانات جديد", save:"حفظ", filenamePh:"اسم جدول البيانات…", untitled:"بلا عنوان",
+        empty:"لا توجد جداول بيانات بعد.", noSheets:"لا توجد أوراق", savedToast:"تم الحفظ:", deletedToast:"تم الحذف", createFirst:"أنشئ جدولاً أولاً", saveFirst:"احفظ أولاً",
         deleteTitle:"حذف جدول البيانات؟", deleteMsg:'حذف "{name}"؟', cancel:"إلغاء", ok:"حذف",
         unsavedTitle:"تغييرات غير محفوظة", unsavedMsg:"لديك تغييرات غير محفوظة. هل تريد تجاهلها؟", okGeneric:"موافق",
         installTitle:"محرر جداول البيانات (Univer)", installDesc:"وحدة جداول البيانات مبنية على Univer وتعمل دون اتصال بالكامل. الحجم التقديري: ~50 ميجابايت.",
         installBtn:"تنزيل وتثبيت", installing:"⏳ جارٍ التنزيل…", installed:"✅ تم التثبيت", retry:"🔁 إعادة المحاولة",
         installStarting:"جارٍ الاتصال بـ unpkg.com…" },
-  ru: { newTitle:"Новая таблица", save:"Сохранить", filenamePh:"Название таблицы…", untitled:"Без названия",
-        empty:"Пока нет таблиц.", noSheets:"Нет листов", emptyMsg:"Нажмите <strong>＋</strong>, чтобы создать новую таблицу",
-        savedToast:"Сохранено:", deletedToast:"Удалено", createFirst:"Сначала создайте таблицу", saveFirst:"Сначала сохраните",
+  ru: { heading:"Таблицы", searchPh:"Поиск таблиц…", exportCsv:"Экспорт листа в CSV (.csv)", duplicatedToast:"Таблица продублирована", emptyMsg:"Выберите таблицу слева или создайте новую",
+        newTitle:"Новая таблица", save:"Сохранить", filenamePh:"Название таблицы…", untitled:"Без названия",
+        empty:"Пока нет таблиц.", noSheets:"Нет листов", savedToast:"Сохранено:", deletedToast:"Удалено", createFirst:"Сначала создайте таблицу", saveFirst:"Сначала сохраните",
         deleteTitle:"Удалить таблицу?", deleteMsg:'Удалить "{name}"?', cancel:"Отмена", ok:"Удалить",
         unsavedTitle:"Несохранённые изменения", unsavedMsg:"У вас есть несохранённые изменения. Отменить их?", okGeneric:"ОК",
         installTitle:"Редактор таблиц (Univer)", installDesc:"Модуль таблиц основан на Univer и работает полностью офлайн. Примерный размер: ~50 МБ.",
@@ -290,49 +242,24 @@ function toast(msg) {
   _toastT = setTimeout(() => el.classList.remove("show"), 2400);
 }
 
-function showConfirmDialog({ title, message, confirmLabel, cancelLabel, onConfirm, onCancel }) {
-  const ov = document.createElement("div");
-  ov.className = "sp-confirm-overlay";
-  const card = document.createElement("div");
-  card.className = "sp-confirm-card";
-  const h = document.createElement("p"); h.className = "sp-confirm-title"; h.textContent = title || "";
-  const m = document.createElement("p"); m.className = "sp-confirm-msg"; m.textContent = message || "";
-  const acts = document.createElement("div"); acts.className = "sp-confirm-actions";
-  const cancel = document.createElement("button"); cancel.className = "sp-btn"; cancel.textContent = cancelLabel || t("cancel");
-  const ok = document.createElement("button"); ok.className = "sp-btn sp-btn--primary"; ok.textContent = confirmLabel || t("okGeneric");
-  acts.append(cancel, ok); card.append(h, m, acts); ov.append(card); document.body.append(ov);
-  const close = () => { ov.remove(); document.removeEventListener("keydown", onKey); };
-  const onKey = e => { if (e.key === "Escape") { close(); onCancel?.(); } };
-  document.addEventListener("keydown", onKey);
-  ov.addEventListener("click", e => { if (e.target === ov) { close(); onCancel?.(); } });
-  cancel.addEventListener("click", () => { close(); onCancel?.(); });
-  ok.addEventListener("click", () => { close(); onConfirm?.(); });
-  ok.focus();
-}
+// Mismo diálogo que la barra lateral común
 function showUnsavedConfirm() {
-  return new Promise(resolve => {
-    showConfirmDialog({
-      title: t("unsavedTitle"), message: t("unsavedMsg"),
-      confirmLabel: t("okGeneric"), cancelLabel: t("cancel"),
-      onConfirm: () => resolve(true), onCancel: () => resolve(false)
-    });
-  });
+  return OflSidebar.dialog({ lang: _LANG, title: t("unsavedTitle"), message: t("unsavedMsg"), confirmLabel: t("okGeneric"), cancelLabel: t("cancel") });
 }
 
 (function () {
   const API = "/api/addon-spreadsheet";
 
   // ── DOM refs ──
-  const spFileList      = document.getElementById("spFileList");
-  const spNewBtn         = document.getElementById("spNewBtn");
   const spSaveBtn        = document.getElementById("spSaveBtn");
-  const spDeleteBtn      = document.getElementById("spDeleteBtn");
   const spFilenameInput  = document.getElementById("spFilenameInput");
   const spContainer      = document.getElementById("spContainer");
 
   let _sheetUniver = null, _sheetAPI = null, _sheetUnit = null, _sheetCurrentName = null;
   let _dirty = false;
   let _dirtyListenerAttached = false;
+  let _pendingFolder = null;   // carpeta donde irá una hoja nueva al guardarla
+  function setDirty(v) { _dirty = !!v; sb.setDirty(_dirty); }
 
   // ══════════════════════════════════════════════════════════
   // Carga de scripts Univer (offline-first, vendor/univer/presets)
@@ -581,35 +508,31 @@ function showUnsavedConfirm() {
     _sheetAPI = inst.univerAPI;
 
     if (_sheetAPI && typeof _sheetAPI.onCommandExecuted === "function" && !_dirtyListenerAttached) {
-      _sheetAPI.onCommandExecuted(cmd => { if (cmd) _dirty = true; });
+      // Solo cuentan los cambios de datos (mutaciones), no mover la selección
+      const MUT = (window.UniverCore && UniverCore.CommandType && UniverCore.CommandType.MUTATION != null) ? UniverCore.CommandType.MUTATION : 2;
+      _sheetAPI.onCommandExecuted(cmd => { if (cmd && (cmd.type == null || cmd.type === MUT) && !_dirty) setDirty(true); });
       _dirtyListenerAttached = true;
     }
   }
 
-  async function sheetOpenNew() {
-    if (_dirty) {
-      const leave = await showUnsavedConfirm();
-      if (!leave) return;
-      _dirty = false;
-    }
+  async function sheetOpenNew(folderId = null) {
+    if (_dirty && !(await showUnsavedConfirm())) return;
+    setDirty(false);
     try { await _sheetEnsure(); } catch (e) { if (e.message !== "not_ready") console.error(e); return; }
     try {
       if (_sheetUnit) { try { _sheetUniver.disposeUnit(_sheetUnit.getUnitId()); } catch (_) {} }
       _sheetUnit = _sheetUniver.createUnit(UniverCore.UniverInstanceType.UNIVER_SHEET, _sheetSnap("Sheet1"));
       _sheetCurrentName = null;
-      _dirty = false;
-      if (spFilenameInput) spFilenameInput.value = "";
-      _markActive(null);
+      _pendingFolder = folderId || null;
+      setDirty(false);
+      if (spFilenameInput) { spFilenameInput.value = ""; spFilenameInput.focus(); }
+      sb.setActive(null);
       window.dispatchEvent(new Event("resize"));
     } catch (e) { console.error(e); toast("❌ " + e.message); }
   }
 
   async function sheetOpenFile(name) {
-    if (_dirty && _sheetCurrentName && _sheetCurrentName !== name) {
-      const leave = await showUnsavedConfirm();
-      if (!leave) return;
-      _dirty = false;
-    }
+    if (_dirty && _sheetCurrentName !== name && !(await showUnsavedConfirm())) return;
     try { await _sheetEnsure(); } catch (e) { if (e.message !== "not_ready") console.error(e); return; }
     try {
       const res = await fetch(`${API}/load?name=${encodeURIComponent(name)}`);
@@ -622,9 +545,10 @@ function showUnsavedConfirm() {
       const snapshot = Object.assign({}, d.data, { id: "sheet-" + Date.now() });
       _sheetUnit = _sheetUniver.createUnit(UniverCore.UniverInstanceType.UNIVER_SHEET, snapshot);
       _sheetCurrentName = d.name;
-      _dirty = false;
+      _pendingFolder = null;
+      setDirty(false);
       if (spFilenameInput) spFilenameInput.value = d.name;
-      _markActive(name);
+      sb.setActive(d.name);
       window.dispatchEvent(new Event("resize"));
     } catch (e) {
       console.error("[Sheets] openFile error:", e);
@@ -635,67 +559,130 @@ function showUnsavedConfirm() {
   async function sheetSave() {
     if (!_sheetUniver || !_sheetUnit) { toast("⚠️ " + t("createFirst")); return; }
     const name = (spFilenameInput?.value || "").trim() || t("untitled");
+    const prev = _sheetCurrentName;
     try {
-      await fetch(`${API}/save`, {
+      const r = await fetch(`${API}/save`, {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, data: _sheetUnit.getSnapshot() })
       });
-      _sheetCurrentName = name;
-      _dirty = false;
-      toast("💾 " + t("savedToast") + " " + name);
-      await refreshList(); _markActive(name);
+      if (!r.ok) throw new Error(await r.text());
+      const saved = await r.json().catch(() => ({}));
+      const finalName = (saved.filename || name).replace(/\.usheet$/, "");
+      // Guardar con otro nombre crea otra hoja (la anterior se queda): va a la misma carpeta.
+      if (prev && prev !== finalName && !sb.getItem(finalName) && sb.folderOf(prev)) _pendingFolder = sb.folderOf(prev);
+      _sheetCurrentName = finalName;
+      setDirty(false);
+      toast(t("savedToast") + " " + finalName);
+      await refreshList();
+      if (_pendingFolder) { sb.placeIn(finalName, _pendingFolder); _pendingFolder = null; }
     } catch (e) { toast("❌ " + e.message); }
   }
 
-  function sheetDelete() {
-    if (!_sheetCurrentName) { toast("⚠️ " + t("saveFirst")); return; }
-    const name = _sheetCurrentName;
-    showConfirmDialog({
-      title: t("deleteTitle"), message: tfmt("deleteMsg", { name }),
-      confirmLabel: t("ok"), cancelLabel: t("cancel"),
-      onConfirm: async () => {
-        try {
-          await fetch(`${API}/delete?name=${encodeURIComponent(name)}`, { method: "DELETE" });
-          toast("🗑 " + t("deletedToast"));
-          _sheetCurrentName = null;
-          if (_sheetUnit) { try { _sheetUniver.disposeUnit(_sheetUnit.getUnitId()); } catch (_) {} _sheetUnit = null; }
-          if (spFilenameInput) spFilenameInput.value = "";
-          await refreshList(); _showEmpty();
-        } catch (e) { toast("❌ " + e.message); }
-      }
-    });
-  }
-
   function _showEmpty() {
-    spContainer.innerHTML = `<div class="sp-empty-msg"><span class="big-icon">📊</span><span>${t("emptyMsg")}</span></div>`;
+    spContainer.innerHTML = `<div class="sp-empty-msg"><span class="big-icon">📊</span><span>${escapeHTML(t("emptyMsg"))}</span></div>`;
   }
 
+  const toItem = it => ({ id: it.name, title: it.name, time: (it.modified || 0) * 1000,
+                          info: it.size ? `${Math.max(1, Math.round(it.size / 1024))} KB` : "" });
   async function refreshList() {
-    if (!spFileList) return;
-    try {
-      const items = await (await fetch(`${API}/list`)).json();
-      spFileList.innerHTML = "";
-      if (!items.length) { spFileList.innerHTML = `<li class="sp-list-empty">${escapeHTML(t("empty"))}</li>`; return; }
-      items.forEach(item => {
-        const li = document.createElement("li");
-        li.className = "sp-item" + (_sheetCurrentName === item.name ? " active" : "");
-        li.dataset.name = item.name;
-        li.textContent = item.name;
-        li.title = item.name;
-        li.addEventListener("click", () => sheetOpenFile(item.name));
-        spFileList.appendChild(li);
-      });
-    } catch (e) { console.warn("[Sheets] list:", e); }
+    try { sb.setItems(((await (await fetch(`${API}/list`)).json()) || []).map(toItem)); }
+    catch (e) { console.warn("[Sheets] list:", e); }
+    sb.setActive(_sheetCurrentName);
   }
 
-  function _markActive(name) {
-    spFileList?.querySelectorAll(".sp-item").forEach(li => li.classList.toggle("active", li.dataset.name === name));
+  // CSV de la primera hoja (o de la activa si es la abierta)
+  function snapshotToCsv(snap) {
+    const sheetId = (snap.sheetOrder && snap.sheetOrder[0]) || Object.keys(snap.sheets || {})[0];
+    const sh = (snap.sheets || {})[sheetId] || {};
+    const cells = sh.cellData || {};
+    const rows = Object.keys(cells).map(Number).filter(n => !isNaN(n));
+    if (!rows.length) return "";
+    const maxR = Math.max(...rows);
+    let maxC = 0;
+    rows.forEach(r => Object.keys(cells[r] || {}).forEach(c => { maxC = Math.max(maxC, Number(c)); }));
+    const q = v => {
+      const s = v == null ? "" : String(v);
+      return /[",\n;]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+    };
+    const out = [];
+    for (let r = 0; r <= maxR; r++) {
+      const line = [];
+      for (let c = 0; c <= maxC; c++) {
+        const cell = cells[r] && cells[r][c];
+        line.push(q(cell ? (cell.v != null ? cell.v : (cell.p && cell.p.body ? String(cell.p.body.dataStream || "").replace(/\r?\n$/, "") : "")) : ""));
+      }
+      out.push(line.join(","));
+    }
+    return out.join("\r\n");
   }
+  async function getSnapshot(name) {
+    if (name === _sheetCurrentName && _sheetUnit) return _sheetUnit.getSnapshot();
+    const d = await (await fetch(`${API}/load?name=${encodeURIComponent(name)}`)).json();
+    return d.data;
+  }
+
+  // ── Barra lateral común ─────────────────────────────────────
+  const sb = OflSidebar.create({
+    host: document.querySelector(".sp-shell"),
+    before: document.querySelector(".sp-editor"),
+    addonId: "spreadsheet", lang: _LANG, toast, newIcon: "sheet",
+    strings: { heading: t("heading"), newItem: t("newTitle"), searchPh: t("searchPh"), empty: t("empty"),
+               untitled: t("untitled"), deleteTitle: t("deleteTitle"), deleteMsg: t("deleteMsg") },
+    onLayout: () => window.dispatchEvent(new Event("resize")),
+    onOpen: name => sheetOpenFile(name),
+    onNew: fid => sheetOpenNew(fid),
+    async onRename(name, title) {
+      if (sb.getItem(title)) throw new Error(sb.t("nameTaken"));
+      const r = await fetch(`${API}/rename`, { method: "POST", headers: { "Content-Type": "application/json" },
+                                              body: JSON.stringify({ oldName: name, newName: title }) });
+      if (!r.ok) throw new Error(r.status === 409 ? sb.t("nameTaken") : await r.text());
+      const d = await r.json();
+      const n = sb.getItem(name); if (n) n.title = d.name;
+      if (_sheetCurrentName === name) { _sheetCurrentName = d.name; spFilenameInput.value = d.name; }
+      return d.name;
+    },
+    async onDuplicate(name) {
+      const data = await getSnapshot(name);
+      const taken = new Set(sb.items.map(x => x.id));
+      let k = 2, copy = `${name} (${k})`;
+      while (taken.has(copy)) copy = `${name} (${++k})`;
+      const r = await fetch(`${API}/save`, { method: "POST", headers: { "Content-Type": "application/json" },
+                                            body: JSON.stringify({ name: copy, data }) });
+      if (!r.ok) throw new Error(await r.text());
+      await refreshList();
+      toast(t("duplicatedToast"));
+      return copy;
+    },
+    async onDelete(name) {
+      const r = await fetch(`${API}/delete?name=${encodeURIComponent(name)}`, { method: "DELETE" });
+      if (!r.ok && r.status !== 404) throw new Error(await r.text());
+      if (_sheetCurrentName === name) {
+        _sheetCurrentName = null;
+        if (_sheetUnit) { try { _sheetUniver.disposeUnit(_sheetUnit.getUnitId()); } catch (_) {} _sheetUnit = null; }
+        spFilenameInput.value = "";
+        setDirty(false);
+        _showEmpty();
+      }
+    },
+    exportItems: n => [
+      { icon: "file-text", label: t("exportCsv"), onClick: async () => {
+          try {
+            const csv = snapshotToCsv(await getSnapshot(n.id));
+            const url = URL.createObjectURL(new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8" }));
+            const a = document.createElement("a");
+            a.href = url; a.download = `${n.title}.csv`;
+            document.body.append(a); a.click(); a.remove();
+            setTimeout(() => URL.revokeObjectURL(url), 4000);
+          } catch (e) { toast("❌ " + e.message); }
+        } },
+    ],
+  });
 
   // ── Bindings ──────────────────────────────────────────────────
-  spNewBtn?.addEventListener("click", sheetOpenNew);
   spSaveBtn?.addEventListener("click", sheetSave);
-  spDeleteBtn?.addEventListener("click", sheetDelete);
+  document.addEventListener("keydown", ev => {
+    if ((ev.ctrlKey || ev.metaKey) && !ev.shiftKey && !ev.altKey && ev.key.toLowerCase() === "s") { ev.preventDefault(); sheetSave(); }
+  }, true);
 
   window.addEventListener("beforeunload", (e) => {
     if (!_dirty) return;
@@ -703,15 +690,17 @@ function showUnsavedConfirm() {
   });
 
   async function init() {
+    OflSidebar.hydrateIcons();
     document.getElementById("spSaveLbl").textContent = t("save");
+    spSaveBtn.title = t("save") + " (Ctrl+S)";
     if (spFilenameInput) spFilenameInput.placeholder = t("filenamePh");
-    spNewBtn.title = t("newTitle");
 
-    await refreshList();
+    await Promise.all([refreshList(), sb.ready]);
     if (!(await _univerReady())) { _showInstallPanel(); return; }
 
     const deepLinkSheet = new URLSearchParams(location.search).get("sheet");
     if (deepLinkSheet) {
+      sb.revealFolderOf(deepLinkSheet);
       await sheetOpenFile(deepLinkSheet);
     } else if (!_sheetUnit) {
       _showEmpty();

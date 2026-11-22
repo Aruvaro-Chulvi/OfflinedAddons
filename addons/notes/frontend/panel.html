@@ -6,6 +6,7 @@
 <title>Notes</title>
 <link rel="stylesheet" href="/vendor/quill/quill.snow.css">
 <script src="/vendor/quill/quill.min.js"></script>
+<script src="sidebar.js"></script>
 <style>
 :root {
   --bg: #f6f6f6;
@@ -37,51 +38,23 @@ button, input, select { font-family: inherit; }
 
 .nt-view { display: flex; width: 100%; height: 100%; background: var(--panel); }
 
-/* ── Sidebar ── */
-.nt-sidebar {
-  flex: 0 0 240px; display: flex; flex-direction: column;
-  border-right: 1px solid var(--muted); background: var(--soft); min-width: 0;
-}
-.nt-toolbar { display: flex; gap: 8px; padding: 8px; background: var(--panel); border-bottom: 1px solid var(--muted); }
-.nt-toolbar button {
-  font-size: .8rem; padding: 5px 10px; border-radius: 8px; border: 1px solid var(--muted);
-  background: var(--soft); color: var(--ink); cursor: pointer;
-}
-.nt-toolbar button:hover { background: var(--muted); }
-.nt-search { padding: 8px; border-bottom: 1px solid var(--muted); }
-.nt-search input {
-  width: 100%; padding: 6px 8px; border-radius: 8px; border: 1px solid var(--muted);
-  background: var(--bg); color: var(--ink);
-}
-.nt-list { flex: 1; overflow-y: auto; padding: 4px 0; list-style: none; margin: 0; }
-.nt-list-empty { padding: 16px 12px; color: var(--subtle); font-size: .82rem; text-align: center; }
-.nt-list li {
-  padding: 8px 12px; cursor: pointer; font-size: .85rem; color: var(--ink);
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  border-bottom: 1px solid rgba(0,0,0,0.03);
-}
-[data-theme="dark"] .nt-list li { border-bottom-color: rgba(255,255,255,0.04); }
-.nt-list li.active { background: var(--muted); font-weight: 600; }
-.nt-list li:hover { background: color-mix(in srgb, var(--ink) 6%, transparent); }
-
 /* ── Editor ── */
 .nt-editor { flex: 1; display: flex; flex-direction: column; min-width: 0; min-height: 0; background: var(--panel); overflow: hidden; }
 .nt-header { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-bottom: 1px solid var(--muted); flex-shrink: 0; }
 .nt-title-input {
-  flex: 1; padding: 7px 12px; border-radius: 10px; border: 1px solid var(--muted);
+  flex: 1; min-width: 0; padding: 7px 12px; border-radius: 10px; border: 1px solid var(--muted);
   background: var(--bg); color: var(--ink); font-size: .9rem; outline: none; transition: border-color .15s;
 }
 .nt-title-input:focus { border-color: var(--accent); }
-
 .nt-btn {
   padding: 6px 14px; border-radius: 8px; border: 1px solid var(--muted); background: var(--soft);
   color: var(--ink); font-size: .82rem; cursor: pointer; display: inline-flex; align-items: center;
-  gap: 5px; white-space: nowrap; transition: background .15s, border-color .15s;
+  gap: 6px; white-space: nowrap; transition: background .15s, border-color .15s;
 }
+.nt-btn .ofs-ic { width: 16px; height: 16px; }
 .nt-btn:hover { background: var(--muted); }
-.nt-btn:disabled { opacity: .45; cursor: not-allowed; }
-.nt-btn--primary { background: var(--accent); color: var(--bg); border-color: transparent; font-weight: 600; }
-.nt-btn--primary:hover { filter: brightness(1.12); }
+.nt-btn--icon { padding: 6px 8px; }
+.nt-btn--primary { font-weight: 600; }
 
 /* ── Quill ── */
 .nt-quill-wrap { flex: 1; display: flex; flex-direction: column; min-height: 0; }
@@ -97,53 +70,22 @@ button, input, select { font-family: inherit; }
 .ql-snow .ql-picker-options { background: var(--panel); border-color: var(--muted) !important; }
 .ql-editor.ql-blank::before { color: var(--subtle); }
 
-/* ── Toast / confirm (mismo patrón que el resto de addons) ── */
 #ntToast {
   position: fixed; left: 50%; bottom: 22px; transform: translate(-50%, 12px);
   background: var(--accent); color: var(--bg); padding: 8px 16px; border-radius: 10px;
-  font-size: .85rem; opacity: 0; pointer-events: none; transition: opacity .2s ease, transform .2s ease; z-index: 50;
+  font-size: .85rem; opacity: 0; pointer-events: none; transition: opacity .2s ease, transform .2s ease; z-index: 500;
 }
 #ntToast.show { opacity: 1; transform: translate(-50%, 0); }
-.nt-confirm-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.35); display: flex; align-items: center; justify-content: center; z-index: 100; }
-.nt-confirm-card { background: var(--panel); border-radius: 12px; padding: 18px; width: 320px; box-shadow: 0 10px 30px rgba(0,0,0,.25); }
-.nt-confirm-title { font-weight: 700; margin: 0 0 6px; }
-.nt-confirm-msg { margin: 0 0 16px; color: var(--subtle); font-size: .88rem; }
-.nt-confirm-actions { display: flex; justify-content: flex-end; gap: 8px; }
-
-/* ── Context menu (clic derecho sobre una nota de la lista) ── */
-.nt-ctxmenu {
-  position: fixed; z-index: 200; min-width: 180px; padding: 4px;
-  background: var(--panel); border: 1px solid var(--muted); border-radius: 10px;
-  box-shadow: 0 10px 30px rgba(0,0,0,.25); display: none;
-}
-.nt-ctxmenu.show { display: block; }
-.nt-ctxmenu-item {
-  padding: 7px 10px; border-radius: 6px; font-size: .85rem; cursor: pointer;
-  display: flex; align-items: center; gap: 8px; color: var(--ink);
-}
-.nt-ctxmenu-item:hover { background: var(--muted); }
 </style>
 </head>
 <body>
 
 <div class="nt-view">
-  <aside class="nt-sidebar">
-    <div class="nt-toolbar">
-      <button id="noteNewBtn">➕ <span id="noteNewLbl">New</span></button>
-      <button id="noteDelBtn">🗑️ <span id="noteDelLbl">Delete</span></button>
-    </div>
-    <div class="nt-search">
-      <input id="notesSearch" type="search" placeholder="Search notes…">
-    </div>
-    <ul id="notesList" class="nt-list"></ul>
-  </aside>
-  <div id="ntCtxMenu" class="nt-ctxmenu"></div>
-
   <div class="nt-editor">
     <div class="nt-header">
       <input id="noteTitle" class="nt-title-input" type="text" placeholder="Untitled note" autocomplete="off">
-      <button id="noteGeoBtn" class="nt-btn" title="Location">📍</button>
-      <button id="noteSaveBtn" class="nt-btn nt-btn--primary">💾 <span id="noteSaveLbl">Save</span></button>
+      <button id="noteGeoBtn" class="nt-btn nt-btn--icon"><svg data-ic="map-pin"></svg></button>
+      <button id="noteSaveBtn" class="nt-btn nt-btn--primary"><svg data-ic="save"></svg><span id="noteSaveLbl">Save</span></button>
     </div>
     <div class="nt-quill-wrap">
       <div id="quillToolbar">
@@ -168,66 +110,71 @@ button, input, select { font-family: inherit; }
 
 <script>
 const I18N = {
-  en: { newBtn:"New", del:"Delete", save:"Save", searchPh:"Search notes…",
-        untitled:"Untitled note", deleteTitle:"Delete note?", deleteMsg:'Are you sure you want to delete the note "{name}"?',
-        cancel:"Cancel", ok:"OK", empty:"No saved notes yet.", savedToast:"Saved",
-        unsavedTitle:"Unsaved changes", unsavedMsg:"You have unsaved changes. Discard them?",
-        geoNoNote:"Open or save a note first.", saveError:"Couldn't save the note.",
-        duplicateNote:"Duplicate note", readAloud:"Read note aloud", duplicatedToast:"Note duplicated" },
-  es: { newBtn:"Nuevo", del:"Eliminar", save:"Guardar", searchPh:"Buscar notas…",
-        untitled:"Nota sin título", deleteTitle:"¿Eliminar nota?", deleteMsg:'¿Seguro que quieres eliminar la nota "{name}"?',
-        cancel:"Cancelar", ok:"Aceptar", empty:"Todavía no hay notas guardadas.", savedToast:"Guardado",
-        unsavedTitle:"Cambios sin guardar", unsavedMsg:"Tienes cambios sin guardar. ¿Descartarlos?",
-        geoNoNote:"Abre o guarda una nota primero.", saveError:"No se pudo guardar la nota.",
-        duplicateNote:"Duplicar nota", readAloud:"Leer nota en voz alta", duplicatedToast:"Nota duplicada" },
-  fr: { newBtn:"Nouveau", del:"Supprimer", save:"Enregistrer", searchPh:"Rechercher des notes…",
-        untitled:"Note sans titre", deleteTitle:"Supprimer la note ?", deleteMsg:'Voulez-vous vraiment supprimer la note "{name}" ?',
-        cancel:"Annuler", ok:"OK", empty:"Aucune note enregistrée.", savedToast:"Enregistré",
-        unsavedTitle:"Modifications non enregistrées", unsavedMsg:"Vous avez des modifications non enregistrées. Les abandonner ?",
-        geoNoNote:"Ouvrez ou enregistrez d'abord une note.", saveError:"Impossible d'enregistrer la note.",
-        duplicateNote:"Dupliquer la note", readAloud:"Lire la note à voix haute", duplicatedToast:"Note dupliquée" },
-  pt: { newBtn:"Novo", del:"Eliminar", save:"Guardar", searchPh:"Pesquisar notas…",
-        untitled:"Nota sem título", deleteTitle:"Eliminar nota?", deleteMsg:'Tem a certeza que deseja eliminar a nota "{name}"?',
-        cancel:"Cancelar", ok:"OK", empty:"Ainda sem notas guardadas.", savedToast:"Guardado",
-        unsavedTitle:"Alterações não guardadas", unsavedMsg:"Tens alterações não guardadas. Descartar?",
-        geoNoNote:"Abre ou guarda uma nota primeiro.", saveError:"Não foi possível guardar a nota.",
-        duplicateNote:"Duplicar nota", readAloud:"Ler nota em voz alta", duplicatedToast:"Nota duplicada" },
-  it: { newBtn:"Nuovo", del:"Elimina", save:"Salva", searchPh:"Cerca note…",
-        untitled:"Nota senza titolo", deleteTitle:"Eliminare la nota?", deleteMsg:'Vuoi davvero eliminare la nota "{name}"?',
-        cancel:"Annulla", ok:"OK", empty:"Ancora nessuna nota salvata.", savedToast:"Salvato",
-        unsavedTitle:"Modifiche non salvate", unsavedMsg:"Hai modifiche non salvate. Scartarle?",
-        geoNoNote:"Apri o salva prima una nota.", saveError:"Impossibile salvare la nota.",
-        duplicateNote:"Duplica nota", readAloud:"Leggi nota ad alta voce", duplicatedToast:"Nota duplicata" },
-  de: { newBtn:"Neu", del:"Löschen", save:"Speichern", searchPh:"Notizen durchsuchen…",
-        untitled:"Unbenannte Notiz", deleteTitle:"Notiz löschen?", deleteMsg:'Möchtest du die Notiz "{name}" wirklich löschen?',
-        cancel:"Abbrechen", ok:"OK", empty:"Noch keine gespeicherten Notizen.", savedToast:"Gespeichert",
-        unsavedTitle:"Nicht gespeicherte Änderungen", unsavedMsg:"Du hast nicht gespeicherte Änderungen. Verwerfen?",
-        geoNoNote:"Öffne oder speichere zuerst eine Notiz.", saveError:"Notiz konnte nicht gespeichert werden.",
-        duplicateNote:"Notiz duplizieren", readAloud:"Notiz vorlesen", duplicatedToast:"Notiz dupliziert" },
-  zh: { newBtn:"新建", del:"删除", save:"保存", searchPh:"搜索笔记…",
-        untitled:"未命名笔记", deleteTitle:"删除笔记？", deleteMsg:'确定要删除笔记"{name}"吗？',
-        cancel:"取消", ok:"确定", empty:"还没有已保存的笔记。", savedToast:"已保存",
-        unsavedTitle:"未保存的更改", unsavedMsg:"你有未保存的更改，要放弃吗？",
-        geoNoNote:"请先打开或保存一条笔记。", saveError:"无法保存笔记。",
-        duplicateNote:"复制笔记", readAloud:"朗读笔记", duplicatedToast:"笔记已复制" },
-  hi: { newBtn:"नया", del:"हटाएं", save:"सहेजें", searchPh:"नोट खोजें…",
-        untitled:"शीर्षकहीन नोट", deleteTitle:"नोट हटाएं?", deleteMsg:'क्या आप वाकई "{name}" नोट हटाना चाहते हैं?',
-        cancel:"रद्द करें", ok:"ठीक है", empty:"अभी तक कोई सहेजा गया नोट नहीं।", savedToast:"सहेजा गया",
-        unsavedTitle:"असहेजे परिवर्तन", unsavedMsg:"आपके पास असहेजे परिवर्तन हैं। उन्हें छोड़ दें?",
-        geoNoNote:"पहले एक नोट खोलें या सहेजें।", saveError:"नोट सहेजा नहीं जा सका।",
-        duplicateNote:"नोट डुप्लिकेट करें", readAloud:"नोट पढ़ें", duplicatedToast:"नोट डुप्लिकेट हो गया" },
-  ar: { newBtn:"جديد", del:"حذف", save:"حفظ", searchPh:"البحث في الملاحظات…",
-        untitled:"ملاحظة بلا عنوان", deleteTitle:"حذف الملاحظة؟", deleteMsg:'هل تريد حقًا حذف الملاحظة "{name}"؟',
-        cancel:"إلغاء", ok:"موافق", empty:"لا توجد ملاحظات محفوظة بعد.", savedToast:"تم الحفظ",
-        unsavedTitle:"تغييرات غير محفوظة", unsavedMsg:"لديك تغييرات غير محفوظة. هل تريد تجاهلها؟",
-        geoNoNote:"افتح أو احفظ ملاحظة أولاً.", saveError:"تعذر حفظ الملاحظة.",
-        duplicateNote:"مضاعفة الملاحظة", readAloud:"قراءة الملاحظة بصوت عالٍ", duplicatedToast:"تمت مضاعفة الملاحظة" },
-  ru: { newBtn:"Новая", del:"Удалить", save:"Сохранить", searchPh:"Поиск заметок…",
-        untitled:"Заметка без названия", deleteTitle:"Удалить заметку?", deleteMsg:'Вы уверены, что хотите удалить заметку "{name}"?',
-        cancel:"Отмена", ok:"ОК", empty:"Пока нет сохранённых заметок.", savedToast:"Сохранено",
-        unsavedTitle:"Несохранённые изменения", unsavedMsg:"У вас есть несохранённые изменения. Отменить их?",
-        geoNoNote:"Сначала откройте или сохраните заметку.", saveError:"Не удалось сохранить заметку.",
-        duplicateNote:"Дублировать заметку", readAloud:"Прочитать заметку вслух", duplicatedToast:"Заметка продублирована" },
+  en: { heading:"Notes", newItem:"New note", searchPh:"Search notes…",
+        exportTxt:"Export as text (.txt)",
+        exportHtml:"Export as web page (.html)", location:"Place on the map", empty:"No saved notes yet.", save:"Save", untitled:"Untitled note",
+        deleteTitle:"Delete note?", deleteMsg:'Are you sure you want to delete the note "{name}"?',
+        savedToast:"Saved", unsavedTitle:"Unsaved changes",
+        unsavedMsg:"You have unsaved changes. Discard them?", geoNoNote:"Open or save a note first.",
+        saveError:"Couldn't save the note.", duplicate:"Duplicate", readAloud:"Read aloud",
+        duplicatedToast:"Note duplicated" },
+  es: { heading:"Documentos", newItem:"Nuevo documento", searchPh:"Buscar documentos…", exportTxt:"Exportar como texto (.txt)", exportHtml:"Exportar como página web (.html)",
+        location:"Situar en el mapa", empty:"Todavía no hay documentos guardados.", save:"Guardar",
+        untitled:"Documento sin título", deleteTitle:"¿Eliminar documento?",
+        deleteMsg:"¿Seguro que quieres eliminar el documento «{name}»?", savedToast:"Guardado", unsavedTitle:"Cambios sin guardar", unsavedMsg:"Tienes cambios sin guardar. ¿Descartarlos?",
+        geoNoNote:"Abre o guarda un documento primero.", saveError:"No se pudo guardar el documento.",
+        duplicate:"Duplicar", readAloud:"Leer en voz alta", duplicatedToast:"Documento duplicado" },
+  fr: { heading:"Documents", newItem:"Nouveau document", searchPh:"Rechercher des documents…", exportTxt:"Exporter en texte (.txt)", exportHtml:"Exporter en page web (.html)",
+        location:"Placer sur la carte", empty:"Aucun document enregistré.", save:"Enregistrer",
+        untitled:"Document sans titre", deleteTitle:"Supprimer le document ?",
+        deleteMsg:"Voulez-vous vraiment supprimer le document « {name} » ?", savedToast:"Enregistré", unsavedTitle:"Modifications non enregistrées",
+        unsavedMsg:"Vous avez des modifications non enregistrées. Les abandonner ?",
+        geoNoNote:"Ouvrez ou enregistrez d'abord un document.", saveError:"Impossible d'enregistrer le document.",
+        duplicate:"Dupliquer", readAloud:"Lire à voix haute", duplicatedToast:"Document dupliqué" },
+  pt: { heading:"Documentos", newItem:"Novo documento", searchPh:"Pesquisar documentos…", exportTxt:"Exportar como texto (.txt)", exportHtml:"Exportar como página web (.html)",
+        location:"Situar no mapa", empty:"Ainda sem documentos guardados.", save:"Guardar",
+        untitled:"Documento sem título", deleteTitle:"Eliminar documento?",
+        deleteMsg:"Tem a certeza de que quer eliminar o documento «{name}»?", savedToast:"Guardado", unsavedTitle:"Alterações não guardadas", unsavedMsg:"Tens alterações não guardadas. Descartá-las?",
+        geoNoNote:"Abre ou guarda um documento primeiro.", saveError:"Não foi possível guardar o documento.",
+        duplicate:"Duplicar", readAloud:"Ler em voz alta", duplicatedToast:"Documento duplicado" },
+  it: { heading:"Documenti", newItem:"Nuovo documento", searchPh:"Cerca documenti…", exportTxt:"Esporta come testo (.txt)", exportHtml:"Esporta come pagina web (.html)",
+        location:"Colloca sulla mappa", empty:"Ancora nessun documento salvato.", save:"Salva",
+        untitled:"Documento senza titolo", deleteTitle:"Eliminare il documento?",
+        deleteMsg:"Vuoi davvero eliminare il documento «{name}»?", savedToast:"Salvato", unsavedTitle:"Modifiche non salvate", unsavedMsg:"Hai modifiche non salvate. Scartarle?",
+        geoNoNote:"Apri o salva prima un documento.", saveError:"Impossibile salvare il documento.",
+        duplicate:"Duplica", readAloud:"Leggi ad alta voce", duplicatedToast:"Documento duplicato" },
+  de: { heading:"Dokumente", newItem:"Neues Dokument", searchPh:"Dokumente durchsuchen…", exportTxt:"Als Text exportieren (.txt)", exportHtml:"Als Webseite exportieren (.html)",
+        location:"Auf der Karte verorten", empty:"Noch keine gespeicherten Dokumente.", save:"Speichern",
+        untitled:"Unbenanntes Dokument", deleteTitle:"Dokument löschen?",
+        deleteMsg:"Möchtest du das Dokument „{name}“ wirklich löschen?", savedToast:"Gespeichert", unsavedTitle:"Nicht gespeicherte Änderungen",
+        unsavedMsg:"Du hast nicht gespeicherte Änderungen. Verwerfen?",
+        geoNoNote:"Öffne oder speichere zuerst ein Dokument.", saveError:"Dokument konnte nicht gespeichert werden.",
+        duplicate:"Duplizieren", readAloud:"Vorlesen", duplicatedToast:"Dokument dupliziert" },
+  zh: { heading:"文档", newItem:"新建文档", searchPh:"搜索文档…",
+        exportTxt:"导出为文本 (.txt)", exportHtml:"导出为网页 (.html)", location:"在地图上定位",
+        empty:"还没有已保存的文档。", save:"保存", untitled:"未命名文档", deleteTitle:"删除文档？",
+        deleteMsg:"确定要删除文档“{name}”吗？", savedToast:"已保存",
+        unsavedTitle:"未保存的更改", unsavedMsg:"你有未保存的更改，要放弃吗？", geoNoNote:"请先打开或保存一个文档。",
+        saveError:"无法保存文档。", duplicate:"复制", readAloud:"朗读", duplicatedToast:"文档已复制" },
+  hi: { heading:"दस्तावेज़", newItem:"नया दस्तावेज़", searchPh:"दस्तावेज़ खोजें…", exportTxt:"टेक्स्ट के रूप में निर्यात करें (.txt)", exportHtml:"वेब पेज के रूप में निर्यात करें (.html)",
+        location:"मानचित्र पर रखें", empty:"अभी तक कोई सहेजा गया दस्तावेज़ नहीं।", save:"सहेजें",
+        untitled:"शीर्षकहीन दस्तावेज़", deleteTitle:"दस्तावेज़ हटाएँ?",
+        deleteMsg:'क्या आप वाकई दस्तावेज़ "{name}" हटाना चाहते हैं?', savedToast:"सहेजा गया", unsavedTitle:"असहेजे परिवर्तन", unsavedMsg:"आपके पास असहेजे परिवर्तन हैं। उन्हें छोड़ दें?",
+        geoNoNote:"पहले एक दस्तावेज़ खोलें या सहेजें।", saveError:"दस्तावेज़ सहेजा नहीं जा सका।",
+        duplicate:"डुप्लिकेट करें", readAloud:"ज़ोर से पढ़ें", duplicatedToast:"दस्तावेज़ डुप्लिकेट हो गया" },
+  ar: { heading:"المستندات", newItem:"مستند جديد", searchPh:"البحث في المستندات…", exportTxt:"تصدير كنص (.txt)", exportHtml:"تصدير كصفحة ويب (.html)",
+        location:"وضع على الخريطة", empty:"لا توجد مستندات محفوظة بعد.", save:"حفظ",
+        untitled:"مستند بلا عنوان", deleteTitle:"حذف المستند؟",
+        deleteMsg:"هل تريد حقًا حذف المستند «{name}»؟", savedToast:"تم الحفظ", unsavedTitle:"تغييرات غير محفوظة", unsavedMsg:"لديك تغييرات غير محفوظة. هل تريد تجاهلها؟",
+        geoNoNote:"افتح مستندًا أو احفظه أولاً.", saveError:"تعذّر حفظ المستند.",
+        duplicate:"تكرار", readAloud:"قراءة بصوت عالٍ", duplicatedToast:"تم تكرار المستند" },
+  ru: { heading:"Документы", newItem:"Новый документ", searchPh:"Поиск документов…", exportTxt:"Экспорт в текст (.txt)", exportHtml:"Экспорт в веб-страницу (.html)",
+        location:"Указать на карте", empty:"Пока нет сохранённых документов.", save:"Сохранить",
+        untitled:"Документ без названия", deleteTitle:"Удалить документ?",
+        deleteMsg:"Вы уверены, что хотите удалить документ «{name}»?", savedToast:"Сохранено", unsavedTitle:"Несохранённые изменения",
+        unsavedMsg:"У вас есть несохранённые изменения. Отменить их?",
+        geoNoNote:"Сначала откройте или сохраните документ.", saveError:"Не удалось сохранить документ.",
+        duplicate:"Дублировать", readAloud:"Прочитать вслух", duplicatedToast:"Документ продублирован" },
 };
 
 (function () {
@@ -245,12 +192,6 @@ const _LANG = (() => {
 document.documentElement.setAttribute("lang", _LANG);
 if (_LANG === "ar") document.documentElement.setAttribute("dir", "rtl");
 function t(key) { return I18N[_LANG]?.[key] || I18N.en[key] || key; }
-function tfmt(key, params) {
-  let s = t(key);
-  for (const k in (params || {})) s = s.replace(`{${k}}`, params[k]);
-  return s;
-}
-
 function escapeHTML(s = "") { return String(s).replace(/[&<>"']/g, ch => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[ch])); }
 
 let _toastT = null;
@@ -262,48 +203,13 @@ function toast(msg) {
   _toastT = setTimeout(() => el.classList.remove("show"), 2400);
 }
 
-function showConfirmDialog({ title, message, confirmLabel, cancelLabel, onConfirm, onCancel }) {
-  const ov = document.createElement("div");
-  ov.className = "nt-confirm-overlay";
-  const card = document.createElement("div");
-  card.className = "nt-confirm-card";
-  const h = document.createElement("p"); h.className = "nt-confirm-title"; h.textContent = title || "";
-  const m = document.createElement("p"); m.className = "nt-confirm-msg"; m.textContent = message || "";
-  const acts = document.createElement("div"); acts.className = "nt-confirm-actions";
-  const cancel = document.createElement("button"); cancel.className = "nt-btn"; cancel.textContent = cancelLabel || t("cancel");
-  const ok = document.createElement("button"); ok.className = "nt-btn nt-btn--primary"; ok.textContent = confirmLabel || t("ok");
-  acts.append(cancel, ok); card.append(h, m, acts); ov.append(card); document.body.append(ov);
-  const close = () => { ov.remove(); document.removeEventListener("keydown", onKey); };
-  const onKey = e => { if (e.key === "Escape") { close(); onCancel?.(); } };
-  document.addEventListener("keydown", onKey);
-  ov.addEventListener("click", e => { if (e.target === ov) { close(); onCancel?.(); } });
-  cancel.addEventListener("click", () => { close(); onCancel?.(); });
-  ok.addEventListener("click", () => { close(); onConfirm?.(); });
-  ok.focus();
-}
-function showUnsavedConfirm() {
-  return new Promise(resolve => {
-    showConfirmDialog({
-      title: t("unsavedTitle"), message: t("unsavedMsg"),
-      confirmLabel: t("ok"), cancelLabel: t("cancel"),
-      onConfirm: () => resolve(true), onCancel: () => resolve(false)
-    });
-  });
-}
-
 (function () {
   const API = "/api/addon-notes";
-
-  // ── DOM refs ──
-  const notesList     = document.getElementById("notesList");
-  const noteNewBtn     = document.getElementById("noteNewBtn");
-  const noteDelBtn     = document.getElementById("noteDelBtn");
   const noteSaveBtn    = document.getElementById("noteSaveBtn");
   const noteGeoBtn     = document.getElementById("noteGeoBtn");
   const noteTitleInput = document.getElementById("noteTitle");
-  const notesSearchInput = document.getElementById("notesSearch");
 
-  const _state = { items: [], activeId: null, searchQuery: "" };
+  let activeId = null;
   let quill = null;
   let _dirty = false;
 
@@ -313,257 +219,224 @@ function showUnsavedConfirm() {
     const ct = r.headers.get("content-type") || "";
     return ct.includes("application/json") ? r.json() : null;
   }
-
-  function ensureQuill() {
-    if (quill) return;
-    if (!window.Quill) return;
-    quill = new Quill("#quillEditor", { theme: "snow", modules: { toolbar: "#quillToolbar" } });
-    quill.on("text-change", () => { _dirty = true; });
-    noteTitleInput?.addEventListener("input", () => { _dirty = true; });
-  }
-
-  async function loadNotes() {
-    try { _state.items = await _api("/notes"); } catch (e) { console.warn("[NOTES] Error listando notas:", e); _state.items = []; }
-  }
-
-  function renderNotesList() {
-    if (!notesList) return;
-    notesList.innerHTML = "";
-    const q = (_state.searchQuery || "").toLowerCase();
-    const items = (_state.items || []).filter(n => !q || (n.title || "").toLowerCase().includes(q));
-    if (!items.length) {
-      notesList.innerHTML = `<li class="nt-list-empty">${escapeHTML(t("empty"))}</li>`;
-      return;
-    }
-    items.forEach(n => {
-      const li = document.createElement("li");
-      li.dataset.id = n.id;
-      li.textContent = n.title || t("untitled");
-      if (n.id === _state.activeId) li.classList.add("active");
-      li.addEventListener("click", () => openNote(n.id));
-      li.addEventListener("contextmenu", (ev) => { ev.preventDefault(); _showNoteCtxMenu(ev.clientX, ev.clientY, n.id); });
-      notesList.appendChild(li);
-    });
-  }
-
-  // ── Context menu: duplicar / leer en voz alta ─────────────────────────
-  const ctxMenuEl = document.getElementById("ntCtxMenu");
-  function _hideNoteCtxMenu() { ctxMenuEl.classList.remove("show"); }
-  function _showNoteCtxMenu(x, y, id) {
-    ctxMenuEl.innerHTML = "";
-    const mkItem = (icon, label, onClick) => {
-      const it = document.createElement("div");
-      it.className = "nt-ctxmenu-item";
-      it.textContent = `${icon} ${label}`;
-      it.addEventListener("click", () => { _hideNoteCtxMenu(); onClick(); });
-      return it;
-    };
-    ctxMenuEl.appendChild(mkItem("📑", t("duplicateNote"), () => noteDuplicate(id)));
-    ctxMenuEl.appendChild(mkItem("🔊", t("readAloud"), () => noteReadAloud(id)));
-    ctxMenuEl.classList.add("show");
-    const maxX = window.innerWidth - 190, maxY = window.innerHeight - 90;
-    ctxMenuEl.style.left = Math.min(x, Math.max(0, maxX)) + "px";
-    ctxMenuEl.style.top  = Math.min(y, Math.max(0, maxY)) + "px";
-  }
-  document.addEventListener("click", _hideNoteCtxMenu);
-  document.addEventListener("contextmenu", (e) => { if (!e.target.closest(".nt-list li")) _hideNoteCtxMenu(); });
+  const postNote = body => _api("/note", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
 
   function _deltaToPlainText(delta) {
     return (delta?.ops || []).map(op => typeof op.insert === "string" ? op.insert : "").join("");
   }
+  function _snippet(delta) {
+    const s = _deltaToPlainText(delta).replace(/\s+/g, " ").trim();
+    return s.length > 140 ? s.slice(0, 140) + "…" : s;
+  }
+  // Hora de un documento: updated_at del backend; los antiguos solo tienen el id (= Date.now() al crear).
+  function noteTime(n) {
+    if (n.updated) return Number(n.updated) * 1000;
+    if (/^\d{12,}$/.test(String(n.id))) return Number(n.id);
+    return 0;
+  }
+  const toItem = n => ({ id: String(n.id), title: n.title || t("untitled"), time: noteTime(n), snippet: n.snippet || "" });
+  const currentTitle = id => (id === activeId ? (noteTitleInput.value || "").trim() : sb.getItem(id)?.title) || t("untitled");
 
-  async function noteDuplicate(id) {
-    const meta = _state.items.find(n => n.id === id);
-    if (!meta) return;
-    try {
+  async function getDelta(id) {
+    if (id === activeId && quill) return quill.getContents();
+    const full = await _api(`/note?id=${encodeURIComponent(id)}`);
+    return (full && full.delta) || { ops: [] };
+  }
+
+  function setDirty(v) { _dirty = !!v; sb.setDirty(_dirty); }
+  function confirmDiscard() {
+    if (!_dirty || !activeId) return Promise.resolve(true);
+    return sb.dialog({ title: t("unsavedTitle"), message: t("unsavedMsg") });
+  }
+
+  // ── Barra lateral común ─────────────────────────────────────
+  const sb = OflSidebar.create({
+    host: document.querySelector(".nt-view"),
+    before: document.querySelector(".nt-editor"),
+    addonId: "notes", lang: _LANG, toast,
+    strings: { heading: t("heading"), newItem: t("newItem"), searchPh: t("searchPh"), empty: t("empty"),
+               untitled: t("untitled"), deleteTitle: t("deleteTitle"), deleteMsg: t("deleteMsg"), duplicate: t("duplicate") },
+    onOpen: id => openNote(id),
+    onNew: fid => noteNew(fid),
+    async onRename(id, title) {
+      // Se guarda el contenido YA guardado con el título nuevo: los cambios sin
+      // guardar del editor siguen pendientes, igual que antes de renombrar.
       const full = await _api(`/note?id=${encodeURIComponent(id)}`);
+      const saved = await postNote({ id, title, delta: (full && full.delta) || { ops: [] } });
+      sb.upsert({ id, title: saved.title || title, time: (saved.updated_at || Date.now() / 1000) * 1000 });
+      if (id === activeId) noteTitleInput.value = saved.title || title;
+      return id;
+    },
+    async onDuplicate(id) {
+      const delta = await getDelta(id);
       const newId = Date.now().toString();
-      const title = meta.title || t("untitled");
-      const delta = (full && full.delta) || { ops: [] };
-      const saved = await _api("/note", {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: newId, title, delta })
-      });
-      const finalId = saved.id || newId;
-      _state.items.unshift({ id: finalId, title: saved.title || title });
-      renderNotesList();
+      const saved = await postNote({ id: newId, title: currentTitle(id), delta });
+      const finalId = String(saved.id || newId);
+      sb.upsert({ id: finalId, title: saved.title, time: (saved.updated_at || Date.now() / 1000) * 1000, snippet: _snippet(delta) });
       toast(t("duplicatedToast"));
-    } catch (e) {
-      console.error("[NOTES] Error duplicando nota:", e);
-      toast("❌ " + e.message);
-    }
+      return finalId;
+    },
+    async onDelete(id) {
+      await _api(`/note?id=${encodeURIComponent(id)}`, { method: "DELETE" });
+      if (id === activeId) {
+        setTimeout(async () => {
+          const next = sb.newestId();
+          activeId = null; _dirty = false; _notifyActiveChanged();
+          if (next) await openNote(next, { skipDirtyCheck: true });
+          else { noteTitleInput.value = ""; quill?.setText("", "api"); sb.setActive(null); }
+        }, 0);
+      }
+    },
+    menuItems: n => [
+      { icon: "volume-2", label: t("readAloud"), onClick: () => noteReadAloud(n.id) },
+      { icon: "map-pin", label: t("location"), onClick: () => openGeo(n.id) },
+    ],
+    exportItems: n => [
+      { icon: "file-text", label: t("exportTxt"), onClick: () => exportNote(n.id, "txt") },
+      { icon: "file-code", label: t("exportHtml"), onClick: () => exportNote(n.id, "html") },
+    ],
+  });
+
+  function ensureQuill() {
+    if (quill || !window.Quill) return;
+    quill = new Quill("#quillEditor", { theme: "snow", modules: { toolbar: "#quillToolbar" } });
+    quill.on("text-change", (_d, _o, source) => { if (source === "user") setDirty(true); });
+    noteTitleInput.addEventListener("input", () => setDirty(true));
+  }
+
+  async function loadNotes() {
+    try { sb.setItems(((await _api("/notes")) || []).map(toItem)); }
+    catch (e) { console.warn("[NOTES] Error listando notas:", e); sb.setItems([]); }
   }
 
   async function noteReadAloud(id) {
     try {
-      const full = (id === _state.activeId && quill)
-        ? { delta: quill.getContents() }
-        : await _api(`/note?id=${encodeURIComponent(id)}`);
-      const text = _deltaToPlainText(full && full.delta).trim();
+      const text = _deltaToPlainText(await getDelta(id)).trim();
       if (!text) { toast(t("empty")); return; }
       window.parent.postMessage({ action: "speakText", text }, "*");
+    } catch (e) { console.error("[NOTES] Error leyendo nota en voz alta:", e); }
+  }
+
+  function openGeo(id) {
+    try { window.parent.postMessage({ action: "openGeoPicker", kind: "note", ref: id, title: currentTitle(id) }, "*"); } catch (_) {}
+  }
+
+  async function exportNote(id, kind) {
+    const title = currentTitle(id);
+    try {
+      const delta = await getDelta(id);
+      let blob;
+      if (kind === "txt") {
+        blob = new Blob([title + "\n\n" + _deltaToPlainText(delta)], { type: "text/plain;charset=utf-8" });
+      } else {
+        // Quill fuera de pantalla para pasar el delta a HTML con el mismo formato
+        const hostEl = document.createElement("div");
+        hostEl.style.cssText = "position:fixed;left:-10000px;top:0;width:800px;";
+        document.body.append(hostEl);
+        const tmp = new Quill(hostEl, { readOnly: true, modules: { toolbar: false } });
+        tmp.setContents(delta);
+        const body = tmp.root.innerHTML;
+        hostEl.remove();
+        const html = `<!DOCTYPE html>\n<html lang="${_LANG}"${_LANG === "ar" ? ' dir="rtl"' : ""}>\n<head>\n<meta charset="UTF-8">\n` +
+          `<title>${escapeHTML(title)}</title>\n<style>body{font-family:system-ui,sans-serif;max-width:760px;margin:40px auto;padding:0 16px;line-height:1.55;color:#1f1f1f}</style>\n` +
+          `</head>\n<body>\n<h1>${escapeHTML(title)}</h1>\n${body}\n</body>\n</html>\n`;
+        blob = new Blob([html], { type: "text/html;charset=utf-8" });
+      }
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = (title.replace(/[\\/:*?"<>|\u0000-\u001f]+/g, "_").trim() || "note") + "." + kind;
+      document.body.append(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 4000);
     } catch (e) {
-      console.error("[NOTES] Error leyendo nota en voz alta:", e);
+      console.error("[NOTES] Error exportando nota:", e);
+      toast("❌ " + e.message);
     }
   }
 
   function _notifyActiveChanged() {
-    try { window.parent.postMessage({ type: "notesActiveChanged", id: _state.activeId }, "*"); } catch (_) {}
+    try { window.parent.postMessage({ type: "notesActiveChanged", id: activeId }, "*"); } catch (_) {}
   }
 
   async function openNote(id, { skipDirtyCheck = false } = {}) {
-    if (!skipDirtyCheck && _dirty && _state.activeId && _state.activeId !== id) {
-      const leave = await showUnsavedConfirm();
-      if (!leave) return;
-      _dirty = false;
-    }
-    _state.activeId = id;
-    renderNotesList();
+    if (!skipDirtyCheck && activeId !== id && !(await confirmDiscard())) return;
+    _dirty = false;
+    activeId = id;
+    sb.setActive(id);
     _notifyActiveChanged();
-
-    const meta = _state.items.find(n => n.id === id);
-    if (noteTitleInput) noteTitleInput.value = meta?.title || "";
-
+    noteTitleInput.value = sb.getItem(id)?.title || "";
     ensureQuill();
     if (!quill) return;
     try {
       const full = await _api(`/note?id=${encodeURIComponent(id)}`);
-      quill.setContents((full && full.delta) || { ops: [] });
+      quill.setContents((full && full.delta) || { ops: [] }, "api");
     } catch (e) {
       console.warn("[NOTES] Error cargando nota:", e);
-      quill.setText("");
+      quill.setText("", "api");
     }
-    _dirty = false;
+    setDirty(false);
   }
 
-  async function noteNew() {
-    if (_dirty && _state.activeId) {
-      const leave = await showUnsavedConfirm();
-      if (!leave) return;
-      _dirty = false;
-    }
+  async function noteNew(folderId = null) {
+    if (!(await confirmDiscard())) return;
     const id = Date.now().toString();
-    const title = t("untitled");
-    const delta = { ops: [] };
     try {
-      const saved = await _api("/note", {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id, title, delta })
-      });
-      const finalId = saved.id || id;
-      const finalTitle = saved.title || title;
-      _state.items.unshift({ id: finalId, title: finalTitle });
-      _state.activeId = finalId;
-      renderNotesList();
+      const saved = await postNote({ id, title: t("untitled"), delta: { ops: [] } });
+      const finalId = String(saved.id || id);
+      sb.upsert({ id: finalId, title: saved.title || t("untitled"), time: (saved.updated_at || Date.now() / 1000) * 1000, snippet: "" });
+      if (folderId) sb.placeIn(finalId, folderId);
       await openNote(finalId, { skipDirtyCheck: true });
+      noteTitleInput.focus(); noteTitleInput.select();
     } catch (e) {
       console.error("[NOTES] Error creando nota:", e);
       toast("❌ " + e.message);
     }
   }
 
-  async function noteDelete() {
-    if (!_state.activeId) return;
-    const id = _state.activeId;
-    try { await _api(`/note?id=${encodeURIComponent(id)}`, { method: "DELETE" }); }
-    catch (e) { console.error("[NOTES] Error borrando nota:", e); }
-
-    const i = _state.items.findIndex(n => n.id === id);
-    if (i >= 0) _state.items.splice(i, 1);
-    _state.activeId = _state.items[0]?.id || null;
-    _dirty = false;
-    renderNotesList();
-    _notifyActiveChanged();
-
-    if (_state.activeId) {
-      await openNote(_state.activeId, { skipDirtyCheck: true });
-    } else {
-      if (noteTitleInput) noteTitleInput.value = "";
-      if (quill) quill.setText("");
-    }
-  }
-
-  function showNoteDeleteConfirm(name) {
-    showConfirmDialog({
-      title: t("deleteTitle"), message: tfmt("deleteMsg", { name: name || t("untitled") }),
-      confirmLabel: t("del"), cancelLabel: t("cancel"), onConfirm: noteDelete
-    });
-  }
-
   async function noteSave() {
-    const id = _state.activeId;
+    const id = activeId;
     if (!id) return;
-    const idx = _state.items.findIndex(n => n.id === id);
-    if (idx < 0) return;
-
-    const title = (noteTitleInput?.value || "").trim() || t("untitled");
+    const title = (noteTitleInput.value || "").trim() || t("untitled");
     const delta = quill ? quill.getContents() : { ops: [] };
-
     try {
-      const saved = await _api("/note", {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id, title, delta })
-      });
-      _state.items[idx].title = saved.title || title;
-      _dirty = false;
-      renderNotesList();
+      const saved = await postNote({ id, title, delta });
+      setDirty(false);
+      sb.upsert({ id, title: saved.title || title, time: (saved.updated_at || Date.now() / 1000) * 1000, snippet: _snippet(delta) });
       toast(t("savedToast"));
     } catch (e) {
       console.error("[NOTES] Error guardando nota:", e);
-      toast("❌ " + (t("saveError") || e.message));
+      toast("❌ " + t("saveError"));
     }
   }
 
-  // ── Bindings ──────────────────────────────────────────────────
-  noteNewBtn?.addEventListener("click", noteNew);
-  noteDelBtn?.addEventListener("click", () => {
-    if (!_state.activeId) return;
-    const active = _state.items.find(n => n.id === _state.activeId);
-    showNoteDeleteConfirm(active?.title || t("untitled"));
+  noteSaveBtn.addEventListener("click", noteSave);
+  noteGeoBtn.addEventListener("click", () => { if (!activeId) { toast(t("geoNoNote")); return; } openGeo(activeId); });
+  document.addEventListener("keydown", ev => {
+    if ((ev.ctrlKey || ev.metaKey) && !ev.shiftKey && !ev.altKey && ev.key.toLowerCase() === "s") { ev.preventDefault(); noteSave(); }
   });
-  noteSaveBtn?.addEventListener("click", noteSave);
-  noteGeoBtn?.addEventListener("click", () => {
-    const id = _state.activeId;
-    if (!id) { toast(t("geoNoNote")); return; }
-    const title = (noteTitleInput?.value || "").trim() || t("untitled");
-    try { window.parent.postMessage({ action: "openGeoPicker", kind: "note", ref: id, title }, "*"); } catch (_) {}
-  });
-  notesSearchInput?.addEventListener("input", (ev) => { _state.searchQuery = ev.target.value || ""; renderNotesList(); });
-
-  window.addEventListener("beforeunload", (e) => {
-    if (!_dirty) return;
-    e.preventDefault(); e.returnValue = "";
-  });
+  window.addEventListener("beforeunload", e => { if (!_dirty) return; e.preventDefault(); e.returnValue = ""; });
 
   // El host puede pedir refrescar la nota activa tras un append externo
   // (p. ej. "enviar a notas" desde el chat o una wiki).
-  window.addEventListener("message", (e) => {
-    if (e.data?.type === "notesRefreshIfActive" && e.data.id && e.data.id === _state.activeId) {
-      openNote(_state.activeId, { skipDirtyCheck: true });
-    }
+  window.addEventListener("message", e => {
+    if (e.data?.type === "notesRefreshIfActive" && e.data.id && e.data.id === activeId) openNote(activeId, { skipDirtyCheck: true });
   });
 
   async function init() {
-    document.getElementById("noteNewLbl").textContent = t("newBtn");
-    document.getElementById("noteDelLbl").textContent = t("del");
+    OflSidebar.hydrateIcons();
     document.getElementById("noteSaveLbl").textContent = t("save");
-    if (notesSearchInput) notesSearchInput.placeholder = t("searchPh");
-    if (noteTitleInput) noteTitleInput.placeholder = t("untitled");
-
+    noteSaveBtn.title = t("save") + " (Ctrl+S)";
+    noteGeoBtn.title = t("location"); noteGeoBtn.setAttribute("aria-label", t("location"));
+    noteTitleInput.placeholder = t("untitled");
     ensureQuill();
-    await loadNotes();
-    renderNotesList();
+    await Promise.all([loadNotes(), sb.ready]);
 
     // Deep-link: el host puede pedir abrir directamente una nota concreta
     // (p. ej. desde Mapas, Buscador global, Timeline o Calendario).
-    const deepLinkNote = new URLSearchParams(location.search).get("note");
-    if (deepLinkNote && _state.items.some(n => n.id === deepLinkNote)) {
-      await openNote(deepLinkNote, { skipDirtyCheck: true });
-    } else if (_state.items.length) {
-      await openNote(_state.items[0].id, { skipDirtyCheck: true });
-    } else {
-      await noteNew();
-    }
+    const deep = new URLSearchParams(location.search).get("note");
+    if (deep && sb.getItem(deep)) { sb.revealFolderOf(deep); await openNote(deep, { skipDirtyCheck: true }); }
+    else if (sb.newestId()) await openNote(sb.newestId(), { skipDirtyCheck: true });
+    else await noteNew();
   }
   init();
 })();
