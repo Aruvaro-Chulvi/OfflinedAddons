@@ -60,8 +60,6 @@
         <div class="sec-b">
           <div class="opt"><span data-t="theme"></span>
             <div class="seg" id="themeSeg"><button data-v="auto" data-t="auto"></button><button data-v="light" data-t="light"></button><button data-v="dark" data-t="dark"></button></div></div>
-          <div class="opt"><span data-t="defSize"></span>
-            <select id="defSize"><option value="256">256 px</option><option value="512">512 px</option><option value="1024">1024 px</option><option value="2048">2048 px</option></select></div>
         </div>
       </div>
       <div class="privacy"><svg class="i"><use href="#i-shield"/></svg><span data-t="privacy"></span></div>
@@ -80,77 +78,29 @@
     </div>
 
     <div class="cols">
-      <div class="editor">
+      <div class="col content-col">
         <div class="types" id="types"></div>
-
         <section class="card">
           <h3 data-t="content"></h3>
           <div class="help" id="typeHelp"></div>
           <div class="fields" id="fields"></div>
         </section>
-
-        <section class="card">
-          <h3 data-t="design"></h3>
-
-          <div class="lbl" data-t="presets"></div>
-          <div class="presets" id="presets"></div>
-
-          <div class="lbl" data-t="colors"></div>
-          <div class="colors">
-            <label class="color"><input type="color" id="cFg"><span data-t="fg"></span></label>
-            <label class="color" id="cFg2Wrap"><input type="color" id="cFg2"><span data-t="fg2"></span></label>
-            <label class="color" id="cBgWrap"><input type="color" id="cBg"><span data-t="bg"></span></label>
-            <label class="color" id="cEyeWrap"><input type="color" id="cEye"><span data-t="eyeColor"></span></label>
-          </div>
-          <div class="opt"><span data-t="gradient"></span><button class="sw" data-k="gradient"></button></div>
-          <div class="seg full" id="gradSeg"><button data-v="diag" data-t="dir_diag"></button><button data-v="vert" data-t="dir_vert"></button><button data-v="horiz" data-t="dir_horiz"></button><button data-v="radial" data-t="dir_radial"></button></div>
-          <div class="opt"><span data-t="transparent"></span><button class="sw" data-k="transparent"></button></div>
-          <div class="opt"><span data-t="eyeSame"></span><button class="sw" data-k="eyeSame"></button></div>
-
-          <div class="lbl" data-t="bodyShape"></div>
-          <div class="shapes" id="bodySeg"></div>
-          <div class="lbl" data-t="eyeShape"></div>
-          <div class="shapes" id="eyeSeg"></div>
-
-          <div class="lbl" data-t="logo"></div>
-          <div class="logo-row">
-            <div class="logo-prev" id="logoPrev"><svg class="i"><use href="#i-image"/></svg></div>
-            <button class="btn" id="logoAdd"><span data-t="logoAdd"></span></button>
-            <button class="btn" id="logoDel" hidden><span data-t="logoRemove"></span></button>
-            <input type="file" id="logoFile" accept="image/*" hidden>
-          </div>
-          <div id="logoOpts" hidden>
-            <div class="opt"><span data-t="logoSize"></span><input type="range" id="logoSize" min="14" max="28" step="1"></div>
-            <div class="opt"><span data-t="logoPad"></span><button class="sw" data-k="logoPad"></button></div>
-            <div class="opt"><span data-t="logoRound"></span><button class="sw" data-k="logoRound"></button></div>
-            <div class="help" data-t="logoNote"></div>
-          </div>
-
-          <div class="lbl" data-t="caption"></div>
-          <input class="in" id="caption" maxlength="60" autocomplete="off">
-
-          <div class="opt"><span data-t="margin"></span><input type="range" id="margin" min="0" max="8" step="1"><b class="val" id="marginVal"></b></div>
-
-          <div class="lbl" data-t="ecc"></div>
-          <div class="seg full" id="eccSeg"><button data-v="L"></button><button data-v="M"></button><button data-v="Q"></button><button data-v="H"></button></div>
-          <div class="help" data-t="eccHelp"></div>
-
-          <button class="link-btn" id="resetDesign"><svg class="i"><use href="#i-rotate"/></svg><span data-t="resetDesign"></span></button>
-        </section>
       </div>
 
-      <div class="preview-col">
+      <div class="col preview-col">
         <div class="preview card">
-          <div class="qr-box" id="qrBox"></div>
-          <div class="qr-empty" id="qrEmpty"><svg class="i"><use href="#i-qr"/></svg><span id="qrEmptyTxt"></span></div>
+          <div class="qr-stage">
+            <div class="qr-box" id="qrBox"></div>
+            <div class="qr-empty" id="qrEmpty"><svg class="i"><use href="#i-qr"/></svg><span id="qrEmptyTxt"></span></div>
+          </div>
           <div class="info" id="qrInfo"></div>
           <div class="warns" id="warns"></div>
 
           <div class="export">
             <div class="opt"><span data-t="exportSize"></span>
-              <select id="expSize"><option value="256">256 px</option><option value="512">512 px</option><option value="1024">1024 px</option><option value="2048">2048 px</option></select></div>
+              <div class="seg" id="expSeg"><button data-v="256">256</button><button data-v="512">512</button><button data-v="1024">1024</button><button data-v="2048">2048</button></div></div>
             <div class="ex-btns">
-              <button class="btn primary" id="pngBtn"><svg class="i"><use href="#i-download"/></svg><span data-t="png"></span></button>
+              <button class="btn primary big" id="pngBtn"><svg class="i"><use href="#i-download"/></svg><span data-t="png"></span></button>
               <button class="btn" id="svgBtn"><svg class="i"><use href="#i-download"/></svg><span data-t="svg"></span></button>
               <button class="btn" id="copyBtn"><svg class="i"><use href="#i-copy"/></svg><span data-t="copy"></span></button>
               <button class="btn" id="printBtn"><svg class="i"><use href="#i-printer"/></svg><span data-t="print"></span></button>
@@ -159,6 +109,69 @@
 
           <details class="payload"><summary><svg class="i"><use href="#i-eye"/></svg><span data-t="seeContent"></span></summary><pre id="payload"></pre></details>
         </div>
+      </div>
+
+      <div class="col design-col">
+        <section class="card design">
+          <div class="design-h"><h3 data-t="design"></h3>
+            <button class="link-btn" id="resetDesign"><svg class="i"><use href="#i-rotate"/></svg><span data-t="resetDesign"></span></button></div>
+
+          <details class="grp" open data-g="style">
+            <summary><span data-t="presets"></span><svg class="i chev"><use href="#i-chev"/></svg></summary>
+            <div class="presets" id="presets"></div>
+          </details>
+
+          <details class="grp" open data-g="colors">
+            <summary><span data-t="colors"></span><span class="sum" id="sumColors"></span><svg class="i chev"><use href="#i-chev"/></svg></summary>
+            <div class="colors">
+              <label class="color"><input type="color" id="cFg"><span data-t="fg"></span></label>
+              <label class="color" id="cBgWrap"><input type="color" id="cBg"><span data-t="bg"></span></label>
+              <label class="color" id="cFg2Wrap"><input type="color" id="cFg2"><span data-t="fg2"></span></label>
+              <label class="color" id="cEyeWrap"><input type="color" id="cEye"><span data-t="eyeColor"></span></label>
+            </div>
+            <div class="opt"><span data-t="gradient"></span><button class="sw" data-k="gradient"></button></div>
+            <div class="seg full" id="gradSeg"><button data-v="diag" data-t="dir_diag"></button><button data-v="vert" data-t="dir_vert"></button><button data-v="horiz" data-t="dir_horiz"></button><button data-v="radial" data-t="dir_radial"></button></div>
+            <div class="opt"><span data-t="transparent"></span><button class="sw" data-k="transparent"></button></div>
+            <div class="opt"><span data-t="eyeSame"></span><button class="sw" data-k="eyeSame"></button></div>
+          </details>
+
+          <details class="grp" open data-g="shapes">
+            <summary><span data-t="shapes"></span><span class="sum" id="sumShapes"></span><svg class="i chev"><use href="#i-chev"/></svg></summary>
+            <div class="lbl" data-t="bodyShape"></div>
+            <div class="shapes" id="bodySeg"></div>
+            <div class="lbl" data-t="eyeShape"></div>
+            <div class="shapes" id="eyeSeg"></div>
+          </details>
+
+          <details class="grp" data-g="logo">
+            <summary><span data-t="logo"></span><span class="sum" id="sumLogo"></span><svg class="i chev"><use href="#i-chev"/></svg></summary>
+            <div class="logo-row">
+              <div class="logo-prev" id="logoPrev"><svg class="i"><use href="#i-image"/></svg></div>
+              <button class="btn" id="logoAdd"><span data-t="logoAdd"></span></button>
+              <button class="btn" id="logoDel" hidden><span data-t="logoRemove"></span></button>
+              <input type="file" id="logoFile" accept="image/*" hidden>
+            </div>
+            <div id="logoOpts" hidden>
+              <div class="opt"><span data-t="logoSize"></span><input type="range" id="logoSize" min="14" max="28" step="1"></div>
+              <div class="opt"><span data-t="logoPad"></span><button class="sw" data-k="logoPad"></button></div>
+              <div class="opt"><span data-t="logoRound"></span><button class="sw" data-k="logoRound"></button></div>
+            </div>
+            <div class="help" data-t="logoNote"></div>
+          </details>
+
+          <details class="grp" data-g="text">
+            <summary><span data-t="textMargin"></span><span class="sum" id="sumText"></span><svg class="i chev"><use href="#i-chev"/></svg></summary>
+            <div class="lbl" data-t="caption"></div>
+            <input class="in" id="caption" maxlength="60" autocomplete="off">
+            <div class="opt"><span data-t="margin"></span><input type="range" id="margin" min="0" max="8" step="1"><b class="val" id="marginVal"></b></div>
+          </details>
+
+          <details class="grp" data-g="ecc">
+            <summary><span data-t="ecc"></span><span class="sum" id="sumEcc"></span><svg class="i chev"><use href="#i-chev"/></svg></summary>
+            <div class="seg full" id="eccSeg"><button data-v="L"></button><button data-v="M"></button><button data-v="Q"></button><button data-v="H"></button></div>
+            <div class="help" data-t="eccHelp"></div>
+          </details>
+        </section>
       </div>
     </div>
 

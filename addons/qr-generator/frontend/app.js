@@ -378,6 +378,12 @@
       b.classList.toggle('on', Object.keys(p).every((k) => k === 'fg2' && !d.gradient ? true : String(d[k]) === String(p[k]) || (k === 'eyeColor' && d.eyeSame !== false)));
     });
     $('logoOpts').hidden = !d.logo;
+    const sw2 = (c) => '<i style="background:' + c + '"></i>';
+    $('sumColors').innerHTML = sw2(d.fg) + (d.gradient ? sw2(d.fg2) : '') + (d.eyeSame === false ? sw2(d.eyeColor) : '') + (d.transparent ? '' : sw2(d.bg));
+    $('sumShapes').textContent = t('body_' + d.body) + ' · ' + t('eyes_' + d.eyes);
+    $('sumLogo').textContent = d.logo ? '✓' : '';
+    $('sumText').textContent = (d.caption || '').trim() ? '«' + d.caption.trim().slice(0, 14) + '»' : String(d.margin);
+    $('sumEcc').textContent = ecl + ' · ' + t('ecc_' + ecl);
     $('logoDel').hidden = !d.logo;
     $('logoPrev').innerHTML = d.logo ? '<img alt="" src="' + d.logo.src + '">' : '<svg class="i"><use href="#i-image"/></svg>';
     if (d.logo) $('logoSize').value = Math.round((d.logo.size || 0.22) * 100);
@@ -412,7 +418,7 @@
     exp.forEach((id) => { $(id).disabled = false; });
     const q = r.qr, d = cur.design;
     box.hidden = false; emp.hidden = true;
-    box.classList.toggle('checker', !!d.transparent);
+    box.parentElement.classList.toggle('checker', !!d.transparent);
     box.innerHTML = R.svg(q, d).svg;
     lastInfo = { ok: true, pct: Math.round((q.dataBits / q.capacityBits) * 100) };
     const W = q.size + 2 * (d.margin == null ? 4 : d.margin);
@@ -450,12 +456,12 @@
   }
   async function pngBlob() {
     const o = R.svg(lastQR, cur.design);
-    return R.png(o.svg, o.w, o.h, +$('expSize').value || 1024);
+    return R.png(o.svg, o.w, o.h, settings().size || 1024);
   }
   $('pngBtn').onclick = async () => { if (!lastQR) return; try { saveFile(await pngBlob(), fileBase() + '.png'); } catch (_) { toast(t('exportFail'), true); } };
   $('svgBtn').onclick = () => {
     if (!lastQR) return;
-    const o = R.svg(lastQR, cur.design, { px: +$('expSize').value || 1024 });
+    const o = R.svg(lastQR, cur.design, { px: settings().size || 1024 });
     saveFile(new Blob(['<?xml version="1.0" encoding="UTF-8"?>\n' + o.svg], { type: 'image/svg+xml' }), fileBase() + '.svg');
   };
   $('copyBtn').onclick = async () => {
@@ -466,8 +472,7 @@
       toast(t('copied'));
     } catch (_) { toast(t('copyFail'), true); }
   };
-  $('expSize').onchange = () => { settings().size = +$('expSize').value; $('defSize').value = $('expSize').value; save(); };
-  $('defSize').onchange = () => { settings().size = +$('defSize').value; $('expSize').value = $('defSize').value; save(); };
+  document.querySelectorAll('#expSeg button').forEach((b) => { b.onclick = () => { settings().size = +b.dataset.v; renderSettings(); save(); }; });
 
   // Print
   let printN = 1, printCap = true;
@@ -539,9 +544,16 @@
   $('search').oninput = renderList;
   document.querySelector('#setSec .sec-h').onclick = () => $('setSec').classList.toggle('closed');
   document.querySelectorAll('#themeSeg button').forEach((b) => { b.onclick = () => { settings().theme = b.dataset.v; renderSettings(); applyTheme(); save(); }; });
+  function initGroups() {
+    const open = settings().groups;
+    document.querySelectorAll('details.grp').forEach((g) => {
+      if (open && typeof open[g.dataset.g] === 'boolean') g.open = open[g.dataset.g];
+      g.addEventListener('toggle', () => { const o = settings().groups = settings().groups || {}; o[g.dataset.g] = g.open; save(); });
+    });
+  }
   function renderSettings() {
     document.querySelectorAll('#themeSeg button').forEach((b) => b.classList.toggle('on', b.dataset.v === settings().theme));
-    $('defSize').value = String(settings().size); $('expSize').value = String(settings().size);
+    document.querySelectorAll('#expSeg button').forEach((b) => b.classList.toggle('on', +b.dataset.v === +settings().size));
   }
   const openDrawer = () => $('app').classList.add('drawer');
   const closeDrawer = () => $('app').classList.remove('drawer');
@@ -567,6 +579,7 @@
     buildDesignStatic();
     applyTexts();
     renderSettings();
+    initGroups();
     const u = me();
     open(u.items.find((x) => x.id === u.current) || u.items[0] || newItem('url'));
   })();

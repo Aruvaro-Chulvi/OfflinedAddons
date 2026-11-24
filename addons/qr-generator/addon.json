@@ -1,7 +1,7 @@
 {
   "id": "qr-generator",
   "name": "QR Generator",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "author": "Álvaro C. Chulvi",
   "description": "Make QR codes for links, Wi‑Fi, contacts, email, phone, SMS, WhatsApp, places, events and text. Colours, shapes, a logo and a caption; save as PNG or SVG, copy or print label sheets. Static codes that never expire, made on your computer.",
   "icon": "🔳",

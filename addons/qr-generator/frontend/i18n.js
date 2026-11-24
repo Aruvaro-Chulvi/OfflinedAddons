@@ -44,7 +44,7 @@ window.QR_I18N = {
     savedTo: "Saved in Offlined Exports: {f}", downloaded: "Downloaded: {f}", copied: "Image copied to the clipboard.",
     copyFail: "Could not copy. Save it as PNG instead.", exportFail: "Could not save the file.",
     printTitle: "Print", printOne: "One large", printSheet: "Sheet of 12 labels", printMany: "Sheet of 35 small ones", printBtn: "Print",
-    printCaption: "Show the name under each one", imgTooBig: "That image could not be opened.",
+    printCaption: "Show the name under each one", imgTooBig: "That image could not be opened.", shapes: "Shapes", textMargin: "Caption & margin",
   },
   es: {
     appName: "Generador de QR", newQR: "Nuevo QR", search: "Buscar", myQR: "Mis QR", emptyList: "Aquí aparecerán tus códigos QR.",
@@ -90,7 +90,7 @@ window.QR_I18N = {
     savedTo: "Guardado en Offlined Exports: {f}", downloaded: "Descargado: {f}", copied: "Imagen copiada al portapapeles.",
     copyFail: "No se pudo copiar. Guárdalo en PNG.", exportFail: "No se pudo guardar el archivo.",
     printTitle: "Imprimir", printOne: "Uno grande", printSheet: "Hoja de 12 etiquetas", printMany: "Hoja de 35 pequeños", printBtn: "Imprimir",
-    printCaption: "Poner el nombre debajo de cada uno", imgTooBig: "No se pudo abrir esa imagen.",
+    printCaption: "Poner el nombre debajo de cada uno", imgTooBig: "No se pudo abrir esa imagen.", shapes: "Formas", textMargin: "Texto y margen",
   },
   fr: {
     appName: "Générateur de QR", newQR: "Nouveau QR code", search: "Rechercher", myQR: "Mes QR codes", emptyList: "Tes QR codes apparaîtront ici.",
@@ -136,7 +136,7 @@ window.QR_I18N = {
     savedTo: "Enregistré dans Offlined Exports : {f}", downloaded: "Téléchargé : {f}", copied: "Image copiée dans le presse-papiers.",
     copyFail: "Impossible de copier. Enregistre-le en PNG.", exportFail: "Impossible d'enregistrer le fichier.",
     printTitle: "Imprimer", printOne: "Un grand", printSheet: "Planche de 12 étiquettes", printMany: "Planche de 35 petits", printBtn: "Imprimer",
-    printCaption: "Afficher le nom sous chacun", imgTooBig: "Impossible d'ouvrir cette image.",
+    printCaption: "Afficher le nom sous chacun", imgTooBig: "Impossible d'ouvrir cette image.", shapes: "Formes", textMargin: "Légende et marge",
   },
   pt: {
     appName: "Gerador de QR", newQR: "Novo QR", search: "Pesquisar", myQR: "Os meus QR", emptyList: "Os teus códigos QR vão aparecer aqui.",
@@ -182,7 +182,7 @@ window.QR_I18N = {
     savedTo: "Guardado em Offlined Exports: {f}", downloaded: "Transferido: {f}", copied: "Imagem copiada para a área de transferência.",
     copyFail: "Não foi possível copiar. Guarda-o em PNG.", exportFail: "Não foi possível guardar o ficheiro.",
     printTitle: "Imprimir", printOne: "Um grande", printSheet: "Folha de 12 etiquetas", printMany: "Folha de 35 pequenos", printBtn: "Imprimir",
-    printCaption: "Pôr o nome por baixo de cada um", imgTooBig: "Não foi possível abrir essa imagem.",
+    printCaption: "Pôr o nome por baixo de cada um", imgTooBig: "Não foi possível abrir essa imagem.", shapes: "Formas", textMargin: "Legenda e margem",
   },
   it: {
     appName: "Generatore di QR", newQR: "Nuovo QR", search: "Cerca", myQR: "I miei QR", emptyList: "I tuoi codici QR appariranno qui.",
@@ -228,7 +228,7 @@ window.QR_I18N = {
     savedTo: "Salvato in Offlined Exports: {f}", downloaded: "Scaricato: {f}", copied: "Immagine copiata negli appunti.",
     copyFail: "Impossibile copiare. Salvalo come PNG.", exportFail: "Impossibile salvare il file.",
     printTitle: "Stampa", printOne: "Uno grande", printSheet: "Foglio da 12 etichette", printMany: "Foglio da 35 piccoli", printBtn: "Stampa",
-    printCaption: "Mostra il nome sotto ognuno", imgTooBig: "Impossibile aprire quell'immagine.",
+    printCaption: "Mostra il nome sotto ognuno", imgTooBig: "Impossibile aprire quell'immagine.", shapes: "Forme", textMargin: "Didascalia e margine",
   },
   de: {
     appName: "QR-Generator", newQR: "Neuer QR-Code", search: "Suchen", myQR: "Meine QR-Codes", emptyList: "Deine QR-Codes erscheinen hier.",
@@ -274,7 +274,7 @@ window.QR_I18N = {
     savedTo: "Gespeichert in Offlined Exports: {f}", downloaded: "Heruntergeladen: {f}", copied: "Bild in die Zwischenablage kopiert.",
     copyFail: "Kopieren nicht möglich. Speichere ihn als PNG.", exportFail: "Die Datei konnte nicht gespeichert werden.",
     printTitle: "Drucken", printOne: "Ein großer", printSheet: "Bogen mit 12 Etiketten", printMany: "Bogen mit 35 kleinen", printBtn: "Drucken",
-    printCaption: "Namen unter jedem anzeigen", imgTooBig: "Dieses Bild konnte nicht geöffnet werden.",
+    printCaption: "Namen unter jedem anzeigen", imgTooBig: "Dieses Bild konnte nicht geöffnet werden.", shapes: "Formen", textMargin: "Beschriftung & Rand",
   },
   zh: {
     appName: "二维码生成器", newQR: "新建二维码", search: "搜索", myQR: "我的二维码", emptyList: "你的二维码会显示在这里。",
@@ -320,7 +320,7 @@ window.QR_I18N = {
     savedTo: "已保存到 Offlined Exports：{f}", downloaded: "已下载：{f}", copied: "图片已复制到剪贴板。",
     copyFail: "无法复制，请改为保存 PNG。", exportFail: "无法保存文件。",
     printTitle: "打印", printOne: "单个大图", printSheet: "12 张标签", printMany: "35 个小码", printBtn: "打印",
-    printCaption: "在每个二维码下显示名称", imgTooBig: "无法打开该图片。",
+    printCaption: "在每个二维码下显示名称", imgTooBig: "无法打开该图片。", shapes: "形状", textMargin: "文字与边距",
   },
   hi: {
     appName: "QR जनरेटर", newQR: "नया QR", search: "खोजें", myQR: "मेरे QR", emptyList: "आपके QR कोड यहाँ दिखेंगे।",
@@ -366,7 +366,7 @@ window.QR_I18N = {
     savedTo: "Offlined Exports में सहेजा गया: {f}", downloaded: "डाउनलोड हुआ: {f}", copied: "छवि क्लिपबोर्ड पर कॉपी हो गई।",
     copyFail: "कॉपी नहीं हो सका। इसे PNG के रूप में सहेजें।", exportFail: "फ़ाइल सहेजी नहीं जा सकी।",
     printTitle: "प्रिंट", printOne: "एक बड़ा", printSheet: "12 लेबल की शीट", printMany: "35 छोटे वाली शीट", printBtn: "प्रिंट",
-    printCaption: "हर एक के नीचे नाम दिखाएँ", imgTooBig: "वह छवि खोली नहीं जा सकी।",
+    printCaption: "हर एक के नीचे नाम दिखाएँ", imgTooBig: "वह छवि खोली नहीं जा सकी।", shapes: "आकार", textMargin: "टेक्स्ट और मार्जिन",
   },
   ar: {
     appName: "مولّد QR", newQR: "QR جديد", search: "بحث", myQR: "رموز QR الخاصة بي", emptyList: "ستظهر رموز QR الخاصة بك هنا.",
@@ -412,7 +412,7 @@ window.QR_I18N = {
     savedTo: "تم الحفظ في Offlined Exports: {f}", downloaded: "تم التنزيل: {f}", copied: "تم نسخ الصورة إلى الحافظة.",
     copyFail: "تعذّر النسخ. احفظه بصيغة PNG.", exportFail: "تعذّر حفظ الملف.",
     printTitle: "طباعة", printOne: "واحد كبير", printSheet: "ورقة من 12 ملصقًا", printMany: "ورقة من 35 صغيرًا", printBtn: "طباعة",
-    printCaption: "إظهار الاسم أسفل كل رمز", imgTooBig: "تعذّر فتح هذه الصورة.",
+    printCaption: "إظهار الاسم أسفل كل رمز", imgTooBig: "تعذّر فتح هذه الصورة.", shapes: "الأشكال", textMargin: "النص والهامش",
   },
   ru: {
     appName: "Генератор QR", newQR: "Новый QR", search: "Поиск", myQR: "Мои QR", emptyList: "Здесь появятся твои QR-коды.",
@@ -458,6 +458,6 @@ window.QR_I18N = {
     savedTo: "Сохранено в Offlined Exports: {f}", downloaded: "Скачано: {f}", copied: "Изображение скопировано в буфер обмена.",
     copyFail: "Не удалось скопировать. Сохрани как PNG.", exportFail: "Не удалось сохранить файл.",
     printTitle: "Печать", printOne: "Один большой", printSheet: "Лист из 12 наклеек", printMany: "Лист из 35 маленьких", printBtn: "Печать",
-    printCaption: "Показывать название под каждым", imgTooBig: "Не удалось открыть это изображение.",
+    printCaption: "Показывать название под каждым", imgTooBig: "Не удалось открыть это изображение.", shapes: "Формы", textMargin: "Подпись и поля",
   },
 };
