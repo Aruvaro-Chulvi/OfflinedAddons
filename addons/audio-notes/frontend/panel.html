@@ -399,6 +399,13 @@ function showConfirmDialog({ title, message, confirmLabel, cancelLabel, onConfir
 
   // ── Visualizer ──────────────────────────────────────────────
   const _viz = { recCtx:null, recAnalyser:null, playCtx:null, playSource:null, playAnalyser:null, analyser:null, raf:null, mode:null };
+  // Silencio general de Offlined 4 («ofl:mute»): la reproducción pasa por Web Audio (para el visualizador), así que se calla aquí
+  let _oflMuted = false;
+  window.addEventListener("message", (e) => {
+    if (e.origin !== location.origin || !e.data || e.data.type !== "ofl:mute") return;
+    _oflMuted = !!e.data.on;
+    if (_viz.playCtx) { if (_oflMuted) _viz.playCtx.suspend().catch(() => {}); else _viz.playCtx.resume().catch(() => {}); }
+  });
 
   function _vizGetCanvas() { return document.getElementById("audioVisualizer"); }
   function _vizResize() {
@@ -434,7 +441,7 @@ function showConfirmDialog({ title, message, confirmLabel, cancelLabel, onConfir
         _viz.playSource.connect(_viz.playAnalyser);
         _viz.playAnalyser.connect(_viz.playCtx.destination);
       }
-      if (_viz.playCtx.state === "suspended") _viz.playCtx.resume();
+      if (_viz.playCtx.state === "suspended" && !_oflMuted) _viz.playCtx.resume();
       _viz.analyser = _viz.playAnalyser; _viz.mode = "play";
       _vizResize(); _vizHideIdle(); _vizDraw();
     } catch (e) { console.warn("[viz] playStart error:", e); }

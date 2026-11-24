@@ -10,7 +10,8 @@ Cuando el usuario abre tu addon, Offlined carga
 /addon-panels/<id>/frontend/panel.html?theme=dark&lang=es
 ```
 
-dentro de un `<iframe>` aislado (`allow-scripts allow-same-origin allow-forms allow-popups allow-modals`) que
+dentro de un `<iframe>` aislado (`allow-scripts allow-same-origin allow-forms allow-popups allow-modals
+allow-pointer-lock`; el bloqueo del puntero, desde Offlined 4) que
 ocupa la ventana de Offlined bajo una pequeña barra de título con tu icono, nombre, versión y autor.
 
 - Todos los archivos de tu carpeta `frontend/` se sirven del mismo modo: `frontend/style.css` es
@@ -19,6 +20,19 @@ ocupa la ventana de Offlined bajo una pequeña barra de título con tu icono, no
   abrió el panel.
 - No hay nada antes ni después: ni gancho de instalación ni proceso en segundo plano. El `<script>` de tu propia página es
   toda la vida de tu addon, desde el momento en que el usuario lo abre hasta que sale de él.
+
+## Cuando el usuario sale
+
+Desde Offlined 4, **tu página se cierra cuando el usuario va a otra sección** de Offlined, y se carga otra vez desde
+cero cuando vuelve (Offlined 3 la dejaba cargada y oculta, con su sonido). Por eso:
+
+- **Guarda sobre la marcha**, en tu [almacén](04-storage-and-api.md), no solo cuando el usuario pulse un botón: lo
+  que solo esté en memoria se pierde al salir.
+- Si hay algo que **no se puede guardar** y se perdería (una partida en curso, una grabación), díselo a Offlined
+  mientras dure, y Offlined preguntará al usuario antes de cerrar tu panel
+  ([`oflAddonBusy`](04-storage-and-api.md#algo-en-curso-ofladdonbusy)).
+- Cuando el usuario minimiza Offlined, tu página sigue abierta pero oculta (`document.hidden`): pausa tu juego y tu
+  sonido.
 
 ## Tu página va por su cuenta
 
@@ -39,11 +53,11 @@ Usa los mismos nombres de color y valores que Offlined y tu addon se verá nativ
 ```css
 :root {
   --bg: #f6f6f6; --panel: #ffffff; --ink: #1f1f1f; --muted: #d6d6d6;
-  --soft: #e9e9e9; --subtle: #6b7280; --accent: #2d2d2d;
+  --soft: #e9e9e9; --subtle: #666666; --accent: #2d2d2d; --accent-line: #2d2d2d;
 }
 [data-theme="dark"] {
   --bg: #0f0f10; --panel: #17181a; --ink: #e9e9ea; --muted: #2b2c31;
-  --soft: #222327; --subtle: #9a9a9a; --accent: #dedede;
+  --soft: #222327; --subtle: #9a9a9a; --accent: #dedede; --accent-line: #6b6d75;
 }
 body { background: var(--bg); color: var(--ink); font-family: system-ui, sans-serif; }
 ```
@@ -56,14 +70,17 @@ const theme = params.get("theme") || (matchMedia("(prefers-color-scheme: dark)")
 document.documentElement.dataset.theme = theme;
 
 window.addEventListener("message", (e) => {
+  if (e.origin !== location.origin) return;   // solo de Offlined
   if (e.data?.type === "theme") document.documentElement.dataset.theme = e.data.value;
 });
 ```
 
 ### El aspecto de Offlined
 
-- Los botones son planos: un borde fino, sin sombra. Marca el estado seleccionado o activo con un cambio de color, no con
-  una sombra ni con relieve.
+- Los botones son planos: un borde fino, sin sombra. El botón principal es gris, no de color: `var(--soft)` con borde
+  `var(--accent-line)`. Marca el estado seleccionado o activo del mismo modo: un cambio de color, nunca una sombra ni
+  relieve.
+- Deja el color para tu contenido (un tablero, un gráfico), no para los botones y paneles de alrededor.
 - Esquinas redondeadas de 8–14 px, espaciado generoso, fuente del sistema.
 - Iconos: emoji, o SVG de [Lucide](https://lucide.dev) (ISC) dentro de tu carpeta.
 
@@ -83,6 +100,32 @@ document.getElementById("save").textContent = t("save");
 
 Para el árabe, define `document.documentElement.dir = "rtl"` cuando `lang === "ar"`. No hay ningún mensaje cuando el usuario
 cambia el idioma mientras tu addon está abierto: verá el nuevo idioma la próxima vez que lo abra.
+
+## Sonido
+
+Si tu addon reproduce sonido o música:
+
+- **Respeta el silencio general de Offlined.** Cuando el usuario pulsa el botón de silencio que hay junto a las banderas
+  de idioma, Offlined envía `{ type: "ofl:mute", on: true }` a tu panel (y lo repite cada segundo mientras siga
+  puesto); `on: false` cuando se quita. Offlined silencia él mismo los elementos `<audio>` y `<video>`, pero el sonido
+  hecho con Web Audio lo tienes que callar tú.
+- **Calla cuando no se te ve:** suspende tu `AudioContext` mientras `document.hidden`.
+- Empieza el audio tras el primer clic o tecla del usuario (regla del navegador), y dale un interruptor o un volumen.
+
+```js
+let ctx = null, master = null, oflMuted = false;   // master: un GainNode justo antes de ctx.destination
+window.addEventListener("message", (e) => {
+  if (e.origin !== location.origin || e.data?.type !== "ofl:mute") return;
+  oflMuted = !!e.data.on;
+  if (master) master.gain.value = oflMuted ? 0 : 1;
+});
+document.addEventListener("visibilitychange", () => {
+  if (!ctx) return;
+  if (document.hidden) ctx.suspend(); else ctx.resume();
+});
+```
+
+`ofl:mute` es nuevo en Offlined 4; las versiones anteriores nunca lo envían, y tu código simplemente no lo recibe.
 
 ## Librerías
 
@@ -112,3 +155,5 @@ futura. Si tu addon depende de una, define `min_offlined` y pruébalo con cada n
   archivos comprimidos y archivos ocultos.
 - Hasta **25 MB** por archivo y **50 MB** por addon. Cuanto menos, mejor: cada byte lo descarga todo el que lo
   instala.
+- **Las descargas están bloqueadas** dentro del panel (el aislamiento no tiene `allow-downloads`). Para darle un archivo
+  al usuario, guárdalo en su carpeta *Exportaciones*: [guardar un archivo para el usuario](04-storage-and-api.md#guardar-un-archivo-para-el-usuario).

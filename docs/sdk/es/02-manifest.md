@@ -3,22 +3,22 @@
 *[Read in English](../02-manifest.md)* · [Índice del SDK](README.md)
 
 Todo addon tiene un `addon.json` en la raíz de su carpeta: UTF-8, sin BOM. Este es el manifiesto real del
-addon Pizarra (abreviado):
+addon Sudoku (abreviado):
 
 ```json
 {
-  "id": "whiteboard",
-  "name": "Whiteboard",
-  "version": "1.0.0",
+  "id": "sudoku",
+  "name": "Sudoku",
+  "version": "1.0.1",
   "author": "Álvaro C. Chulvi",
-  "description": "Draw freely with a full-featured whiteboard — save, rename and reopen your drawings, fully offline.",
-  "icon": "✏️",
+  "description": "Classic 9×9 sudoku with eight levels, from very easy to deadly, and its own generator that grades every puzzle by the techniques it needs.",
+  "icon": "🔢",
   "license": "MIT",
-  "category": "office",
+  "category": "games",
   "min_offlined": "3.0.0",
   "permissions": [],
-  "name_i18n": { "en": "Whiteboard", "es": "Pizarra", "fr": "Tableau blanc" },
-  "description_i18n": { "en": "Draw freely…", "es": "Dibuja libremente…" }
+  "name_i18n": { "en": "Sudoku", "es": "Sudoku", "zh": "数独", "ar": "سودوكو" },
+  "description_i18n": { "en": "Classic 9×9 sudoku…", "es": "Sudoku clásico de 9×9…" }
 }
 ```
 

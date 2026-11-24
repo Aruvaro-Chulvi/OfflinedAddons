@@ -1,0 +1,36 @@
+{
+  "id": "sky-guardians",
+  "name": "Sky Guardians",
+  "version": "1.0.0",
+  "author": "Álvaro C. Chulvi",
+  "description": "Air-combat survival over your own maps: defend a giant communication tower against ever stronger waves of enemy aircraft.",
+  "icon": "🛡️",
+  "license": "MIT",
+  "category": "games",
+  "min_offlined": "4.0.0",
+  "permissions": [],
+  "name_i18n": {
+    "en": "Sky Guardians",
+    "es": "Guardianes del Cielo",
+    "fr": "Gardiens du Ciel",
+    "pt": "Guardiões do Céu",
+    "it": "Guardiani del Cielo",
+    "de": "Himmelswächter",
+    "zh": "天空守护者",
+    "hi": "आकाश के रक्षक",
+    "ar": "حراس السماء",
+    "ru": "Стражи неба"
+  },
+  "description_i18n": {
+    "en": "Air-combat survival over your own maps: defend a giant communication tower against ever stronger waves of enemy aircraft.",
+    "es": "Survival de combate aéreo sobre tus mapas: defiende una torre de comunicaciones gigante de oleadas de aviones enemigos cada vez más fuertes.",
+    "fr": "Survie en combat aérien sur vos propres cartes : défendez une tour de communication géante contre des vagues d'avions ennemis toujours plus fortes.",
+    "pt": "Sobrevivência em combate aéreo sobre os seus mapas: defenda uma torre de comunicações gigante de vagas de aviões inimigos cada vez mais fortes.",
+    "it": "Sopravvivenza in combattimento aereo sulle tue mappe: difendi una torre di comunicazione gigante da ondate di aerei nemici sempre più forti.",
+    "de": "Luftkampf-Survival über deinen eigenen Karten: Verteidige einen riesigen Funkturm gegen immer stärkere Wellen feindlicher Flugzeuge.",
+    "zh": "在你自己的地图上进行空战生存：保卫一座巨大的通信塔，抵御一波比一波强的敌机。",
+    "hi": "अपने नक्शों पर हवाई युद्ध सर्वाइवल: एक विशाल संचार टावर को लगातार मज़बूत होती दुश्मन विमानों की लहरों से बचाएँ।",
+    "ar": "بقاء في قتال جوي فوق خرائطك: دافع عن برج اتصالات عملاق أمام موجات من الطائرات المعادية تزداد قوة.",
+    "ru": "Выживание в воздушном бою над вашими картами: защищайте гигантскую башню связи от всё более сильных волн вражеских самолётов."
+  }
+}

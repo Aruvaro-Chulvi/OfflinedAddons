@@ -49,12 +49,26 @@ CAREFUL = [
 ]
 # Offlined APIs that touch personal data. Using them is allowed when the addon
 # needs it, and the review checks that it does.
+# Prefixes as Offlined 4 names them (updated 2026-11-24: /api/files, /api/settings and /api/locations no longer exist).
 SENSITIVE_API = {
     "/api/vault": "the Safe (passwords, documents)", "/api/mail": "mail", "/api/contacts": "contacts",
-    "/api/calendar": "calendar", "/api/users": "user profiles", "/api/parental": "parental control",
-    "/api/privacy": "privacy settings", "/api/chat": "AI chats", "/api/media": "photos and media",
-    "/api/files": "files", "/api/workspace": "files on the computer", "/api/open_url": "the system browser",
-    "/api/settings": "settings", "/api/agents": "AI agents", "/api/locations": "places and locations",
+    "/api/calendar": "calendar", "/api/users": "user profiles", "/api/user": "the active user profile",
+    "/api/parental": "parental control", "/api/privacy": "privacy settings", "/api/privacy-report": "the privacy report",
+    "/api/chat": "AI chats", "/api/chats": "AI chats", "/api/encartha": "AI chats", "/api/agents": "AI agents",
+    "/api/media": "photos, music and videos", "/api/vision": "photo analysis",
+    "/api/library": "Offlined Files", "/api/fs": "files", "/api/fs-meta": "files", "/api/trash": "the trash",
+    "/api/workspace": "files on the computer", "/api/rag": "the user's indexed documents",
+    "/api/addon-notes": "Office documents", "/api/addon-spreadsheet": "Office documents",
+    "/api/addon-whiteboard": "Office documents", "/api/addon-audio-notes": "Office documents",
+    "/api/office-pdf": "Office documents", "/api/office-slides": "Office documents", "/api/office-trash": "Office documents",
+    "/api/budget": "the personal budget", "/api/recipes": "recipes", "/api/prefs": "the user's preferences",
+    "/api/zim-links": "the user's own ZIM files", "/api/my-zims": "the user's own ZIM files",
+    "/api/wikialbum": "learning progress", "/api/wikiaula": "learning progress",
+    "/api/exports": "saving files to Exports", "/api/import": "importing into the user's data",
+    "/api/data": "the user's data", "/api/sync": "synchronisation", "/api/reset": "resetting Offlined's data",
+    "/api/lanshare": "sharing on the local network", "/api/portable_apps": "running programs on the computer",
+    "/api/system": "system actions", "/api/open_url": "the system browser", "/api/downloads": "downloads from the internet",
+    "/api/remote-llm": "an AI server on the network",
 }
 API_RE = re.compile(r"[\"'`](/api/[A-Za-z0-9_\-/]+)")
 
@@ -62,6 +76,9 @@ API_RE = re.compile(r"[\"'`](/api/[A-Za-z0-9_\-/]+)")
 class Result:
     def __init__(self, name: str):
         self.name = name
+        self.webaudio = ""      # first own file that makes sound with Web Audio
+        self.oflmute = False    # some file listens to Offlined's global mute
+        self.pointerlock = ""   # first file that asks for pointer lock
         self.errors: List[str] = []
         self.warnings: List[str] = []
         self.apis: Dict[str, str] = {}
@@ -220,6 +237,13 @@ def check_files(d: Path, r: Result) -> None:
 
 
 def scan_text(rel: str, text: str, r: Result) -> None:
+    own = "/vendor/" not in "/" + rel and "/lib/" not in "/" + rel
+    if own and "AudioContext" in text and not r.webaudio:
+        r.webaudio = rel
+    if "ofl:mute" in text:
+        r.oflmute = True
+    if own and "requestPointerLock" in text and not r.pointerlock:
+        r.pointerlock = rel
     for rx, what in REMOTE:
         m = rx.search(text)
         if m:
@@ -258,6 +282,15 @@ def validate(d: Path, catalog: dict) -> Result:
     r = Result(d.name)
     m = check_manifest(d, r)
     check_files(d, r)
+    # Offlined 4: global mute and pointer lock (SDK 3. The panel)
+    if r.webaudio and not r.oflmute:
+        r.warn(f"`{r.webaudio}` makes sound with Web Audio, but nothing listens to Offlined's global mute (`ofl:mute`, SDK → The panel → Sound)")
+    if r.pointerlock and m:
+        try:
+            if K.semver(str(m.get("min_offlined", "0.0.0"))) < K.semver("4.0.0"):
+                r.warn(f"`{r.pointerlock}` uses pointer lock, which only works from Offlined 4: set `min_offlined` to 4.0.0")
+        except ValueError:
+            pass
     if m and not r.errors:
         check_version(d, m, r, catalog)
     return r

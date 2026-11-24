@@ -38,6 +38,21 @@ Se guarda en `Offlined Data/Addons/installed/<id>/data/storage.json`, dentro de 
 en la carpeta de datos de Offlined del usuario: puede que no viajen con ella cuando el usuario mueva Offlined a otro ordenador
 o a una unidad USB, y no están separados por usuario de Offlined. Úsalos solo para preferencias pequeñas que puedas perder.
 
+## Guardar un archivo para el usuario
+
+Tu panel no puede iniciar una descarga (el aislamiento no lo permite). Para darle un archivo al usuario (una exportación,
+una imagen, un documento), envíaselo a Offlined, que lo guarda en la carpeta *Exportaciones* de sus datos:
+
+```js
+const fd = new FormData();
+fd.append("file", blob, "mi-exportacion.pdf");
+fd.append("filename", "mi-exportacion.pdf");
+const r = await fetch("/api/exports/save-file", { method: "POST", body: fd });
+const { name, rel } = await r.json();   // el nombre que recibió (con la fecha si ya existía) y su ruta
+```
+
+Hasta 200 MB por archivo. Dile al usuario dónde ha ido, por ejemplo «Guardado en Exportaciones: mi-exportacion.pdf».
+
 ## Llamar a Offlined
 
 Tu panel comparte origen con el servidor de Offlined, así que puede llamar a los endpoints `/api/…` de Offlined con un
@@ -62,7 +77,7 @@ Lee esto antes de fiarte de ello:
 Tu panel puede pedirle a Offlined que haga algunas cosas con `postMessage`:
 
 ```js
-window.parent.postMessage({ action: "setMode", mode: "calendar" }, "*");
+window.parent.postMessage({ action: "setMode", mode: "calendar" }, location.origin);
 ```
 
 | Mensaje | Qué hace Offlined |
@@ -71,15 +86,38 @@ window.parent.postMessage({ action: "setMode", mode: "calendar" }, "*");
 | `{ action: "openLibrary", path }` | Abre *Archivos de Offlined* en esa carpeta. |
 | `{ action: "openImage", rel }` | Abre una imagen de la galería del usuario en el visor de imágenes. |
 | `{ action: "openGeoPicker", kind, ref, title? }` | Abre el selector que vincula algo tuyo con un lugar del mapa. |
-| `{ action: "speakText", text }` | Lee un texto en voz alta con las voces del ordenador (hasta 4.000 caracteres). |
+| `{ action: "openMap", lat, lon }` | Abre **Mapas** centrado en ese lugar. |
+| `{ action: "speakText", text }` | Lee un texto en voz alta (hasta 4.000 caracteres). **No hace nada en Offlined 4**, que aún no tiene sección de texto a voz. |
 | `{ action: "requestFullscreen" }` | Muestra tu panel a pantalla completa. |
 | `{ action: "exitFullscreen" }` | Sale de la pantalla completa. |
+| `{ type: "oflAddonBusy", busy, title, msg, stay, leave }` | Hay algo en curso que se perdería si el usuario saliera (Offlined 4, más abajo). |
 
 Y Offlined te envía a ti:
 
 | Mensaje | Cuándo |
 |---|---|
 | `{ type: "theme", value: "light" \| "dark" }` | El usuario cambia el tema mientras tu addon está abierto. |
+| `{ type: "ofl:mute", on }` | Se activa o se quita el silencio general, y cada segundo mientras está puesto (Offlined 4, ver [sonido](03-panel.md#sonido)). |
+
+Comprueba `e.origin === location.origin` en tu receptor de mensajes, para que solo Offlined pueda hablar con tu panel.
+
+### Algo en curso: `oflAddonBusy`
+
+Tu panel [se cierra cuando el usuario sale de él](03-panel.md#cuando-el-usuario-sale). Si al salir se perdiera algo que
+no se puede guardar (una partida en curso, una grabación), dilo, y di también cuándo ha terminado:
+
+```js
+window.parent.postMessage({
+  type: "oflAddonBusy", busy: true,                   // false en cuanto termine (fin de la partida, trabajo guardado)
+  title: t("leaveTitle"),                             // «¿Abandonar la partida?»
+  msg: t("leaveMsg"),                                 // «No contará para el ranking.»
+  stay: t("keepPlaying"), leave: t("leaveAnyway"),    // los dos botones
+}, location.origin);
+```
+
+Mientras `busy` sea `true`, salir de tu panel muestra una ventanita con tus textos (ya en el idioma del usuario) y dos
+botones; *stay* deja al usuario en tu addon. Úsalo solo cuando de verdad se perdería algo (no para datos que ya guardas)
+y envía `busy: false` en cuanto termine. Offlined 3 lo ignora.
 
 Es un conjunto pequeño y fijo. No puedes añadir mensajes propios; si tu addon necesita algo de Offlined que no
 está aquí, [abre un issue](https://github.com/Aruvaro-Chulvi/OfflinedAddons/issues/new/choose) y explícalo.

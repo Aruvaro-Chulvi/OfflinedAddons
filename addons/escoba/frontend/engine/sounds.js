@@ -16,6 +16,11 @@
   };
   const LEVEL_GAIN = { off: 0, soft: 0.45, normal: 0.85 };
   let ctx = null, master = null, level = 'soft', buffers = {}, loading = null, base = 'sounds/';
+  let oflMuted = false;   // silencio general de Offlined (botón junto a las banderas, mensaje «ofl:mute»)
+  root.addEventListener('message', (e) => {
+    if (e.origin !== root.location.origin || !e.data || e.data.type !== 'ofl:mute') return;
+    oflMuted = !!e.data.on; if (master) master.gain.value = oflMuted ? 0 : LEVEL_GAIN[level];
+  });
 
   function ensure() {
     if (level === 'off') return null;
@@ -25,7 +30,7 @@
       ctx = new AC();
       const comp = ctx.createDynamicsCompressor();
       master = ctx.createGain();
-      master.gain.value = LEVEL_GAIN[level];
+      master.gain.value = oflMuted ? 0 : LEVEL_GAIN[level];
       master.connect(comp).connect(ctx.destination);
     }
     if (ctx.state === 'suspended' && document.visibilityState === 'visible') ctx.resume().catch(() => {});
@@ -94,7 +99,7 @@
   /** Play an effect. delay in seconds; n = how many (deal, tantos). */
   function play(name, opts) {
     opts = opts || {};
-    if (level === 'off' || document.visibilityState === 'hidden') return;
+    if (level === 'off' || oflMuted || document.visibilityState === 'hidden') return;
     const c = ensure(); if (!c || !FX[name]) return;
     const run = () => { try { FX[name](c.currentTime + 0.02 + (opts.delay || 0), opts.n); } catch (_) {} };
     // samples may still be loading the very first time
@@ -102,7 +107,7 @@
   }
   function setLevel(l) {
     level = LEVEL_GAIN[l] !== undefined ? l : 'soft';
-    if (master) master.gain.value = LEVEL_GAIN[level];
+    if (master) master.gain.value = oflMuted ? 0 : LEVEL_GAIN[level];
   }
   function init(opts) {
     if (opts && opts.base) base = opts.base;

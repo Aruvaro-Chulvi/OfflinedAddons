@@ -3,22 +3,22 @@
 *[Leer en español](es/02-manifest.md)* · [SDK index](README.md)
 
 Every addon has an `addon.json` at the root of its folder: UTF-8, without BOM. This is the real manifest of the
-Whiteboard addon (shortened):
+Sudoku addon (shortened):
 
 ```json
 {
-  "id": "whiteboard",
-  "name": "Whiteboard",
-  "version": "1.0.0",
+  "id": "sudoku",
+  "name": "Sudoku",
+  "version": "1.0.1",
   "author": "Álvaro C. Chulvi",
-  "description": "Draw freely with a full-featured whiteboard — save, rename and reopen your drawings, fully offline.",
-  "icon": "✏️",
+  "description": "Classic 9×9 sudoku with eight levels, from very easy to deadly, and its own generator that grades every puzzle by the techniques it needs.",
+  "icon": "🔢",
   "license": "MIT",
-  "category": "office",
+  "category": "games",
   "min_offlined": "3.0.0",
   "permissions": [],
-  "name_i18n": { "en": "Whiteboard", "es": "Pizarra", "fr": "Tableau blanc" },
-  "description_i18n": { "en": "Draw freely…", "es": "Dibuja libremente…" }
+  "name_i18n": { "en": "Sudoku", "es": "Sudoku", "zh": "数独", "ar": "سودوكو" },
+  "description_i18n": { "en": "Classic 9×9 sudoku…", "es": "Sudoku clásico de 9×9…" }
 }
 ```
 

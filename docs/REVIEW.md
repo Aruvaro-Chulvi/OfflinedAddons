@@ -42,6 +42,9 @@ answers these questions is approved much faster.
 - Not a clone of a commercial product, a game or a brand; no third-party trademarks in its name or icon.
 - Reasonable size for what it does.
 - For an update: `version` raised; old saved data still opens.
+- Sound: it is quiet while Offlined's global mute is on (`ofl:mute`) and while the window is minimised.
+- Leaving it mid-way loses nothing unexpectedly: it saves as it goes, or warns with `oflAddonBusy` while something
+  in progress cannot be saved.
 
 ## 6. Approve
 

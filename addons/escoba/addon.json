@@ -1,7 +1,7 @@
 {
   "id": "escoba",
   "name": "Escoba",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "author": "Álvaro C. Chulvi",
   "description": "The Spanish card game Escoba del 15 against the computer, with our own Spanish deck, four levels and games to 11, 15, 21 or 31 points.",
   "icon": "🃏",

@@ -11,7 +11,8 @@ escribir, y por eso el catálogo se revisa. Esta página dice claramente qué pr
   al propio Offlined (más `data:` y `blob:`). El motor del navegador bloquea las peticiones a otros servidores.
 - **Firmas.** Los addons del catálogo van firmados; Offlined rechaza un paquete firmado que se haya modificado y avisa
   antes de instalar uno sin firmar.
-- **Página separada.** Tu panel se ejecuta en un iframe aislado: no puede leer ni cambiar la página propia de Offlined.
+- **Página separada.** Tu panel se ejecuta en un iframe aislado: no puede leer ni cambiar la página propia de Offlined, ni
+  iniciar descargas (los archivos para el usuario van por [`/api/exports/save-file`](04-storage-and-api.md#guardar-un-archivo-para-el-usuario)).
 - **Rutas seguras.** Los paquetes no pueden escribir fuera de su carpeta (el recorrido de rutas se bloquea al instalar), y un
   panel no puede leer archivos fuera de su carpeta `frontend/` a través de `/addon-panels/`.
 - **Control parental.** Cuando está activado, no se pueden instalar ni quitar addons.

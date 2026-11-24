@@ -42,6 +42,9 @@ respuesta (en el código, en el README o en la pull request).
 - No es un clon de un producto comercial, de un juego ni de una marca; sin marcas de terceros en su nombre o icono.
 - Tamaño razonable para lo que hace.
 - En una actualización: `version` aumentada; los datos guardados anteriormente siguen abriéndose.
+- Sonido: calla mientras está puesto el silencio general de Offlined (`ofl:mute`) y con la ventana minimizada.
+- Salir a mitad no pierde nada sin avisar: guarda sobre la marcha, o avisa con `oflAddonBusy` mientras haya algo en curso
+  que no se pueda guardar.
 
 ## 6. Aprobar
 

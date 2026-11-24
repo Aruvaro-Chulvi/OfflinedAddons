@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Sky Guardians</title>
+<style>html, body { margin: 0; height: 100%; background: #0d1117; }</style>
+</head>
+<body>
+<script>
+  // Sky Guardians usa el motor de Wiki Flight: se abre en su modo complemento con el módulo del juego (game.js).
+  // Esta página es la misma ventana del addon, así que los avisos de Offlined (tema, visible) siguen llegando.
+  const q = new URLSearchParams(location.search);
+  const p = new URLSearchParams({ plugin: "/addon-panels/sky-guardians/frontend/game.js", lang: q.get("lang") || "en" });
+  if (q.get("theme")) p.set("theme", q.get("theme"));
+  location.replace("/flightsim/index.html?" + p.toString());
+</script>
+</body>
+</html>

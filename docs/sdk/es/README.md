@@ -3,9 +3,10 @@
 *[Read in English](../README.md)*
 
 Un **addon** añade una herramienta nueva a [Offlined](https://www.offlined.org), la biblioteca y espacio de trabajo sin conexión. Es una
-pequeña página web (HTML, CSS y JavaScript) que Offlined abre dentro de su propia ventana, en el menú **Addons**,
-junto a su hoja de cálculo, documentos de texto, pizarra y notas de audio (que son addons también; su código fuente
-está en [`addons/`](../../../addons/)).
+pequeña página web (HTML, CSS y JavaScript) que Offlined abre dentro de su propia ventana, desde el menú **Addons**.
+Los addons oficiales (Sudoku, Ajedrez, Escoba, el generador de QR…) están en [`addons/`](../../../addons/): ejemplos
+reales que puedes leer y copiar. Hasta Offlined 3 las apps de oficina (hoja de cálculo, documentos de texto, pizarra y
+notas de audio) también eran addons; desde Offlined 4 vienen incluidas.
 
 Si sabes escribir una página web, sabes escribir un addon. Sin paso de compilación, sin framework, sin código de servidor.
 
@@ -20,6 +21,20 @@ Si sabes escribir una página web, sabes escribir un addon. Sin paso de compilac
 | [5. Publicación](05-publishing.md) | Enviar tu addon a este repositorio: las reglas, la revisión, la firma y el catálogo. |
 | [6. Seguridad y privacidad](06-security.md) | Qué hace cumplir Offlined, qué no, y qué buscan los revisores. |
 | [7. Hoja de ruta](07-roadmap.md) | Qué está previsto y todavía no está disponible. |
+
+## Novedades de Offlined 4
+
+- **Tu panel se cierra cuando el usuario sale de él** (Offlined 3 lo dejaba cargado y oculto). Guarda sobre la marcha y,
+  si salir hiciera perder algo (una partida en curso), pide a Offlined que avise al usuario:
+  [cuando el usuario sale](03-panel.md#cuando-el-usuario-sale).
+- **Silencio general.** Offlined tiene un botón de silencio junto a las banderas de idioma y se lo dice a tu panel
+  (`ofl:mute`). Si tu addon hace sonido, [respétalo](03-panel.md#sonido).
+- **El bloqueo del puntero** funciona dentro de los paneles (juegos que capturan el ratón).
+- **`speakText` no hace nada** por ahora: Offlined 4 no tiene sección de texto a voz.
+- Para darle un archivo al usuario, [guárdalo en su carpeta Exportaciones](04-storage-and-api.md#guardar-un-archivo-para-el-usuario):
+  los paneles no pueden iniciar descargas.
+
+Un addon que dependa de algo de esto debe poner `"min_offlined": "4.0.0"`.
 
 ## La versión corta
 

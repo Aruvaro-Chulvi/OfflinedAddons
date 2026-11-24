@@ -11,7 +11,8 @@ write — and why the catalogue is reviewed. This page says plainly what protect
   to Offlined itself (plus `data:` and `blob:`). Requests to other servers are blocked by the browser engine.
 - **Signatures.** Catalogue addons are signed; Offlined refuses a signed package that was changed, and warns
   before installing an unsigned one.
-- **Separate page.** Your panel runs in a sandboxed iframe: it cannot read or change Offlined's own page.
+- **Separate page.** Your panel runs in a sandboxed iframe: it cannot read or change Offlined's own page, and it
+  cannot start downloads (files for the user go through [`/api/exports/save-file`](04-storage-and-api.md#saving-a-file-for-the-user)).
 - **Safe paths.** Packages cannot write outside their folder (path traversal is blocked at install time), and a
   panel cannot read files outside its `frontend/` folder through `/addon-panels/`.
 - **Parental control.** When it is on, addons cannot be installed or removed.
