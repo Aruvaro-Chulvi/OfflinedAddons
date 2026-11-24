@@ -1,9 +1,9 @@
 {
   "format": 1,
-  "version": "addons-2026-11-22e",
-  "generated": "2026-11-22T03:50:29Z",
+  "version": "addons-2026-11-24",
+  "generated": "2026-11-24T14:56:13Z",
   "repository": "https://github.com/Aruvaro-Chulvi/OfflinedAddons",
-  "base_url": "https://github.com/Aruvaro-Chulvi/OfflinedAddons/releases/download/addons-2026-11-22e/",
+  "base_url": "https://github.com/Aruvaro-Chulvi/OfflinedAddons/releases/download/addons-2026-11-24/",
   "public_key": "13RbPjlJPu7T0VNjci2128gD/SVbHtw6nZMktYVU9C4=",
   "addons": [
     {
@@ -187,6 +187,51 @@
       "updated": "2026-11-22"
     },
     {
+      "id": "escoba",
+      "name": "Escoba",
+      "name_i18n": {
+        "en": "Escoba",
+        "es": "Escoba",
+        "fr": "Escoba",
+        "pt": "Escoba",
+        "it": "Escoba",
+        "de": "Escoba",
+        "zh": "扫牌（Escoba）",
+        "hi": "एस्कोबा",
+        "ar": "إسكوبا",
+        "ru": "Эскоба"
+      },
+      "description": "The Spanish card game Escoba del 15 against the computer, with our own Spanish deck, four levels and games to 11, 15, 21 or 31 points.",
+      "description_i18n": {
+        "en": "The Spanish card game Escoba del 15 against the computer, with our own Spanish deck, four levels and games to 11, 15, 21 or 31 points.",
+        "es": "La escoba del 15 contra el ordenador, con baraja española de diseño propio, cuatro niveles y partidas a 11, 15, 21 o 31 puntos.",
+        "fr": "Le jeu de cartes espagnol Escoba del 15 contre l'ordinateur, avec notre propre jeu espagnol, quatre niveaux et des parties en 11, 15, 21 ou 31 points.",
+        "pt": "A escoba do 15 contra o computador, com baralho espanhol de desenho próprio, quatro níveis e jogos a 11, 15, 21 ou 31 pontos.",
+        "it": "La scopa del 15 spagnola contro il computer, con un mazzo spagnolo disegnato da noi, quattro livelli e partite a 11, 15, 21 o 31 punti.",
+        "de": "Das spanische Kartenspiel Escoba del 15 gegen den Computer, mit eigenem spanischem Blatt, vier Stufen und Spielen bis 11, 15, 21 oder 31 Punkte.",
+        "zh": "与电脑对战西班牙纸牌游戏「十五扫牌」，自制西班牙纸牌，四个难度，可选 11、15、21 或 31 分制。",
+        "hi": "कंप्यूटर के ख़िलाफ़ स्पेनी ताश का खेल एस्कोबा (15), हमारी अपनी स्पेनी गड्डी, चार स्तर और 11, 15, 21 या 31 अंकों के खेल।",
+        "ar": "لعبة الورق الإسبانية إسكوبا الـ15 ضد الحاسوب، بورق إسباني من تصميمنا، وأربعة مستويات، ومباريات إلى 11 أو 15 أو 21 أو 31 نقطة.",
+        "ru": "Испанская карточная игра «Эскоба до 15» против компьютера: собственная испанская колода, четыре уровня и игры до 11, 15, 21 или 31 очка."
+      },
+      "icon": "🃏",
+      "version": "1.0.0",
+      "author": "Álvaro C. Chulvi",
+      "license": "MIT",
+      "category": "games",
+      "min_offlined": "3.0.0",
+      "permissions": [],
+      "official": true,
+      "file": "escoba-1.0.0.zip",
+      "size": 28820,
+      "sha256": "527d31cd6d03cfb7758e4749904082023d2f40ecf0b872a29fc74a431f87a0d2",
+      "content_sha256": "91dcc725207ef3edb20ad8e35c21387723422dc7f3fbd5cf916d395970b3669d",
+      "files": 7,
+      "source": "https://github.com/Aruvaro-Chulvi/OfflinedAddons/tree/main/addons/escoba",
+      "published": "2026-11-24",
+      "updated": "2026-11-24"
+    },
+    {
       "id": "minesweeper",
       "name": "Minesweeper",
       "name_i18n": {
@@ -230,6 +275,51 @@
       "source": "https://github.com/Aruvaro-Chulvi/OfflinedAddons/tree/main/addons/minesweeper",
       "published": "2026-11-22",
       "updated": "2026-11-22"
+    },
+    {
+      "id": "mus",
+      "name": "Mus",
+      "name_i18n": {
+        "en": "Mus",
+        "es": "Mus",
+        "fr": "Mus",
+        "pt": "Mus",
+        "it": "Mus",
+        "de": "Mus",
+        "zh": "穆斯牌（Mus）",
+        "hi": "मुस",
+        "ar": "موس",
+        "ru": "Мус"
+      },
+      "description": "The Spanish card game Mus in pairs against the computer: mus and discards, Grande, Chica, Pares and Juego with envites and órdagos. 8 or 4 kings, vacas to 30 or 40, four levels.",
+      "description_i18n": {
+        "en": "The Spanish card game Mus in pairs against the computer: mus and discards, Grande, Chica, Pares and Juego with envites and órdagos. 8 or 4 kings, vacas to 30 or 40, four levels.",
+        "es": "El mus por parejas contra el ordenador: mus y descartes, Grande, Chica, Pares y Juego con envites y órdagos. A 8 o 4 reyes, vacas a 30 o 40 y cuatro niveles.",
+        "fr": "Le jeu de cartes espagnol Mus en équipes contre l'ordinateur : mus et écarts, Grande, Chica, Pares et Juego avec mises et órdagos. 8 ou 4 rois, manches en 30 ou 40, quatre niveaux.",
+        "pt": "O mus por parelhas contra o computador: mus e descartes, Grande, Chica, Pares e Juego com apostas e órdagos. A 8 ou 4 reis, vacas a 30 ou 40 e quatro níveis.",
+        "it": "Il gioco di carte spagnolo Mus a coppie contro il computer: mus e scarti, Grande, Chica, Pares e Juego con puntate e órdagos. 8 o 4 re, vacas a 30 o 40, quattro livelli.",
+        "de": "Das spanische Kartenspiel Mus zu zweit gegen den Computer: Mus und Abwerfen, Grande, Chica, Pares und Juego mit Einsätzen und Órdagos. 8 oder 4 Könige, Vacas bis 30 oder 40, vier Stufen.",
+        "zh": "与电脑组队对战西班牙纸牌游戏穆斯（Mus）：换牌、Grande、Chica、Pares 和 Juego，下注与全押。8 或 4 国王，每局 30 或 40 分，四个难度。",
+        "hi": "कंप्यूटर के ख़िलाफ़ जोड़ियों में स्पेनी ताश का खेल मुस: पत्ते बदलना, ग्रांदे, चिका, पारेस और हुएगो, दाँव और ओर्दागो के साथ। 8 या 4 राजा, 30 या 40 अंकों के वाका, चार स्तर।",
+        "ar": "لعبة الورق الإسبانية «موس» في أزواج ضد الحاسوب: التبديل، غراندي وتشيكا وباريس وخويغو مع الرهانات والأوردَغو. 8 أو 4 ملوك، جولات إلى 30 أو 40، وأربعة مستويات.",
+        "ru": "Испанская карточная игра Мус в парах против компьютера: мус и сброс, Grande, Chica, Pares и Juego со ставками и órdago. 8 или 4 короля, ваки до 30 или 40, четыре уровня."
+      },
+      "icon": "🂠",
+      "version": "1.0.0",
+      "author": "Álvaro C. Chulvi",
+      "license": "MIT",
+      "category": "games",
+      "min_offlined": "3.0.0",
+      "permissions": [],
+      "official": true,
+      "file": "mus-1.0.0.zip",
+      "size": 36363,
+      "sha256": "1ee34734d0d7878173f45b7cf191a124b4ee4ab58c39cdfd41334aa01ce9b541",
+      "content_sha256": "d665bf7a3d2b592c1cbc21e8a694d026b8d48ce70409c5ba3b813359a6ff4ef0",
+      "files": 7,
+      "source": "https://github.com/Aruvaro-Chulvi/OfflinedAddons/tree/main/addons/mus",
+      "published": "2026-11-24",
+      "updated": "2026-11-24"
     },
     {
       "id": "notes",
