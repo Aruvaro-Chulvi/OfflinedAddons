@@ -28,6 +28,8 @@ addon in this repository can be installed from inside Offlined with one click, i
 | ⭕ | **[Circuit](addons/circuit/)** | Draw one closed loop around the numbers (Slitherlink-style): six levels and its own generator. | Official |
 | 💣 | **[Minesweeper](addons/minesweeper/)** | Clear the board without stepping on a mine: four levels and boards solvable without guessing. | Official |
 | 🧮 | **[Calcudoku](addons/calcudoku/)** | Numbers without repeats and cages with + − × ÷: six sizes and its own generator. | Official |
+| 🃏 | **[Escoba](addons/escoba/)** | The Spanish card game Escoba del 15 against the computer, with our own Spanish deck. | Official |
+| 🂠 | **[Mus](addons/mus/)** | Mus in pairs against the computer: envites, órdagos, 8 or 4 kings, vacas to 30 or 40. | Official |
 
 The full, current list is [`catalog.json`](catalog.json); the signed packages are in the
 [latest release](https://github.com/Aruvaro-Chulvi/OfflinedAddons/releases/latest).

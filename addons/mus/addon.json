@@ -1,0 +1,36 @@
+{
+  "id": "mus",
+  "name": "Mus",
+  "version": "1.0.0",
+  "author": "Álvaro C. Chulvi",
+  "description": "The Spanish card game Mus in pairs against the computer: mus and discards, Grande, Chica, Pares and Juego with envites and órdagos. 8 or 4 kings, vacas to 30 or 40, four levels.",
+  "icon": "🂠",
+  "license": "MIT",
+  "category": "games",
+  "min_offlined": "3.0.0",
+  "permissions": [],
+  "name_i18n": {
+    "en": "Mus",
+    "es": "Mus",
+    "fr": "Mus",
+    "pt": "Mus",
+    "it": "Mus",
+    "de": "Mus",
+    "zh": "穆斯牌（Mus）",
+    "hi": "मुस",
+    "ar": "موس",
+    "ru": "Мус"
+  },
+  "description_i18n": {
+    "en": "The Spanish card game Mus in pairs against the computer: mus and discards, Grande, Chica, Pares and Juego with envites and órdagos. 8 or 4 kings, vacas to 30 or 40, four levels.",
+    "es": "El mus por parejas contra el ordenador: mus y descartes, Grande, Chica, Pares y Juego con envites y órdagos. A 8 o 4 reyes, vacas a 30 o 40 y cuatro niveles.",
+    "fr": "Le jeu de cartes espagnol Mus en équipes contre l'ordinateur : mus et écarts, Grande, Chica, Pares et Juego avec mises et órdagos. 8 ou 4 rois, manches en 30 ou 40, quatre niveaux.",
+    "pt": "O mus por parelhas contra o computador: mus e descartes, Grande, Chica, Pares e Juego com apostas e órdagos. A 8 ou 4 reis, vacas a 30 ou 40 e quatro níveis.",
+    "it": "Il gioco di carte spagnolo Mus a coppie contro il computer: mus e scarti, Grande, Chica, Pares e Juego con puntate e órdagos. 8 o 4 re, vacas a 30 o 40, quattro livelli.",
+    "de": "Das spanische Kartenspiel Mus zu zweit gegen den Computer: Mus und Abwerfen, Grande, Chica, Pares und Juego mit Einsätzen und Órdagos. 8 oder 4 Könige, Vacas bis 30 oder 40, vier Stufen.",
+    "zh": "与电脑组队对战西班牙纸牌游戏穆斯（Mus）：换牌、Grande、Chica、Pares 和 Juego，下注与全押。8 或 4 国王，每局 30 或 40 分，四个难度。",
+    "hi": "कंप्यूटर के ख़िलाफ़ जोड़ियों में स्पेनी ताश का खेल मुस: पत्ते बदलना, ग्रांदे, चिका, पारेस और हुएगो, दाँव और ओर्दागो के साथ। 8 या 4 राजा, 30 या 40 अंकों के वाका, चार स्तर।",
+    "ar": "لعبة الورق الإسبانية «موس» في أزواج ضد الحاسوب: التبديل، غراندي وتشيكا وباريس وخويغو مع الرهانات والأوردَغو. 8 أو 4 ملوك، جولات إلى 30 أو 40، وأربعة مستويات.",
+    "ru": "Испанская карточная игра Мус в парах против компьютера: мус и сброс, Grande, Chica, Pares и Juego со ставками и órdago. 8 или 4 короля, ваки до 30 или 40, четыре уровня."
+  }
+}

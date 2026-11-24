@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mus</title>
+<link rel="stylesheet" href="mus.css">
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <!-- Lucide icons (ISC licence) -->
+    <symbol id="i-chev" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+    <symbol id="i-play" viewBox="0 0 24 24"><path d="M6 3l14 9-14 9z"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol>
+    <symbol id="i-bulb" viewBox="0 0 24 24"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5M9 18h6M10 22h4"/></symbol>
+    <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></symbol>
+    <symbol id="i-trophy" viewBox="0 0 24 24"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6M18 9h1.5a2.5 2.5 0 0 0 0-5H18M4 22h16M10 14.7V17c0 .6-.5 1-1 1.2C7.9 18.8 7 20.2 7 22M14 14.7V17c0 .6.5 1 1 1.2 1.1.6 2 2 2 3.8M18 2H6v7a6 6 0 0 0 12 0z"/></symbol>
+  </defs>
+</svg>
+<div id="cardDefs"></div>
+
+<div class="app" id="app">
+  <!-- ═══════════ Side panel ═══════════ -->
+  <aside class="side">
+    <div class="user">
+      <div class="avatar" id="avatar">?</div>
+      <div><div class="name" id="userName">—</div><div class="sub" id="userSub"></div></div>
+      <button class="close" id="drawerClose" data-tt="close"><svg class="i"><use href="#i-x"/></svg></button>
+    </div>
+
+    <div class="sec">
+      <button class="sec-h"><span data-t="newGame"></span><svg class="i chev"><use href="#i-chev"/></svg></button>
+      <div class="sec-b">
+        <div class="levels" id="levels"></div>
+        <div class="lbl" data-t="target"></div>
+        <div class="seg full" id="targetSeg"><button data-v="30">30</button><button data-v="40">40</button></div>
+        <div class="lbl" data-t="kings"></div>
+        <div class="seg full" id="kingsSeg"><button data-v="8" data-t="k8"></button><button data-v="4" data-t="k4"></button></div>
+        <div class="help-line" data-t="vacasInfo"></div>
+        <button class="btn cta wide" id="newBtn"><svg class="i"><use href="#i-play"/></svg><span data-t="start"></span></button>
+      </div>
+    </div>
+
+    <div class="sec">
+      <button class="sec-h"><span data-t="thisGame"></span><svg class="i chev"><use href="#i-chev"/></svg></button>
+      <div class="sec-b">
+        <div class="opt"><span data-t="us"></span><span id="infoUs">—</span></div>
+        <div class="opt"><span data-t="them"></span><span id="infoThem">—</span></div>
+        <div class="opt"><span id="infoMano">—</span><span id="infoTarget">—</span></div>
+      </div>
+    </div>
+
+    <div class="sec">
+      <button class="sec-h"><span data-t="myStats"></span><svg class="i chev"><use href="#i-chev"/></svg></button>
+      <div class="sec-b">
+        <div class="stats-tabs" id="statTabs"></div>
+        <div class="grid3">
+          <div class="stat"><b id="stW">0</b><span data-t="won"></span></div>
+          <div class="stat"><b id="stL">0</b><span data-t="lost"></span></div>
+          <div class="stat"><b id="stV">0</b><span data-t="vacasWon"></span></div>
+        </div>
+        <div class="help-line"><span data-t="ordagos"></span>: <b id="stO">0</b></div>
+      </div>
+    </div>
+
+    <div class="sec closed">
+      <button class="sec-h"><span data-t="settings"></span><svg class="i chev"><use href="#i-chev"/></svg></button>
+      <div class="sec-b">
+        <div class="opt"><span data-t="handHelp"></span><button class="sw" data-k="handHelp"></button></div>
+        <div class="opt"><span data-t="speed"></span>
+          <div class="seg" id="speedSeg"><button data-v="slow" data-t="slow"></button><button data-v="normal" data-t="normal"></button><button data-v="fast" data-t="fast"></button></div></div>
+        <div class="opt"><span data-t="theme"></span>
+          <div class="seg" id="themeSeg"><button data-v="auto" data-t="auto"></button><button data-v="light" data-t="light"></button><button data-v="dark" data-t="dark"></button></div></div>
+      </div>
+    </div>
+
+    <div class="sec closed">
+      <button class="sec-h"><span data-t="rules"></span><svg class="i chev"><use href="#i-chev"/></svg></button>
+      <div class="sec-b"><div class="rules-text" data-t="rulesText"></div></div>
+    </div>
+    <div class="store-note" id="storeNote" hidden data-t="offlineStore"></div>
+  </aside>
+
+  <!-- ═══════════ Table ═══════════ -->
+  <main class="main" id="main">
+    <div class="scorebar">
+      <button class="icon-btn menu-btn" id="menuBtn" data-tt="menu"><svg class="i"><use href="#i-menu"/></svg></button>
+      <span><span data-t="us"></span> <b id="sbUs">0</b><span class="vdots" id="vUs"></span></span>
+      <span><span data-t="them"></span> <b id="sbThem">0</b><span class="vdots" id="vThem"></span></span>
+      <span class="sp"></span>
+      <span id="sbInfo"></span>
+    </div>
+
+    <div class="mesa">
+      <div class="ms top" id="seat2"><div class="name"><span data-t="partner"></span><span class="mano" hidden>mano</span></div><div class="cards"></div><div class="decl"></div><div class="bubble"></div></div>
+      <div class="ms left" id="seat3"><div class="name"><span data-t="left"></span><span class="mano" hidden>mano</span></div><div class="cards"></div><div class="decl"></div><div class="bubble"></div></div>
+      <div class="ms right" id="seat1"><div class="name"><span data-t="right"></span><span class="mano" hidden>mano</span></div><div class="cards"></div><div class="decl"></div><div class="bubble"></div></div>
+      <div class="center-box">
+        <div class="lances" id="lances"></div>
+        <div class="center-msg" id="centerMsg"></div>
+        <div class="banner" id="banner"></div>
+      </div>
+      <div class="me-box ms" id="seat0">
+        <div class="bubble"></div>
+        <div class="cards" id="myCards"></div>
+        <div class="handinfo" id="handInfo"></div>
+        <div class="name"><span data-t="you"></span><span class="mano" hidden>mano</span></div>
+      </div>
+    </div>
+
+    <div class="actions" id="actions"></div>
+    <div class="toast" id="toast"></div>
+  </main>
+</div>
+
+<div class="overlay" id="countDlg">
+  <div class="dlg wide">
+    <h2 data-t="countTitle"></h2>
+    <div class="count-hands" id="countHands"></div>
+    <table class="score-table">
+      <thead><tr><th data-t="lance"></th><th data-t="result"></th><th data-t="us"></th><th data-t="them"></th></tr></thead>
+      <tbody id="countRows"></tbody>
+    </table>
+    <div class="sub" id="countNote"></div>
+    <button class="btn cta wide" id="countNext"><svg class="i"><use href="#i-play"/></svg><span id="countNextTxt"></span></button>
+  </div>
+</div>
+
+<div class="overlay" id="endDlg">
+  <div class="dlg">
+    <div class="badge" id="endBadge"><svg class="i" style="width:26px;height:26px"><use href="#i-trophy"/></svg></div>
+    <h2 id="endTitle"></h2>
+    <div class="sub" id="endSub"></div>
+    <button class="btn cta wide" id="endAgain"><svg class="i"><use href="#i-play"/></svg><span data-t="another"></span></button>
+    <div class="row2"><button class="btn" id="endClose" data-t="close"></button></div>
+  </div>
+</div>
+
+<div class="overlay" id="confirmDlg">
+  <div class="dlg">
+    <p data-t="confirmNew"></p>
+    <div class="row2"><button class="btn" id="confirmNo" data-t="no"></button><button class="btn cta" id="confirmYes" data-t="yes"></button></div>
+  </div>
+</div>
+
+<script src="i18n.js"></script>
+<script src="engine/cards.js"></script>
+<script src="engine/mus-engine.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

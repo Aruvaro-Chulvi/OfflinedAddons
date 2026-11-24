@@ -1,0 +1,36 @@
+{
+  "id": "escoba",
+  "name": "Escoba",
+  "version": "1.0.0",
+  "author": "Álvaro C. Chulvi",
+  "description": "The Spanish card game Escoba del 15 against the computer, with our own Spanish deck, four levels and games to 11, 15, 21 or 31 points.",
+  "icon": "🃏",
+  "license": "MIT",
+  "category": "games",
+  "min_offlined": "3.0.0",
+  "permissions": [],
+  "name_i18n": {
+    "en": "Escoba",
+    "es": "Escoba",
+    "fr": "Escoba",
+    "pt": "Escoba",
+    "it": "Escoba",
+    "de": "Escoba",
+    "zh": "扫牌（Escoba）",
+    "hi": "एस्कोबा",
+    "ar": "إسكوبا",
+    "ru": "Эскоба"
+  },
+  "description_i18n": {
+    "en": "The Spanish card game Escoba del 15 against the computer, with our own Spanish deck, four levels and games to 11, 15, 21 or 31 points.",
+    "es": "La escoba del 15 contra el ordenador, con baraja española de diseño propio, cuatro niveles y partidas a 11, 15, 21 o 31 puntos.",
+    "fr": "Le jeu de cartes espagnol Escoba del 15 contre l'ordinateur, avec notre propre jeu espagnol, quatre niveaux et des parties en 11, 15, 21 ou 31 points.",
+    "pt": "A escoba do 15 contra o computador, com baralho espanhol de desenho próprio, quatro níveis e jogos a 11, 15, 21 ou 31 pontos.",
+    "it": "La scopa del 15 spagnola contro il computer, con un mazzo spagnolo disegnato da noi, quattro livelli e partite a 11, 15, 21 o 31 punti.",
+    "de": "Das spanische Kartenspiel Escoba del 15 gegen den Computer, mit eigenem spanischem Blatt, vier Stufen und Spielen bis 11, 15, 21 oder 31 Punkte.",
+    "zh": "与电脑对战西班牙纸牌游戏「十五扫牌」，自制西班牙纸牌，四个难度，可选 11、15、21 或 31 分制。",
+    "hi": "कंप्यूटर के ख़िलाफ़ स्पेनी ताश का खेल एस्कोबा (15), हमारी अपनी स्पेनी गड्डी, चार स्तर और 11, 15, 21 या 31 अंकों के खेल।",
+    "ar": "لعبة الورق الإسبانية إسكوبا الـ15 ضد الحاسوب، بورق إسباني من تصميمنا، وأربعة مستويات، ومباريات إلى 11 أو 15 أو 21 أو 31 نقطة.",
+    "ru": "Испанская карточная игра «Эскоба до 15» против компьютера: собственная испанская колода, четыре уровня и игры до 11, 15, 21 или 31 очка."
+  }
+}

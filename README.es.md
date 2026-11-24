@@ -28,6 +28,8 @@ menú **Addons**. Todos los addons de este repositorio se pueden instalar desde 
 | ⭕ | **[Circuito](addons/circuit/)** | Dibuja un único circuito cerrado alrededor de los números (tipo Slitherlink): seis niveles y generador propio. | Oficial |
 | 💣 | **[Buscaminas](addons/minesweeper/)** | Despeja el tablero sin pisar minas: cuatro niveles y tableros que se resuelven sin adivinar. | Oficial |
 | 🧮 | **[Calcudoku](addons/calcudoku/)** | Números sin repetir y jaulas con + − × ÷: seis tamaños y generador propio. | Oficial |
+| 🃏 | **[Escoba](addons/escoba/)** | La escoba del 15 contra el ordenador, con baraja española de diseño propio. | Oficial |
+| 🂠 | **[Mus](addons/mus/)** | Mus por parejas contra el ordenador: envites, órdagos, 8 o 4 reyes, vacas a 30 o 40. | Oficial |
 
 La lista completa y actualizada está en [`catalog.json`](catalog.json); los paquetes firmados están en la
 [última versión publicada](https://github.com/Aruvaro-Chulvi/OfflinedAddons/releases/latest).
