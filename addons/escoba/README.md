@@ -35,6 +35,13 @@ Our own design, made for clarity: the four suits (oros, copas, espadas, bastos) 
 traditional numbers 1–7, 10, 11, 12, and the figures (sota, caballo, rey) drawn with flat
 geometric shapes in two tones of the suit colour, on a soft panel. A small badge shows the value of the figures in this game (8, 9, 10).
 
+## Sound
+
+Short, quiet sound effects that follow the rhythm of the game: shuffling and dealing, a card on the table, taking
+cards, a soft chime when it is your turn and small signals for the big moments (an escoba, the siete de oros, the end of a hand). Settings → Sound: off, soft
+(default) or normal. The card and chip sounds are recordings from Kenney's «Casino Audio» pack (CC0, kenney.nl);
+the signals are synthesised in the browser.
+
 ## Where your data is
 
 In the addon's own storage (`Offlined Data/Addons/installed/escoba/data/storage.json`): the game in progress,
@@ -47,4 +54,4 @@ avatar colour) and the avatar picture `/api/users/<id>/avatar`. Nothing else, an
 
 ## Licence
 
-MIT. Icons from [Lucide](https://lucide.dev) (ISC).
+MIT. Icons from [Lucide](https://lucide.dev) (ISC). Card and chip sounds: Kenney «Casino Audio» (CC0).

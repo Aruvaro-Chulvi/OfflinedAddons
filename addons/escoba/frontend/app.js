@@ -5,8 +5,10 @@
   const ID = 'escoba';
   const C = window.SpanishCards, E = window.EscobaEngine;
   const $ = (id) => document.getElementById(id);
+  const snd = (name, opts) => { try { window.GameSound.play(name, opts); } catch (_) {} };
   const params = new URLSearchParams(location.search);
   const ME = 0, AI = 1;
+  const SKIP_SOUNDS = ['chip'];
   const SPEED = { slow: 1400, normal: 900, fast: 450 };
 
   // ── Language ────────────────────────────────────────────────────────────────────────────────────────
@@ -41,7 +43,7 @@
   applyTheme();
 
   // ── Storage ─────────────────────────────────────────────────────────────────────────────────────────
-  const DEFAULTS = { sumHelp: true, showValue: true, speed: 'normal', theme: 'auto', level: 2, target: 21 };
+  const DEFAULTS = { sumHelp: true, showValue: true, sound: 'soft', speed: 'normal', theme: 'auto', level: 2, target: 21 };
   async function loadDB() {
     try {
       const r = await fetch(`/api/addons/${ID}/storage`, { cache: 'no-store' });
@@ -96,10 +98,11 @@
   }
   function startHand() {
     G.s = E.newHand(G.dealer);
+    snd('shuffle'); snd('deal', { n: 6, delay: 0.55 });
     sel = null; picks = new Set(); reveal = null;
     renderAll(); save();
     const ini = G.s.events.find((e) => e.type === 'initial');
-    if (ini) { banner(t('escoba')); toast(t('initialEscoba')); }
+    if (ini) { banner(t('escoba')); toast(t('initialEscoba')); snd('escoba', { delay: 1.1 }); }
     G.s.events = [];
     if (G.s.turn === AI) setTimeout(aiTurn, delay());
   }
@@ -121,19 +124,25 @@
   }
   function myTurn() { return G && !G.over && !busy && G.s.turn === ME && G.s.hands[ME].length; }
   function doMove(p, mv) {
+    const takesSiete = mv.take.length && (mv.take.includes(E.SIETE_OROS) || mv.card === E.SIETE_OROS);
+    if (mv.take.length) snd('take'); else if (p === ME) snd('play');
+    if (takesSiete) snd('coin', { delay: 0.12 });
     const r = E.play(G.s, mv);
+    if (r.escoba) snd('escoba', { delay: 0.15 });
+    if (r.dealt) snd('deal', { n: 6, delay: 0.35 });
     if (r.escoba) {
       banner(t('escoba'));
       if (p === ME) statsOf(G.level).escobas++;
       if (p === AI) toast(t('aiEscoba'));
     }
     const rest = G.s.events.find((e) => e.type === 'rest');
-    if (rest) toast(t('restTo', { who: rest.player === ME ? t('you') : t('computer') }));
+    if (rest) { toast(t('restTo', { who: rest.player === ME ? t('you') : t('computer') })); snd('take', { delay: 0.4 }); }
     G.s.events = [];
     sel = null; picks = new Set(); reveal = null;
     renderAll(); save();
     if (r.handOver) { setTimeout(scoreHand, 700); return; }
     if (G.s.turn === AI) setTimeout(aiTurn, delay());
+    else if (p === AI) snd('turn', { delay: 0.35 });
   }
   function aiTurn() {
     if (!G || G.over || G.s.turn !== AI) return;
@@ -142,6 +151,7 @@
       const mv = E.choose(G.s, AI, G.level);
       // show the card and what it takes before applying it
       reveal = mv;
+      snd('play');
       renderBoard();
       setTimeout(() => { busy = false; doMove(AI, mv); }, delay());
     }, 60);
@@ -165,6 +175,7 @@
     if (over) finishGame();
     save(true);
     renderAll();
+    snd('handEnd');
     $('handDlg').classList.add('show');
   }
   $('nextHandBtn').onclick = () => {
@@ -181,6 +192,7 @@
   }
   function showEnd() {
     const won = G.pts[0] > G.pts[1], s = statsOf(G.level);
+    snd(won ? 'win' : 'lose');
     $('endTitle').textContent = won ? t('win') : t('loss');
     $('endSub').textContent = t('finalScore', { a: G.pts[0], b: G.pts[1], lv: lvName(G.level) }) + (G.helped ? ' · ' + t('withHelp') : '');
     $('endBadge').classList.toggle('lose', !won);
@@ -270,7 +282,9 @@
     const S = settings();
     document.querySelectorAll('.sw').forEach((s) => s.classList.toggle('on', !!S[s.dataset.k]));
     document.querySelectorAll('#themeSeg button').forEach((b) => b.classList.toggle('on', b.dataset.v === S.theme));
-    document.querySelectorAll('#speedSeg button').forEach((b) => b.classList.toggle('on', b.dataset.v === S.speed));
+    document.querySelectorAll('#soundSeg button').forEach((b) => { b.onclick = () => { settings().sound = b.dataset.v; window.GameSound.setLevel(b.dataset.v); renderSettings(); save(); if (b.dataset.v !== 'off') snd('play'); }; });
+  document.querySelectorAll('#speedSeg button').forEach((b) => b.classList.toggle('on', b.dataset.v === S.speed));
+    document.querySelectorAll('#soundSeg button').forEach((b) => b.classList.toggle('on', b.dataset.v === S.sound));
   }
   function renderUser() {
     const name = USER.name || t('you');
@@ -370,6 +384,7 @@
     buildLevels();
     await Promise.all([loadUser(), loadDB()]);
     $('storeNote').hidden = storeMode !== 'local';
+    window.GameSound.init({ level: settings().sound, skip: SKIP_SOUNDS });
     applyTheme();
     renderUser();
     statLevel = settings().level;

@@ -37,6 +37,13 @@ treses cuentan como reyes y los doses como ases; con 4 reyes conservan su valor.
   idiomas de Offlined; una página breve de reglas dentro del addon.
 - Las señas entre compañeros no están en esta primera versión.
 
+## Sonido
+
+Efectos cortos y discretos que siguen el ritmo de la partida: barajar y repartir, una carta en la mesa, llevarse
+cartas, un aviso suave cuando te toca y pequeñas señales para los momentos importantes (envido, quiero, órdago, la cuenta de tantos, la vaca ganada). Ajustes → Sonido:
+apagado, suave (por defecto) o normal. Los sonidos de cartas y fichas son grabaciones del paquete «Casino Audio» de
+Kenney (CC0, kenney.nl); las señales se generan en el propio navegador.
+
 ## Dónde se guardan tus datos
 
 En el almacén propio del addon (`Offlined Data/Addons/installed/mus/data/storage.json`): la partida en curso, los
@@ -49,4 +56,4 @@ color de su avatar) y la foto del avatar `/api/users/<id>/avatar`. Nada más, y 
 
 ## Licencia
 
-MIT. Iconos de [Lucide](https://lucide.dev) (ISC).
+MIT. Iconos de [Lucide](https://lucide.dev) (ISC). Sonidos de cartas y fichas: Kenney «Casino Audio» (CC0).

@@ -35,6 +35,13 @@ Diseño propio pensado para que se lea bien: los cuatro palos (oros, copas, espa
 siempre, los números tradicionales 1–7, 10, 11 y 12, y las figuras (sota, caballo, rey) dibujadas con formas
 geométricas planas en dos tonos del color del palo, sobre un panel suave. Una pequeña marca indica lo que valen las figuras en este juego (8, 9, 10).
 
+## Sonido
+
+Efectos cortos y discretos que siguen el ritmo de la partida: barajar y repartir, una carta en la mesa, llevarse
+cartas, un aviso suave cuando te toca y pequeñas señales para los momentos importantes (una escoba, el siete de oros, el fin de la mano). Ajustes → Sonido:
+apagado, suave (por defecto) o normal. Los sonidos de cartas y fichas son grabaciones del paquete «Casino Audio» de
+Kenney (CC0, kenney.nl); las señales se generan en el propio navegador.
+
 ## Dónde se guardan tus datos
 
 En el almacén propio del addon (`Offlined Data/Addons/installed/escoba/data/storage.json`): la partida en curso, los
@@ -47,4 +54,4 @@ color de su avatar) y la foto del avatar `/api/users/<id>/avatar`. Nada más, y 
 
 ## Licencia
 
-MIT. Iconos de [Lucide](https://lucide.dev) (ISC).
+MIT. Iconos de [Lucide](https://lucide.dev) (ISC). Sonidos de cartas y fichas: Kenney «Casino Audio» (CC0).

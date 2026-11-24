@@ -2,6 +2,7 @@
    (Grande, Chica, Pares, Juego, Punto, Órdago): they are the names of the game everywhere. */
 window.MUS_I18N = {
   en: {
+    sound: "Sound", soundOff: "Off", soundSoft: "Soft",
     appName: "Mus", lv: ["Beginner", "Amateur", "Advanced", "Master"],
     lvDesc: ["Bets and answers almost at random", "Plays its cards, never bluffs", "Reads the hand and bluffs a little", "Weighs every bet and reads yours"],
     newGame: "New game", target: "Vaca to", points: "{n} points", kings: "Kings", k8: "8 kings", k4: "4 kings", start: "New game",
@@ -29,6 +30,7 @@ window.MUS_I18N = {
     offlineStore: "Saved only in this browser (Offlined's storage is not available).",
   },
   es: {
+    sound: "Sonido", soundOff: "Apagado", soundSoft: "Suave",
     appName: "Mus", lv: ["Principiante", "Aficionado", "Avanzado", "Maestro"],
     lvDesc: ["Envida y quiere casi al azar", "Juega sus cartas, no farolea", "Lee la mano y farolea algo", "Pesa cada envite y lee los tuyos"],
     newGame: "Nueva partida", target: "Vaca a", points: "{n} tantos", kings: "Reyes", k8: "8 reyes", k4: "4 reyes", start: "Nueva partida",
@@ -56,6 +58,7 @@ window.MUS_I18N = {
     offlineStore: "Guardado solo en este navegador (el almacén de Offlined no está disponible).",
   },
   fr: {
+    sound: "Son", soundOff: "Coupé", soundSoft: "Doux",
     appName: "Mus", lv: ["Débutant", "Amateur", "Avancé", "Maître"],
     lvDesc: ["Mise et répond presque au hasard", "Joue ses cartes, ne bluffe pas", "Lit la main et bluffe un peu", "Pèse chaque mise et lit les vôtres"],
     newGame: "Nouvelle partie", target: "Manche en", points: "{n} points", kings: "Rois", k8: "8 rois", k4: "4 rois", start: "Nouvelle partie",
@@ -83,6 +86,7 @@ window.MUS_I18N = {
     offlineStore: "Enregistré seulement dans ce navigateur (le stockage d'Offlined n'est pas disponible).",
   },
   pt: {
+    sound: "Som", soundOff: "Desligado", soundSoft: "Suave",
     appName: "Mus", lv: ["Principiante", "Amador", "Avançado", "Mestre"],
     lvDesc: ["Aposta e responde quase ao acaso", "Joga as suas cartas, não faz bluff", "Lê a mão e faz algum bluff", "Pesa cada aposta e lê as tuas"],
     newGame: "Novo jogo", target: "Vaca a", points: "{n} pontos", kings: "Reis", k8: "8 reis", k4: "4 reis", start: "Novo jogo",
@@ -110,6 +114,7 @@ window.MUS_I18N = {
     offlineStore: "Guardado só neste navegador (o armazenamento do Offlined não está disponível).",
   },
   it: {
+    sound: "Suono", soundOff: "Spento", soundSoft: "Leggero",
     appName: "Mus", lv: ["Principiante", "Dilettante", "Avanzato", "Maestro"],
     lvDesc: ["Punta e risponde quasi a caso", "Gioca le sue carte, non bluffa", "Legge la mano e bluffa un po'", "Valuta ogni puntata e legge le tue"],
     newGame: "Nuova partita", target: "Vaca a", points: "{n} punti", kings: "Re", k8: "8 re", k4: "4 re", start: "Nuova partita",
@@ -137,6 +142,7 @@ window.MUS_I18N = {
     offlineStore: "Salvato solo in questo browser (l'archivio di Offlined non è disponibile).",
   },
   de: {
+    sound: "Ton", soundOff: "Aus", soundSoft: "Leise",
     appName: "Mus", lv: ["Anfänger", "Hobbyspieler", "Fortgeschritten", "Meister"],
     lvDesc: ["Setzt und antwortet fast zufällig", "Spielt seine Karten, blufft nie", "Liest das Blatt und blufft etwas", "Wägt jeden Einsatz ab und liest deine"],
     newGame: "Neues Spiel", target: "Vaca bis", points: "{n} Punkte", kings: "Könige", k8: "8 Könige", k4: "4 Könige", start: "Neues Spiel",
@@ -164,6 +170,7 @@ window.MUS_I18N = {
     offlineStore: "Nur in diesem Browser gespeichert (der Speicher von Offlined ist nicht verfügbar).",
   },
   zh: {
+    sound: "声音", soundOff: "关闭", soundSoft: "轻柔",
     appName: "穆斯牌（Mus）", lv: ["新手", "业余", "进阶", "大师"],
     lvDesc: ["几乎随机下注和应答", "凭牌力打，不诈唬", "会读牌，偶尔诈唬", "权衡每次下注并解读你的下注"],
     newGame: "新游戏", target: "每局到", points: "{n} 分", kings: "国王", k8: "8 国王", k4: "4 国王", start: "新游戏",
@@ -191,6 +198,7 @@ window.MUS_I18N = {
     offlineStore: "仅保存在此浏览器中（Offlined 存储不可用）。",
   },
   hi: {
+    sound: "ध्वनि", soundOff: "बंद", soundSoft: "धीमी",
     appName: "मुस", lv: ["शुरुआती", "शौक़िया", "उन्नत", "मास्टर"],
     lvDesc: ["लगभग बेतरतीब दाँव और जवाब", "अपने पत्तों से खेलता है, झाँसा नहीं", "हाथ पढ़ता है, थोड़ा झाँसा देता है", "हर दाँव तौलता है और आपके पढ़ता है"],
     newGame: "नया खेल", target: "वाका", points: "{n} अंक", kings: "राजा", k8: "8 राजा", k4: "4 राजा", start: "नया खेल",
@@ -218,6 +226,7 @@ window.MUS_I18N = {
     offlineStore: "केवल इस ब्राउज़र में सहेजा गया (Offlined का स्टोरेज उपलब्ध नहीं है)।",
   },
   ar: {
+    sound: "الصوت", soundOff: "مطفأ", soundSoft: "خافت",
     appName: "موس", lv: ["مبتدئ", "هاوٍ", "متقدم", "أستاذ"],
     lvDesc: ["يراهن ويجيب عشوائيًا تقريبًا", "يلعب بأوراقه ولا يخادع", "يقرأ اليد ويخادع قليلًا", "يزن كل رهان ويقرأ رهاناتك"],
     newGame: "لعبة جديدة", target: "الجولة إلى", points: "{n} نقطة", kings: "الملوك", k8: "8 ملوك", k4: "4 ملوك", start: "لعبة جديدة",
@@ -245,6 +254,7 @@ window.MUS_I18N = {
     offlineStore: "محفوظ في هذا المتصفح فقط (تخزين Offlined غير متاح).",
   },
   ru: {
+    sound: "Звук", soundOff: "Выкл.", soundSoft: "Тихо",
     appName: "Мус", lv: ["Новичок", "Любитель", "Продвинутый", "Мастер"],
     lvDesc: ["Ставит и отвечает почти наугад", "Играет картами, не блефует", "Читает руку и немного блефует", "Взвешивает каждую ставку и читает ваши"],
     newGame: "Новая игра", target: "Вака до", points: "{n} очков", kings: "Короли", k8: "8 королей", k4: "4 короля", start: "Новая игра",

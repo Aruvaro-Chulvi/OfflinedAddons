@@ -1,7 +1,7 @@
 {
   "id": "mus",
   "name": "Mus",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "author": "Álvaro C. Chulvi",
   "description": "The Spanish card game Mus in pairs against the computer: mus and discards, Grande, Chica, Pares and Juego with envites and órdagos. 8 or 4 kings, vacas to 30 or 40, four levels.",
   "icon": "🂠",

@@ -36,6 +36,13 @@ count as kings and the twos as aces; with 4 kings they keep their value.
   Offlined; a short rules page inside the addon.
 - Partner signals (*señas*) are not included in this first version.
 
+## Sound
+
+Short, quiet sound effects that follow the rhythm of the game: shuffling and dealing, a card on the table, taking
+cards, a soft chime when it is your turn and small signals for the big moments (envido, quiero, órdago, counting the points, a vaca won). Settings → Sound: off, soft
+(default) or normal. The card and chip sounds are recordings from Kenney's «Casino Audio» pack (CC0, kenney.nl);
+the signals are synthesised in the browser.
+
 ## Where your data is
 
 In the addon's own storage (`Offlined Data/Addons/installed/mus/data/storage.json`): the game in progress, settings
@@ -48,4 +55,4 @@ avatar colour) and the avatar picture `/api/users/<id>/avatar`. Nothing else, an
 
 ## Licence
 
-MIT. Icons from [Lucide](https://lucide.dev) (ISC).
+MIT. Icons from [Lucide](https://lucide.dev) (ISC). Card and chip sounds: Kenney «Casino Audio» (CC0).

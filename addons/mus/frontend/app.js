@@ -5,7 +5,9 @@
   const ID = 'mus';
   const C = window.SpanishCards, M = window.MusEngine;
   const $ = (id) => document.getElementById(id);
+  const snd = (name, opts) => { try { window.GameSound.play(name, opts); } catch (_) {} };
   const params = new URLSearchParams(location.search);
+  const SKIP_SOUNDS = [];
   const SPEED = { slow: 1500, normal: 950, fast: 450 };
   const LANCE_LABEL = { grande: 'Grande', chica: 'Chica', pares: 'Pares', juego: 'Juego', punto: 'Punto' };
 
@@ -42,7 +44,7 @@
   applyTheme();
 
   // ── Storage ─────────────────────────────────────────────────────────────────────────────────────────
-  const DEFAULTS = { handHelp: true, speed: 'normal', theme: 'auto', level: 2, target: 30, kings: 8 };
+  const DEFAULTS = { handHelp: true, sound: 'soft', speed: 'normal', theme: 'auto', level: 2, target: 30, kings: 8 };
   async function loadDB() {
     try {
       const r = await fetch(`/api/addons/${ID}/storage`, { cache: 'no-store' });
@@ -94,6 +96,7 @@
     G = { level: S.level, g: M.newGame({ target: S.target, reyes8: +S.kings === 8, dealer: 3 }), helped: false };
     statsOf(G.level).played++;
     M.newHand(G.g);
+    handSounds();
     me().game = G;
     disc = new Set(); amount = 2;
     save();
@@ -107,6 +110,8 @@
   $('confirmYes').onclick = () => { $('confirmDlg').classList.remove('show'); newGame(); };
   $('confirmNo').onclick = () => $('confirmDlg').classList.remove('show');
 
+  function handSounds() { snd('shuffle'); snd('deal', { n: 8, delay: 0.55 }); }
+  let lastTurn = -1;
   function step() {
     clearTimeout(aiTimer);
     if (!G) return;
@@ -114,7 +119,8 @@
     render();
     if (h.phase === 'conteo') { h.countRows = M.conteo(g); afterHand(); return; }
     if (h.phase === 'handEnd') { afterHand(); return; }
-    if (h.turn === 0) return; // waiting for you
+    if (h.turn === 0) { if (lastTurn !== 0 && lastTurn !== -1) snd('turn'); lastTurn = 0; return; } // waiting for you
+    lastTurn = h.turn;
     aiTimer = setTimeout(() => {
       const p = h.turn;
       const d = M.decide(g, p, G.level);
@@ -125,6 +131,9 @@
   function apply(p, d) {
     const g = G.g, h = g.hand;
     const before = h.lance ? h.lance.name : null;
+    const fx = { envido: 'envido', quiero: 'quiero', noquiero: 'noquiero', ordago: 'ordago' }[d.type];
+    if (fx) snd(fx);
+    if (d.type === 'discard') { snd('take'); snd('deal', { n: Math.max(1, d.cards.length), delay: 0.25 }); }
     if (h.phase === 'mus') M.musDecision(g, p, d.type === 'mus');
     else if (h.phase === 'discard') M.discard(g, p, d.cards);
     else M.act(g, p, d);
@@ -187,6 +196,11 @@
     if (h.vacaEnded) note += (note ? ' · ' : '') + t('vacaFor', { who: h.vacaWinner === 0 ? t('us') : t('them') });
     $('countNote').textContent = note;
     $('countNextTxt').textContent = g.over ? t('close') : h.vacaEnded ? t('nextVaca') : t('nextHand');
+    let handPts = 0;
+    for (const r of h.countRows || []) handPts += r.pts;
+    for (const n in h.results) if (h.results[n].status === 'noquiero') handPts += h.results[n].pts;
+    if (handPts) snd('tantos', { n: handPts, delay: 0.2 });
+    if (h.vacaEnded && !g.over) snd('vaca', { delay: 0.3 + Math.min(handPts, 10) * 0.1 });
     $('countDlg').classList.add('show');
   }
   $('countNext').onclick = () => {
@@ -194,12 +208,14 @@
     const g = G.g;
     if (g.over) { showEnd(); return; }
     M.nextHand(g);
+    handSounds();
     disc = new Set(); amount = 2;
     save();
     step();
   };
   function showEnd() {
     const g = G.g, won = g.winner === 0;
+    snd(won ? 'win' : 'lose');
     $('endTitle').textContent = won ? t('win') : t('loss');
     $('endSub').textContent = t('finalScore', { a: g.vacas[0], b: g.vacas[1], lv: lvName(G.level) }) + (G.helped ? ' · ' + t('withHelp') : '');
     $('endBadge').classList.toggle('lose', !won);
@@ -330,7 +346,9 @@
     const S = settings();
     document.querySelectorAll('.sw').forEach((s) => s.classList.toggle('on', !!S[s.dataset.k]));
     document.querySelectorAll('#themeSeg button').forEach((b) => b.classList.toggle('on', b.dataset.v === S.theme));
-    document.querySelectorAll('#speedSeg button').forEach((b) => b.classList.toggle('on', b.dataset.v === S.speed));
+    document.querySelectorAll('#soundSeg button').forEach((b) => { b.onclick = () => { settings().sound = b.dataset.v; window.GameSound.setLevel(b.dataset.v); renderSettings(); save(); if (b.dataset.v !== 'off') snd('play'); }; });
+  document.querySelectorAll('#speedSeg button').forEach((b) => b.classList.toggle('on', b.dataset.v === S.speed));
+    document.querySelectorAll('#soundSeg button').forEach((b) => b.classList.toggle('on', b.dataset.v === S.sound));
   }
   function renderUser() {
     const name = USER.name || t('you');
@@ -380,6 +398,7 @@
     buildLevels();
     await Promise.all([loadUser(), loadDB()]);
     $('storeNote').hidden = storeMode !== 'local';
+    window.GameSound.init({ level: settings().sound, skip: SKIP_SOUNDS });
     applyTheme();
     renderUser(); renderLevels(); renderSettings();
     statLevel = settings().level;

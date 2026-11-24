@@ -1,6 +1,7 @@
 /* Texts of the Escoba addon in Offlined's ten languages. {x} are placeholders. */
 window.ESCOBA_I18N = {
   en: {
+    sound: "Sound", soundOff: "Off", soundSoft: "Soft",
     appName: "Escoba", lv: ["Beginner", "Amateur", "Advanced", "Master"],
     lvDesc: ["Plays almost at random", "Goes for points", "Also avoids giving you escobas", "Imagines your cards and plans ahead"],
     newGame: "New game", target: "Game to", points: "{n} points", start: "New game", thisGame: "This game", you: "You", computer: "Computer",
@@ -22,6 +23,7 @@ window.ESCOBA_I18N = {
     offlineStore: "Saved only in this browser (Offlined's storage is not available).",
   },
   es: {
+    sound: "Sonido", soundOff: "Apagado", soundSoft: "Suave",
     appName: "Escoba", lv: ["Principiante", "Aficionado", "Avanzado", "Maestro"],
     lvDesc: ["Juega casi al azar", "Va a por los puntos", "Además evita darte escobas", "Imagina tus cartas y planea"],
     newGame: "Nueva partida", target: "Partida a", points: "{n} puntos", start: "Nueva partida", thisGame: "Esta partida", you: "Tú", computer: "Ordenador",
@@ -43,6 +45,7 @@ window.ESCOBA_I18N = {
     offlineStore: "Guardado solo en este navegador (el almacén de Offlined no está disponible).",
   },
   fr: {
+    sound: "Son", soundOff: "Coupé", soundSoft: "Doux",
     appName: "Escoba", lv: ["Débutant", "Amateur", "Avancé", "Maître"],
     lvDesc: ["Joue presque au hasard", "Cherche les points", "Évite aussi de vous offrir des escobas", "Imagine vos cartes et anticipe"],
     newGame: "Nouvelle partie", target: "Partie en", points: "{n} points", start: "Nouvelle partie", thisGame: "Cette partie", you: "Vous", computer: "Ordinateur",
@@ -64,6 +67,7 @@ window.ESCOBA_I18N = {
     offlineStore: "Enregistré seulement dans ce navigateur (le stockage d'Offlined n'est pas disponible).",
   },
   pt: {
+    sound: "Som", soundOff: "Desligado", soundSoft: "Suave",
     appName: "Escoba", lv: ["Principiante", "Amador", "Avançado", "Mestre"],
     lvDesc: ["Joga quase ao acaso", "Vai atrás dos pontos", "Também evita dar-te escobas", "Imagina as tuas cartas e planeia"],
     newGame: "Novo jogo", target: "Jogo a", points: "{n} pontos", start: "Novo jogo", thisGame: "Este jogo", you: "Tu", computer: "Computador",
@@ -85,6 +89,7 @@ window.ESCOBA_I18N = {
     offlineStore: "Guardado só neste navegador (o armazenamento do Offlined não está disponível).",
   },
   it: {
+    sound: "Suono", soundOff: "Spento", soundSoft: "Leggero",
     appName: "Escoba", lv: ["Principiante", "Dilettante", "Avanzato", "Maestro"],
     lvDesc: ["Gioca quasi a caso", "Punta ai punti", "Evita anche di darti scope", "Immagina le tue carte e pianifica"],
     newGame: "Nuova partita", target: "Partita a", points: "{n} punti", start: "Nuova partita", thisGame: "Questa partita", you: "Tu", computer: "Computer",
@@ -106,6 +111,7 @@ window.ESCOBA_I18N = {
     offlineStore: "Salvato solo in questo browser (l'archivio di Offlined non è disponibile).",
   },
   de: {
+    sound: "Ton", soundOff: "Aus", soundSoft: "Leise",
     appName: "Escoba", lv: ["Anfänger", "Hobbyspieler", "Fortgeschritten", "Meister"],
     lvDesc: ["Spielt fast zufällig", "Geht auf Punkte", "Vermeidet auch, dir Escobas zu schenken", "Denkt sich deine Karten und plant voraus"],
     newGame: "Neues Spiel", target: "Spiel bis", points: "{n} Punkte", start: "Neues Spiel", thisGame: "Dieses Spiel", you: "Du", computer: "Computer",
@@ -127,6 +133,7 @@ window.ESCOBA_I18N = {
     offlineStore: "Nur in diesem Browser gespeichert (der Speicher von Offlined ist nicht verfügbar).",
   },
   zh: {
+    sound: "声音", soundOff: "关闭", soundSoft: "轻柔",
     appName: "扫牌（Escoba）", lv: ["新手", "业余", "进阶", "大师"],
     lvDesc: ["几乎随机出牌", "专抢分数", "还会避免让你扫牌", "推测你的牌并提前规划"],
     newGame: "新游戏", target: "目标分", points: "{n} 分", start: "新游戏", thisGame: "本局", you: "你", computer: "电脑",
@@ -148,6 +155,7 @@ window.ESCOBA_I18N = {
     offlineStore: "仅保存在此浏览器中（Offlined 存储不可用）。",
   },
   hi: {
+    sound: "ध्वनि", soundOff: "बंद", soundSoft: "धीमी",
     appName: "एस्कोबा", lv: ["शुरुआती", "शौक़िया", "उन्नत", "मास्टर"],
     lvDesc: ["लगभग बेतरतीब खेलता है", "अंकों के पीछे जाता है", "आपको एस्कोबा देने से भी बचता है", "आपके पत्तों का अनुमान लगाकर योजना बनाता है"],
     newGame: "नया खेल", target: "खेल", points: "{n} अंक", start: "नया खेल", thisGame: "यह खेल", you: "आप", computer: "कंप्यूटर",
@@ -169,6 +177,7 @@ window.ESCOBA_I18N = {
     offlineStore: "केवल इस ब्राउज़र में सहेजा गया (Offlined का स्टोरेज उपलब्ध नहीं है)।",
   },
   ar: {
+    sound: "الصوت", soundOff: "مطفأ", soundSoft: "خافت",
     appName: "إسكوبا", lv: ["مبتدئ", "هاوٍ", "متقدم", "أستاذ"],
     lvDesc: ["يلعب عشوائيًا تقريبًا", "يسعى وراء النقاط", "ويتجنب أيضًا منحك إسكوبا", "يتخيل أوراقك ويخطط مسبقًا"],
     newGame: "لعبة جديدة", target: "اللعبة إلى", points: "{n} نقطة", start: "لعبة جديدة", thisGame: "هذه اللعبة", you: "أنت", computer: "الحاسوب",
@@ -190,6 +199,7 @@ window.ESCOBA_I18N = {
     offlineStore: "محفوظ في هذا المتصفح فقط (تخزين Offlined غير متاح).",
   },
   ru: {
+    sound: "Звук", soundOff: "Выкл.", soundSoft: "Тихо",
     appName: "Эскоба", lv: ["Новичок", "Любитель", "Продвинутый", "Мастер"],
     lvDesc: ["Играет почти наугад", "Гонится за очками", "Ещё и не даёт вам эскоб", "Представляет ваши карты и планирует"],
     newGame: "Новая игра", target: "Игра до", points: "{n} очков", start: "Новая игра", thisGame: "Эта игра", you: "Вы", computer: "Компьютер",
