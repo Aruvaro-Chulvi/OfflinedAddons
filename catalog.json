@@ -1,9 +1,9 @@
 {
   "format": 1,
-  "version": "addons-2026-11-25",
-  "generated": "2026-11-24T23:00:50Z",
+  "version": "addons-2026-11-25b",
+  "generated": "2026-11-24T23:05:34Z",
   "repository": "https://github.com/Aruvaro-Chulvi/OfflinedAddons",
-  "base_url": "https://github.com/Aruvaro-Chulvi/OfflinedAddons/releases/download/addons-2026-11-25/",
+  "base_url": "https://github.com/Aruvaro-Chulvi/OfflinedAddons/releases/download/addons-2026-11-25b/",
   "public_key": "13RbPjlJPu7T0VNjci2128gD/SVbHtw6nZMktYVU9C4=",
   "addons": [
     {
@@ -395,21 +395,21 @@
         "ru": "Создавайте QR-коды для ссылок, Wi‑Fi, контактов, почты, телефона, SMS, WhatsApp, мест, событий и текста. Цвета, формы, логотип и подпись; сохраняйте в PNG или SVG, копируйте или печатайте листы наклеек. Статические коды, которые никогда не истекают, создаются на вашем компьютере."
       },
       "icon": "🔳",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "author": "Álvaro C. Chulvi",
       "license": "MIT",
       "category": "tools",
       "min_offlined": "3.0.0",
       "permissions": [],
       "official": true,
-      "file": "qr-generator-1.0.0.zip",
-      "size": 47419,
-      "sha256": "61736c85bb6a20feec4af2b964870b958cd7d58057f2f6aacb7c6925224edf35",
-      "content_sha256": "3a8977e26efec40f0530d186df254c2956f2241fb4e30bc6c2e287def240fa07",
+      "file": "qr-generator-1.1.0.zip",
+      "size": 48506,
+      "sha256": "6a1121a1749778b66455d260b73af15424b4be123f057891e3a1894a8d57f0c1",
+      "content_sha256": "bfe7ccf6055a186dd906bc789434c165d3b71fbf8ebc3486a12b99bfe167ba17",
       "files": 7,
       "source": "https://github.com/Aruvaro-Chulvi/OfflinedAddons/tree/main/addons/qr-generator",
       "published": "2026-11-24",
-      "updated": "2026-11-24"
+      "updated": "2026-11-25"
     },
     {
       "id": "sky-guardians",
