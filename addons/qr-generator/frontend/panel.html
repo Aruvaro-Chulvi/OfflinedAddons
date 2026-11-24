@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>QR Generator</title>
+<link rel="stylesheet" href="qr.css">
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <!-- Lucide icons (ISC licence) -->
+    <symbol id="i-chev" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol>
+    <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="M12 5v14"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></symbol>
+    <symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></symbol>
+    <symbol id="i-copy" viewBox="0 0 24 24"><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></symbol>
+    <symbol id="i-download" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></symbol>
+    <symbol id="i-printer" viewBox="0 0 24 24"><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 9V3a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v6"/><rect x="6" y="14" width="12" height="8" rx="1"/></symbol>
+    <symbol id="i-image" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></symbol>
+    <symbol id="i-alert" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+    <symbol id="i-shield" viewBox="0 0 24 24"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/></symbol>
+    <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></symbol>
+    <symbol id="i-settings" viewBox="0 0 24 24"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></symbol>
+    <symbol id="i-qr" viewBox="0 0 24 24"><rect width="5" height="5" x="3" y="3" rx="1"/><rect width="5" height="5" x="16" y="3" rx="1"/><rect width="5" height="5" x="3" y="16" rx="1"/><path d="M21 16h-3a2 2 0 0 0-2 2v3"/><path d="M21 21v.01"/><path d="M12 7v3a2 2 0 0 1-2 2H7"/><path d="M3 12h.01"/><path d="M12 3h.01"/><path d="M12 16v.01"/><path d="M16 12h1"/><path d="M21 12v.01"/><path d="M12 21v-1"/></symbol>
+    <symbol id="i-type" viewBox="0 0 24 24"><path d="M4 7V4h16v3"/><path d="M9 20h6"/><path d="M12 4v16"/></symbol>
+    <symbol id="i-link" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></symbol>
+    <symbol id="i-wifi" viewBox="0 0 24 24"><path d="M12 20h.01"/><path d="M2 8.82a15 15 0 0 1 20 0"/><path d="M5 12.859a10 10 0 0 1 14 0"/><path d="M8.5 16.429a5 5 0 0 1 7 0"/></symbol>
+    <symbol id="i-contact" viewBox="0 0 24 24"><circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 0 0-16 0"/></symbol>
+    <symbol id="i-mail" viewBox="0 0 24 24"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></symbol>
+    <symbol id="i-phone" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></symbol>
+    <symbol id="i-sms" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></symbol>
+    <symbol id="i-chat" viewBox="0 0 24 24"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></symbol>
+    <symbol id="i-pin" viewBox="0 0 24 24"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/></symbol>
+    <symbol id="i-calendar" viewBox="0 0 24 24"><path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/></symbol>
+    <symbol id="i-rotate" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></symbol>
+  </defs>
+</svg>
+
+<div class="app" id="app">
+  <!-- ═══════════ Sidebar: my QR codes ═══════════ -->
+  <aside class="side">
+    <div class="user">
+      <div class="avatar" id="avatar">?</div>
+      <div class="who"><div class="name" id="userName">—</div><div class="sub" data-t="appName"></div></div>
+      <button class="close" id="drawerClose" data-tt="close"><svg class="i"><use href="#i-x"/></svg></button>
+    </div>
+    <div class="side-top">
+      <button class="btn primary wide" id="newBtn"><svg class="i"><use href="#i-plus"/></svg><span data-t="newQR"></span></button>
+      <label class="searchbox"><svg class="i"><use href="#i-search"/></svg><input id="search" type="search" autocomplete="off"></label>
+    </div>
+    <div class="list-h" data-t="myQR"></div>
+    <div class="list" id="list"></div>
+    <div class="side-foot">
+      <div class="sec closed" id="setSec">
+        <button class="sec-h"><svg class="i"><use href="#i-settings"/></svg><span data-t="settings"></span><svg class="i chev"><use href="#i-chev"/></svg></button>
+        <div class="sec-b">
+          <div class="opt"><span data-t="theme"></span>
+            <div class="seg" id="themeSeg"><button data-v="auto" data-t="auto"></button><button data-v="light" data-t="light"></button><button data-v="dark" data-t="dark"></button></div></div>
+          <div class="opt"><span data-t="defSize"></span>
+            <select id="defSize"><option value="256">256 px</option><option value="512">512 px</option><option value="1024">1024 px</option><option value="2048">2048 px</option></select></div>
+        </div>
+      </div>
+      <div class="privacy"><svg class="i"><use href="#i-shield"/></svg><span data-t="privacy"></span></div>
+      <div class="store-note" id="storeNote" hidden data-t="offlineStore"></div>
+    </div>
+  </aside>
+
+  <!-- ═══════════ Editor ═══════════ -->
+  <main class="main" id="main">
+    <div class="topbar">
+      <button class="icon-btn menu-btn" id="menuBtn" data-tt="menu"><svg class="i"><use href="#i-menu"/></svg></button>
+      <input class="title-in" id="nameIn" autocomplete="off" spellcheck="false">
+      <span class="saved" id="savedMark" hidden><svg class="i"><use href="#i-check"/></svg><span data-t="saved"></span></span>
+      <button class="icon-btn" id="dupBtn" data-tt="duplicate"><svg class="i"><use href="#i-copy"/></svg></button>
+      <button class="icon-btn" id="delBtn" data-tt="delete"><svg class="i"><use href="#i-trash"/></svg></button>
+    </div>
+
+    <div class="cols">
+      <div class="editor">
+        <div class="types" id="types"></div>
+
+        <section class="card">
+          <h3 data-t="content"></h3>
+          <div class="help" id="typeHelp"></div>
+          <div class="fields" id="fields"></div>
+        </section>
+
+        <section class="card">
+          <h3 data-t="design"></h3>
+
+          <div class="lbl" data-t="presets"></div>
+          <div class="presets" id="presets"></div>
+
+          <div class="lbl" data-t="colors"></div>
+          <div class="colors">
+            <label class="color"><input type="color" id="cFg"><span data-t="fg"></span></label>
+            <label class="color" id="cFg2Wrap"><input type="color" id="cFg2"><span data-t="fg2"></span></label>
+            <label class="color" id="cBgWrap"><input type="color" id="cBg"><span data-t="bg"></span></label>
+            <label class="color" id="cEyeWrap"><input type="color" id="cEye"><span data-t="eyeColor"></span></label>
+          </div>
+          <div class="opt"><span data-t="gradient"></span><button class="sw" data-k="gradient"></button></div>
+          <div class="seg full" id="gradSeg"><button data-v="diag" data-t="dir_diag"></button><button data-v="vert" data-t="dir_vert"></button><button data-v="horiz" data-t="dir_horiz"></button><button data-v="radial" data-t="dir_radial"></button></div>
+          <div class="opt"><span data-t="transparent"></span><button class="sw" data-k="transparent"></button></div>
+          <div class="opt"><span data-t="eyeSame"></span><button class="sw" data-k="eyeSame"></button></div>
+
+          <div class="lbl" data-t="bodyShape"></div>
+          <div class="shapes" id="bodySeg"></div>
+          <div class="lbl" data-t="eyeShape"></div>
+          <div class="shapes" id="eyeSeg"></div>
+
+          <div class="lbl" data-t="logo"></div>
+          <div class="logo-row">
+            <div class="logo-prev" id="logoPrev"><svg class="i"><use href="#i-image"/></svg></div>
+            <button class="btn" id="logoAdd"><span data-t="logoAdd"></span></button>
+            <button class="btn" id="logoDel" hidden><span data-t="logoRemove"></span></button>
+            <input type="file" id="logoFile" accept="image/*" hidden>
+          </div>
+          <div id="logoOpts" hidden>
+            <div class="opt"><span data-t="logoSize"></span><input type="range" id="logoSize" min="14" max="28" step="1"></div>
+            <div class="opt"><span data-t="logoPad"></span><button class="sw" data-k="logoPad"></button></div>
+            <div class="opt"><span data-t="logoRound"></span><button class="sw" data-k="logoRound"></button></div>
+            <div class="help" data-t="logoNote"></div>
+          </div>
+
+          <div class="lbl" data-t="caption"></div>
+          <input class="in" id="caption" maxlength="60" autocomplete="off">
+
+          <div class="opt"><span data-t="margin"></span><input type="range" id="margin" min="0" max="8" step="1"><b class="val" id="marginVal"></b></div>
+
+          <div class="lbl" data-t="ecc"></div>
+          <div class="seg full" id="eccSeg"><button data-v="L"></button><button data-v="M"></button><button data-v="Q"></button><button data-v="H"></button></div>
+          <div class="help" data-t="eccHelp"></div>
+
+          <button class="link-btn" id="resetDesign"><svg class="i"><use href="#i-rotate"/></svg><span data-t="resetDesign"></span></button>
+        </section>
+      </div>
+
+      <div class="preview-col">
+        <div class="preview card">
+          <div class="qr-box" id="qrBox"></div>
+          <div class="qr-empty" id="qrEmpty"><svg class="i"><use href="#i-qr"/></svg><span id="qrEmptyTxt"></span></div>
+          <div class="info" id="qrInfo"></div>
+          <div class="warns" id="warns"></div>
+
+          <div class="export">
+            <div class="opt"><span data-t="exportSize"></span>
+              <select id="expSize"><option value="256">256 px</option><option value="512">512 px</option><option value="1024">1024 px</option><option value="2048">2048 px</option></select></div>
+            <div class="ex-btns">
+              <button class="btn primary" id="pngBtn"><svg class="i"><use href="#i-download"/></svg><span data-t="png"></span></button>
+              <button class="btn" id="svgBtn"><svg class="i"><use href="#i-download"/></svg><span data-t="svg"></span></button>
+              <button class="btn" id="copyBtn"><svg class="i"><use href="#i-copy"/></svg><span data-t="copy"></span></button>
+              <button class="btn" id="printBtn"><svg class="i"><use href="#i-printer"/></svg><span data-t="print"></span></button>
+            </div>
+          </div>
+
+          <details class="payload"><summary><svg class="i"><use href="#i-eye"/></svg><span data-t="seeContent"></span></summary><pre id="payload"></pre></details>
+        </div>
+      </div>
+    </div>
+
+    <div class="toast" id="toast"><span class="t" id="toastTxt"></span></div>
+  </main>
+</div>
+
+<div class="overlay" id="confirmDlg">
+  <div class="dlg">
+    <p id="confirmTxt"></p>
+    <div class="row2"><button class="btn" id="confirmNo" data-t="no"></button><button class="btn primary" id="confirmYes" data-t="yes"></button></div>
+  </div>
+</div>
+
+<div class="overlay" id="printDlg">
+  <div class="dlg">
+    <h2 data-t="printTitle"></h2>
+    <div class="print-opts" id="printOpts">
+      <button class="popt on" data-v="1"><span class="pv pv1"><i></i></span><span data-t="printOne"></span></button>
+      <button class="popt" data-v="12"><span class="pv pv12"><i></i><i></i><i></i><i></i><i></i><i></i></span><span data-t="printSheet"></span></button>
+      <button class="popt" data-v="35"><span class="pv pv35"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span><span data-t="printMany"></span></button>
+    </div>
+    <div class="opt"><span data-t="printCaption"></span><button class="sw" id="printCap"></button></div>
+    <div class="row2"><button class="btn" id="printNo" data-t="no"></button><button class="btn primary" id="printGo"><svg class="i"><use href="#i-printer"/></svg><span data-t="printBtn"></span></button></div>
+  </div>
+</div>
+
+<div id="printArea"></div>
+
+<script src="i18n.js"></script>
+<script src="engine/qr-engine.js"></script>
+<script src="engine/qr-render.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

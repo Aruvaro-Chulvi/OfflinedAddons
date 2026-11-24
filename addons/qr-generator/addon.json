@@ -1,0 +1,36 @@
+{
+  "id": "qr-generator",
+  "name": "QR Generator",
+  "version": "1.0.0",
+  "author": "Álvaro C. Chulvi",
+  "description": "Make QR codes for links, Wi‑Fi, contacts, email, phone, SMS, WhatsApp, places, events and text. Colours, shapes, a logo and a caption; save as PNG or SVG, copy or print label sheets. Static codes that never expire, made on your computer.",
+  "icon": "🔳",
+  "license": "MIT",
+  "category": "tools",
+  "min_offlined": "3.0.0",
+  "permissions": [],
+  "name_i18n": {
+    "en": "QR Generator",
+    "es": "Generador de QR",
+    "fr": "Générateur de QR",
+    "pt": "Gerador de QR",
+    "it": "Generatore di QR",
+    "de": "QR-Generator",
+    "zh": "二维码生成器",
+    "hi": "QR जनरेटर",
+    "ar": "مولّد رموز QR",
+    "ru": "Генератор QR-кодов"
+  },
+  "description_i18n": {
+    "en": "Make QR codes for links, Wi‑Fi, contacts, email, phone, SMS, WhatsApp, places, events and text. Colours, shapes, a logo and a caption; save as PNG or SVG, copy or print label sheets. Static codes that never expire, made on your computer.",
+    "es": "Crea códigos QR de enlaces, Wi‑Fi, contactos, correo, teléfono, SMS, WhatsApp, lugares, eventos y texto. Colores, formas, logo y texto debajo; guárdalos en PNG o SVG, cópialos o imprime hojas de etiquetas. Códigos estáticos que nunca caducan, hechos en tu ordenador.",
+    "fr": "Crée des codes QR pour liens, Wi‑Fi, contacts, e-mail, téléphone, SMS, WhatsApp, lieux, événements et texte. Couleurs, formes, logo et légende ; en PNG ou SVG, à copier ou à imprimer en planches d'étiquettes. Des codes statiques qui n'expirent jamais, créés sur ton ordinateur.",
+    "pt": "Cria códigos QR de links, Wi‑Fi, contactos, e-mail, telefone, SMS, WhatsApp, locais, eventos e texto. Cores, formas, logótipo e legenda; guarda em PNG ou SVG, copia ou imprime folhas de etiquetas. Códigos estáticos que nunca expiram, feitos no teu computador.",
+    "it": "Crea codici QR per link, Wi‑Fi, contatti, e-mail, telefono, SMS, WhatsApp, luoghi, eventi e testo. Colori, forme, logo e didascalia; salva in PNG o SVG, copia o stampa fogli di etichette. Codici statici che non scadono mai, creati sul tuo computer.",
+    "de": "Erstelle QR-Codes für Links, WLAN, Kontakte, E-Mail, Telefon, SMS, WhatsApp, Orte, Termine und Text. Farben, Formen, Logo und Beschriftung; als PNG oder SVG speichern, kopieren oder Etikettenbögen drucken. Statische Codes, die nie ablaufen, erstellt auf deinem Computer.",
+    "zh": "为链接、Wi‑Fi、联系人、邮件、电话、短信、WhatsApp、地点、活动和文本生成二维码。可设置颜色、形状、标志和说明文字；保存为 PNG 或 SVG、复制，或打印标签页。静态二维码永不过期，在你的电脑上生成。",
+    "hi": "लिंक, वाई‑फ़ाई, संपर्क, ईमेल, फ़ोन, SMS, WhatsApp, स्थान, इवेंट और टेक्स्ट के लिए QR कोड बनाएँ। रंग, आकार, लोगो और नीचे का टेक्स्ट; PNG या SVG में सहेजें, कॉपी करें या लेबल शीट प्रिंट करें। स्थिर कोड जो कभी समाप्त नहीं होते, आपके कंप्यूटर पर बने।",
+    "ar": "أنشئ رموز QR للروابط وشبكات Wi‑Fi وجهات الاتصال والبريد والهاتف والرسائل القصيرة وWhatsApp والأماكن والأحداث والنصوص. ألوان وأشكال وشعار ونص أسفل الرمز؛ احفظه بصيغة PNG أو SVG أو انسخه أو اطبع أوراق ملصقات. رموز ثابتة لا تنتهي صلاحيتها، تُنشأ على حاسوبك.",
+    "ru": "Создавайте QR-коды для ссылок, Wi‑Fi, контактов, почты, телефона, SMS, WhatsApp, мест, событий и текста. Цвета, формы, логотип и подпись; сохраняйте в PNG или SVG, копируйте или печатайте листы наклеек. Статические коды, которые никогда не истекают, создаются на вашем компьютере."
+  }
+}

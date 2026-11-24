@@ -30,6 +30,7 @@ addon in this repository can be installed from inside Offlined with one click, i
 | 🧮 | **[Calcudoku](addons/calcudoku/)** | Numbers without repeats and cages with + − × ÷: six sizes and its own generator. | Official |
 | 🃏 | **[Escoba](addons/escoba/)** | The Spanish card game Escoba del 15 against the computer, with our own Spanish deck. | Official |
 | 🂠 | **[Mus](addons/mus/)** | Mus in pairs against the computer: envites, órdagos, 8 or 4 kings, vacas to 30 or 40. | Official |
+| 🔳 | **[QR Generator](addons/qr-generator/)** | QR codes for links, Wi‑Fi, contacts, events and more: colours, shapes, logo, PNG/SVG and label sheets. | Official |
 
 The full, current list is [`catalog.json`](catalog.json); the signed packages are in the
 [latest release](https://github.com/Aruvaro-Chulvi/OfflinedAddons/releases/latest).
