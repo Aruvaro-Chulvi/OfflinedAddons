@@ -4,7 +4,8 @@
    menús (menu.js), torres (tower.js), naves (planes.js), mandos arcade (arcade.js), combate y oleadas
    (combat.js), partidas/ranking/logros (stats.js), entrenamiento (training.js) y textos (texts.js).
    ═══════════════════════════════════════════════════════════════════════════ */
-import { createTower, BASE_HALF, TOWER_SCALE } from "./tower.js";
+import { createTower, BASE_HALF, TOWER_SCALE, TOWER_H } from "./tower.js";
+import { createMonument } from "./monument.js";
 import { sgPlanes, SG_ATTACK, SG_FIGHTER, applyLivery } from "./planes.js";
 import { logoSvg } from "./logo.js";
 import { createCombat } from "./combat.js";
@@ -15,21 +16,45 @@ import { createTraining } from "./training.js";
 import { NAME, TX } from "./texts.js";
 import { createAudio } from "./audio.js";
 import { bindings as KB, ACTIONS } from "./controls.js";
+import { createPerf } from "./perf.js";
+import { createArena, ARENA_LL, PALETTES, PALETTE_IDS } from "./arena.js";
 
-const VERSION = "0.7.0";
+const VERSION = "1.3.0";
 const PLANES = [{ key: "p_attack", id: SG_ATTACK }, { key: "p_fighter", id: SG_FIGHTER }];
 const SITE_MAX = 1200;                // la torre puede apartarse del punto elegido hasta esto para encontrar sitio
 const PLAZA = BASE_HALF * TOWER_SCALE; // media anchura de la explanada a escala (93 m)
 const ZONE_WARN = 4500, ZONE_MAX = 6000;
 const LS = "sg_last";
+// Gráficos: resolución interna como mucho esta parte de la de la pantalla (0 = sin límite). En una gráfica integrada
+// a 1080p, 0,67 ≈ 40 % menos de tiempo de dibujo que la resolución completa
+const GFX_CAP = { perf: 0.67, bal: 0.85, quality: 0 };
+// Terreno: calidad del motor, distancia de dibujo (la zona de juego mide 6 km de radio) y detalle. Medido en un APU
+// en Madrid: con 28 km y calidad media se montaban 400+ teselas, ~6 M de triángulos y 900 MB, y caía a 1 fps.
+const GFX_TERRAIN = { perf: { q: "low", far: 12000, lod: 0.85, cache: 130 }, bal: { q: "mid", far: 16000, lod: 0.9, cache: 170 }, quality: { q: null, far: 24000, lod: 1, cache: 0 } };
 
 export default function init(api) {
   const { THREE, S, HOOK, LANG } = api;
-  const t = (k, p) => { let s = (TX[LANG] || TX.en)[k] ?? TX.en[k] ?? k; if (p) s = s.replace(/\{(\w+)\}/g, (_, x) => (p[x] != null ? String(p[x]) : "")); return s; };
+  const M_KEYS = new Set(["streakLost", "aaOff", "bossP3", "bossRam", "back2", "tower", "shot", "towerHit", "towerDown", "gameOver", "kitCarry", "repaired", "victorySub", "victoryTitle", "th_strike", "graphTitle"]);
+  let monName = null;   // en partida defendiendo un monumento: su nombre (y las frases de la torre cambian)
+  const t = (k, p) => {
+    if (monName && k === "towerLbl") return monName;
+    if (monName && M_KEYS.has(k)) k += "_m";
+    let s = (TX[LANG] || TX.en)[k] ?? TX.en[k] ?? k; if (p) s = s.replace(/\{(\w+)\}/g, (_, x) => (p[x] != null ? String(p[x]) : "")); return s;
+  };
   const st = (() => { try { return JSON.parse(localStorage.getItem(LS) || "{}"); } catch { return {}; } })();
   st.plane = st.plane === 1 ? 1 : 0;
   if (!["easy", "normal", "hard"].includes(st.diff)) st.diff = "normal";
-  if (!["survival", "short", "daily"].includes(st.mode)) st.mode = "survival";
+  // Quien empieza, en «Corta» (10 oleadas, 6–11 min): la partida rápida que mejor enseña el juego
+  if (!["survival", "short", "daily", "blitz"].includes(st.mode)) st.mode = "short";
+  if (!["auto", "clear", "storm", "night"].includes(st.weather)) st.weather = "auto";
+  if (st.target !== "monument") st.target = "tower";
+  // Escenario: «arena» (Arena Neón, propia, sin mapa) o «city» (tu ciudad, con un mapa descargado). El reto diario y
+  // el entrenamiento, siempre en la arena (iguales para todos y sin descargas)
+  if (st.place !== "city") st.place = "arena";
+  // La Arena Neón necesita el motor v3 (escenario sin mapa, gameBudget, HOOK.sky). Con uno anterior: «Tu ciudad»
+  const ARENA_OK = (api.version || 1) >= 3 && typeof api.gameBudget === "function";
+  // Paleta de la arena: «auto» = al azar en cada partida (el reto diario, la del día)
+  if (st.palette !== "auto" && !PALETTES[st.palette]) st.palette = "auto";
   const save = () => { try { localStorage.setItem(LS, JSON.stringify(st)); } catch { } };
   if (LANG === "ar") document.documentElement.dir = "rtl";
   document.documentElement.lang = LANG;   // para partir bien las palabras largas (guiones)
@@ -60,6 +85,7 @@ export default function init(api) {
   #sg-load .step { color: #8f99a5; font-size: .85rem; }
   #sg-load button { margin-top: 14px; font: inherit; color: #e9e9ea; background: #222327; border: 1px solid #3a3d44; border-radius: 9px; padding: 8px 18px; cursor: pointer; }
   body.fs-plugin #panel6, body.fs-plugin #minimap, body.fs-plugin #mm-zoom, body.fs-plugin #h-left, body.fs-plugin #h-info { display: none !important; }
+  body.sg-replay #hud, body.sg-replay #hudc, body.sg-replay #cams, body.sg-replay #sg-zone, body.sg-replay #sg-down { display: none !important; }   /* repetición: solo la imagen */
   @keyframes sgblink { 50% { opacity: .35; } }`;
   document.head.appendChild(css);
   const down = document.createElement("div"); down.id = "sg-down"; down.className = "sg-hide";
@@ -70,7 +96,8 @@ export default function init(api) {
   load.innerHTML = `<div class="box">${logoSvg(70)}<h2>${title}</h2><div class="where" id="sg-load-where"></div><div class="tip"><b>${t("tipLbl")}</b><span id="sg-load-tip"></span></div>
     <div class="bar"><i id="sg-load-bar"></i></div><div class="step" id="sg-load-step"></div><button id="sg-load-go" class="sg-hide">${t("goNow")}</button></div>`;
   document.body.appendChild(load);
-  let tipI = Math.floor(Math.random() * 17), tipT = 0;
+  const NTIPS = 21;
+  let tipI = Math.floor(Math.random() * NTIPS), tipT = 0;
   document.getElementById("sg-load-go").onclick = () => { const b = document.getElementById("loading-go"); if (b) b.click(); };
   setInterval(() => {
     const on = !!(S.running && S.waitT);
@@ -79,8 +106,8 @@ export default function init(api) {
     document.getElementById("sg-load-bar").style.width = (pct && pct.textContent) || "0%";
     document.getElementById("sg-load-step").textContent = `${step ? step.textContent : ""} · ${(pct && pct.textContent) || ""}`;
     document.getElementById("sg-load-go").classList.toggle("sg-hide", !go || go.classList.contains("hidden"));
-    document.getElementById("sg-load-where").textContent = st.point ? st.point.name : "";
-    if ((tipT += 0.25) >= 6 || !document.getElementById("sg-load-tip").textContent) { tipT = 0; tipI = (tipI + 1) % 17; document.getElementById("sg-load-tip").textContent = t("tip" + (tipI + 1)); }
+    document.getElementById("sg-load-where").textContent = inArena() ? t("arenaName") : st.point ? st.point.name : "";
+    if ((tipT += 0.25) >= 6 || !document.getElementById("sg-load-tip").textContent) { tipT = 0; tipI = (tipI + 1) % NTIPS; document.getElementById("sg-load-tip").textContent = t("tip" + (tipI + 1)); }
   }, 250);
   const zone = document.createElement("div"); zone.id = "sg-zone"; zone.className = "sg-hide";
   document.body.appendChild(zone);
@@ -141,12 +168,23 @@ export default function init(api) {
   function buildTowers() {
     clearTowers();
     towers = [];
+    monName = null;
+    // Defender un monumento 3D: el que pone Wiki Flight en su sitio (si ya no está, la torre de siempre)
+    if (mode === "game" && !inArena() && st.mode !== "daily" && st.target === "monument" && st.lm) {
+      const L = api.S.lm && api.S.lm.list.find(x => x.id === st.lm.id);
+      if (L) {
+        const tw = createMonument(api, L);
+        towers.push({ tw, kind: "monument", H: tw.H, R: tw.R, x: L.X, z: L.Z, vx: L.X, vz: L.Z, fixed: true });
+        monName = st.lm.name || L.m.name; window.__sgTowers = towers; return;
+      }
+      api.flash(t("lmMissing"), 5000);
+    }
     for (let i = 0; i < 1; i++) {   // una sola torre, en el punto elegido (o lo más cerca con sitio)
       const vx = 0, vz = 0;
-      const tw = createTower(THREE, { seed: 1000, scale: TOWER_SCALE });
+      const tw = createTower(THREE, { seed: 1000, scale: TOWER_SCALE, style: inArena() ? "neon" : null });   // en la arena, con piel de neón
       tw.root.rotation.y = Math.random() * Math.PI * 2;
       api.scene.add(tw.root);
-      const o = { tw, vx, vz, x: vx, z: vz };
+      const o = { tw, vx, vz, x: vx, z: vz, H: TOWER_H * TOWER_SCALE, R: PLAZA };
       placeTower(o);
       towers.push(o);
     }
@@ -162,24 +200,40 @@ export default function init(api) {
   addEventListener("pointerdown", unlock, true); addEventListener("keydown", unlock, true);
   const stats = createStats();
   let mode = "game";   // "game" o "training"
-  const combat = createCombat(api, { t, towers: () => towers || [], sound, onGameOver: r => {
-    const res = stats.addRun(r, { plane: S.P.id, point: st.point && st.point.name, day: r.mode === "daily" ? playDay : undefined });
+  const combat = createCombat(api, { t, towers: () => towers || [], sound, onWeather: w => { if (api.setWeather) api.setWeather(w); }, onGameOver: r => {
+    savePerf();
+    const res = stats.addRun(r, { plane: S.P.id, point: inArena() ? t("arenaName") : st.point && st.point.name, day: r.mode === "daily" ? playDay : undefined, lm: monName || undefined });
     api.pause(true); pausedByUs = true;
     menu.showResults({ ...r, plane: S.P.id }, res);
   } });
   window.__sgCombat = combat;
+  // Registro de rendimiento de cada partida (se guarda al acabar o al abandonar; ver perf.js)
+  const perf = createPerf(api, () => { const s = combat.state; let en = 0; for (const e of s.enemies) if (e.alive) en++; return { kills: s.game.kills, wave: s.game.wave, phase: s.game.phase, enemies: en }; });
+  window.__sgPerf = perf;
+  const savePerf = () => { if (!perf.on) return; perf.stop(); stats.savePerf(perf.report({ mode: st.mode, diff: st.diff, weather: st.weather, target: st.target, gfx: settingsCache.gfx, plane: S.P && S.P.id })); };
+  // Contador de fps (Ajustes): esquina de arriba a la izquierda
+  const fpsEl = document.createElement("div"); fpsEl.id = "sg-fps";
+  Object.assign(fpsEl.style, { position: "fixed", left: "10px", top: "8px", zIndex: 45, font: "600 12px system-ui, sans-serif", color: "#cfd6dd", background: "rgba(10,13,18,.6)", padding: "3px 8px", borderRadius: "7px", pointerEvents: "none", display: "none" });
+  document.body.appendChild(fpsEl);
+  setInterval(() => { const on = !!settingsCache.fps && perf.on; fpsEl.style.display = on ? "" : "none"; const l = perf.lastSec; if (on && l) fpsEl.textContent = `${l.fps} fps · ${t("fpsWorst")} ${l.worst} ms`; }, 1000);
   const arcade = createArcade(api, combat);
   HOOK.input = arcade.input;
   const training = createTraining(api, { t, combat, towers: () => towers || [],
     onDone: () => { const n = stats.trained(); api.pause(true); pausedByUs = true; menu.showTrainingDone(n); },
     onSkip: () => quit() });
   let pausedByUs = false, settingsCache = {};
+  const TURBO_S = 3; let turboT = 0;
+  // Cielo de la arena (motor v2+): sus colores y el sol de franjas
+  HOOK.sky = (SKY, dir) => (arena && arena.root.parent && S.arena ? arena.skyTint(SKY, dir) : null);
   const menu = createMenu(api, {
-    t, stats, state: st, save, PLANES, title, version: VERSION, overlay: battleOverlay, sound,
-    applySettings: s => { S.invert = !!s.invert; arcade.setSens(s.sens); combat.setAssist(s.assist); combat.setHudScale({ s: 0.85, m: 1, l: 1.2 }[s.hud] || 1); settingsCache = s; },
+    t, stats, state: st, save, PLANES, title, version: VERSION, overlay: battleOverlay, sound, arenaOK: ARENA_OK,
+    applySettings: s => { if (api.setResolutionCap) api.setResolutionCap(GFX_CAP[s.gfx] || 0); if (api.gameBudget) api.gameBudget(GFX_TERRAIN[s.gfx] || GFX_TERRAIN.bal); S.invert = !!s.invert; arcade.setSens(s.sens); combat.setAssist(s.assist); combat.setHudScale({ s: 0.85, m: 1, l: 1.2 }[s.hud] || 1); settingsCache = s; },
     setLivery: id => { st.livery = id; save(); applyLivery(api.AIRCRAFT, id); },
     previewLivery: id => applyLivery(api.AIRCRAFT, id || st.livery),
     onPlay: () => launch("game"), onTraining: () => launch("training"),
+    // repetición de los últimos 30 s: al acabar vuelve a los resultados
+    onReplay: () => { if (!combat.replay(() => { menu.reopenResults(); })) menu.reopenResults(); },
+    canReplay: () => combat.canReplay && (api.version || 1) >= 2,   // la cámara de la repetición necesita HOOK.camera (motor v2)
     onResume: () => { api.pause(false); recapture(); }, onQuit: () => quit(), onAgain: () => restart(),
   });
   stats.ready.then(() => menu.show("home"));
@@ -187,15 +241,36 @@ export default function init(api) {
   // Partida diaria: Normal, el avión del día y las mismas oleadas para toda la familia
   const dailyPlane = () => daySeed() % PLANES.length;
   let playDay = today();
+  let arena = null;
+  const inArena = () => ARENA_OK && (mode === "training" || st.mode === "daily" || st.place !== "city");
   function launch(m) {
     mode = m;
-    if (st.point) { st.recent = [st.point, ...(st.recent || []).filter(p => Math.abs(p.lat - st.point.lat) > 1e-4 || Math.abs(p.lon - st.point.lon) > 1e-4)].slice(0, 5); save(); }
+    if (st.point && !inArena()) { st.recent = [st.point, ...(st.recent || []).filter(p => Math.abs(p.lat - st.point.lat) > 1e-4 || Math.abs(p.lon - st.point.lon) > 1e-4)].slice(0, 5); save(); }
     const P = PLANES[m === "game" && st.mode === "daily" ? dailyPlane() : st.plane];
-    api.start({ map: st.map, lat: st.point.lat, lon: st.point.lon, name: st.point.name, plane: P.id, assist: true });
+    const wx = m === "game" && st.mode !== "daily" ? st.weather : "auto";
+    const wxS = wx === "storm" ? "storm" : "clear";
+    if (inArena()) {
+      // Ciudad según la semilla: el reto diario, la del día (igual para todos); el entrenamiento, siempre la misma;
+      // el resto, una nueva en cada partida. Ningún edificio pasa de la mitad de la torre
+      const daily = m === "game" && st.mode === "daily", ds = daySeed();
+      const seed = daily ? ds : m === "training" ? 7 : 1 + ((Math.random() * 2e9) | 0);
+      const pal = daily ? PALETTE_IDS[ds % PALETTE_IDS.length] : st.palette !== "auto" ? st.palette : PALETTE_IDS[(Math.random() * PALETTE_IDS.length) | 0];
+      const shadows = settingsCache.gfx !== "perf";   // en «Rendimiento», sin sombras de los edificios
+      const key = `${seed}|${pal}|${shadows}`;
+      if (!arena || arena.key !== key) { if (arena) arena.dispose(); arena = createArena(THREE, { seed, palette: pal, shadows, maxH: TOWER_H * TOWER_SCALE / 2 }); arena.key = key; }
+      if (!arena.root.parent) api.scene.add(arena.root);
+      arena.showGates(m === "game");
+      combat.setNeon(arena.palette);
+      api.start({ arena: { groundAt: arena.groundAt, buildingAt: arena.buildingAt }, lat: ARENA_LL.lat, lon: ARENA_LL.lon, name: t("arenaName"), plane: P.id, assist: true, weather: wxS });
+    } else {
+      if (arena) arena.root.removeFromParent();
+      combat.setNeon(null);
+      api.start({ map: st.map, lat: st.point.lat, lon: st.point.lon, name: st.point.name, plane: P.id, assist: true, weather: wxS });
+    }
   }
   function recapture() {   // volver a capturar el ratón al seguir (si no se juega con mando)
     const c = api.renderer.domElement;
-    if (!navigator.getGamepads || ![...navigator.getGamepads()].some(g => g)) c.requestPointerLock && c.requestPointerLock();
+    if (!navigator.getGamepads || ![...navigator.getGamepads()].some(g => g)) c.requestPointerLock && Promise.resolve(c.requestPointerLock()).catch(() => { });
   }
 
   // ── Enganches con el motor ──
@@ -215,21 +290,50 @@ export default function init(api) {
     if (api.sunPosition(d.getTime(), o.lat, o.lon).alt < 0) pick = d;   // noche polar: a mediodía
     api.clock.setTime(pick.getHours(), pick.getMinutes());
   }
+  // Noche cerrada: la hora en que el sol está 18° por debajo del horizonte (o las 23:30), y el reloj no corre
+  function nightStart() {
+    const o = api.origin(); if (!o || o.lat == null) { api.clock.setTime(23, 30); return; }
+    const d = new Date(); d.setHours(12, 0, 0, 0);
+    for (let m = 0; m < 14 * 60; m += 5) { const ms = d.getTime() + m * 60000; if (api.sunPosition(ms, o.lat, o.lon).alt * 180 / Math.PI < -16) { const p = new Date(ms + 45 * 60000); api.clock.setTime(p.getHours(), p.getMinutes()); return; } }
+    api.clock.setTime(0, 30);   // en verano polar no hay noche cerrada: la madrugada
+  }
+  let wxMode = "auto";
   function begin() {
     tm = 0; siteT = 0;
-    duskStart();
+    // Calidad automática de Wiki Flight: en combate solo baja (si sube en el respiro y baja con la oleada, cada cambio da un tirón)
+    S.aqNoUp = true;
+    if (api.keepLandmarks) api.keepLandmarks(true);   // monumentos 3D de la zona: cargados una vez y ya no se descargan
+    wxMode = mode === "training" ? "clear" : st.mode === "daily" ? "auto" : st.weather;
+    if (wxMode === "night") nightStart(); else duskStart();
     buildTowers();
     api.setCam(settingsCache.cam || "chase");
     const gm = mode === "training" ? "survival" : st.mode, diff = mode === "training" ? "easy" : gm === "daily" ? "normal" : st.diff;
     playDay = today();
-    combat.start(S.P.id, diff, { mode: gm, seed: gm === "daily" ? daySeed(playDay) : 0, wing: mode !== "training" && gm !== "daily" && !!st.wing });
+    const o0 = api.origin(), month = new Date().getMonth(), lat = o0 && o0.lat != null ? o0.lat : 40;
+    const cold = Math.abs(lat) > 58 || (Math.abs(lat) > 38 && (lat > 0 ? month <= 1 || month === 11 : month >= 5 && month <= 7));   // nieve en vez de lluvia
+    combat.start(S.P.id, diff, { mode: gm, seed: gm === "daily" ? daySeed(playDay) : 0, wing: mode !== "training" && gm !== "daily" && !!st.wing, weather: wxMode, cold });
     const b = stats.best(diff, gm);
     combat.setBest(mode === "training" ? 0 : b ? b.score : 0, b ? b.wave : 0);
     arcade.start();
+    if (mode === "game") perf.start(); else perf.stop();
     if (mode === "training") training.start();
     else api.flash(navigator.getGamepads && [...navigator.getGamepads()].some(g => g) ? t("keysPad") : t("keys"), 8000);
   }
+  // Shaders de todo lo del juego (enemigos, efectos, la torre…) compilados en la pantalla de carga (motor v2)
+  let warmTower = null;
+  HOOK.warmup = () => {
+    const g = combat.warmObjects();
+    const style = inArena() ? "neon" : null;
+    if (!warmTower || warmTower.style !== style) { if (warmTower) warmTower.tw.dispose(); warmTower = { style, tw: createTower(THREE, { seed: 1000, scale: TOWER_SCALE, style }) }; }
+    g.add(warmTower.tw.root);
+    return g;
+  };
+  // De noche, sin nombres ni líneas de constelaciones: en un combate no se miran y en gráficas modestas cuestan mucho
+  if (api.skyLabels) api.skyLabels(false);
+  // Modo juego del motor: sin nubes, niebla, halos ni Vía Láctea (adornan pero en combate no se miran)
+  if (api.lite) api.lite(true);
   HOOK.ready = begin;
+  HOOK.camera = dt => combat.replayCamera(dt);   // la repetición lleva su cámara
   HOOK.mute = m => sound.setMuted(m);   // botón 🔊 de arriba a la derecha y tecla M de Wiki Flight
   // Partida en curso: Offlined pregunta antes de cambiar de sección (si no, se cerraría y se perdería)
   let busyNow = false;
@@ -239,7 +343,7 @@ export default function init(api) {
     try { if (parent !== window) parent.postMessage({ type: "oflAddonBusy", busy, title: t("quitConfirm"), msg: t("quitConfirmSub"), stay: t("quitNo"), leave: t("quitYes") }, location.origin); } catch { }
   }, 500);
   sound.setMuted(!api.audio.on);
-  HOOK.ownsKey = code => code !== "Escape" && code !== "KeyC" && !!combat.state.game.on && ACTIONS.some(a => KB.kb[a].includes(code));
+  HOOK.ownsKey = code => combat.ownsKey(code) || (code !== "Escape" && code !== "KeyC" && !!combat.state.game.on && ACTIONS.some(a => KB.kb[a].includes(code)));
   const autoPause = why => {
     if (!S.running || S.paused || S.waitT || !combat.state.game.on || combat.state.game.over) return;
     api.pause(true); if (why) api.flash(why, 4000);
@@ -248,24 +352,34 @@ export default function init(api) {
   document.addEventListener("visibilitychange", () => { if (document.hidden) autoPause(); });
   addEventListener("gamepaddisconnected", () => autoPause(t("padLost")));
   HOOK.frame = (dt, frozen) => {
+    perf.tick(frozen || S.paused || combat.replaying);
+    const inA = !!(arena && arena.root.parent && S.arena);
+    if (inA) arena.update(api.SKY.night, frozen ? 0 : dt, api.camera);
     if (!towers || !S.running) { combat.frame(dt, true); return; }
     tm += dt;
     combat.frame(dt, frozen);
     if (!frozen) { arcade.post(dt); training.frame(dt); }
+    // Puertas «Flow» de la arena: al cruzar una, turbo unos segundos y la racha sube
+    if (inA && !frozen && !S.paused && S.flight && !(S.crashT > 0)) arena.updateGates(dt, S.flight.pos, () => { combat.flowGate(); turboT = TURBO_S; });
+    if (turboT > 0 && !frozen && S.flight) {
+      turboT -= dt;
+      const f = S.flight, v = f.vel.length(), tgt = S.P.vmax * 1.25;
+      if (v > 1 && v < tgt) f.vel.multiplyScalar(Math.min(tgt / v, 1 + 1.4 * dt));
+    }
     // «Clic para apuntar»: mientras no hay ratón capturado ni mando
     combat.setMouseHint(!S.paused && !(S.crashT > 0) && !arcade.mouseOn && !(navigator.getGamepads && [...navigator.getGamepads()].some(x => x)));
-    { const G = combat.state.game; api.clock.speed = G.phase === "rest" && G.wave > 0 && !G.over && !G.training ? 40 : 1; }
-    if (frozen) dt = 0;
+    { const G = combat.state.game; api.clock.speed = wxMode !== "night" && G.phase === "rest" && G.wave > 0 && !G.over && !G.training ? 40 : 1; }
+    if (frozen && !combat.replaying) dt = 0;   // en la repetición la torre sí se mueve (se ve caer)
     // Al empezar llegan teselas con más detalle: durante 30 s se revisa que ninguna torre haya quedado sobre un
     // edificio o en el agua (si pasa, se busca otro sitio)
     if (tm < 30 && (siteT += dt) > 2) {
       siteT = 0;
-      for (const o of towers) if (siteScore(o.x, o.z) === null) placeTower(o);
+      for (const o of towers) if (!o.fixed && siteScore(o.x, o.z) === null) placeTower(o);
     }
     const ctx = { night: api.SKY.night > 0.5, light: 1 - 0.85 * api.SKY.night, camPos: api.camera.position, scale: api.pointScale() };
     const resettle = ((tm * 2) | 0) !== (((tm - dt) * 2) | 0);   // cada medio segundo: el suelo puede afinarse
     for (const o of towers) {
-      if (resettle) o.tw.root.position.y = baseY(o.x, o.z);
+      if (resettle && !o.fixed) o.tw.root.position.y = baseY(o.x, o.z);
       o.tw.update(dt, ctx);
     }
     const f = S.flight;
@@ -305,6 +419,10 @@ export default function init(api) {
     if (paused && document.pointerLockElement && document.exitPointerLock) document.exitPointerLock();
     menu.showPause(paused);
   };
+  // Rueda dentada y botón de controles de la barra de arriba (motor): abren los del juego, ya en pausa.
+  // Antes abrían los ajustes de Wiki Flight, que quedaban por debajo de la pausa y repetían los del juego.
+  HOOK.openSettings = () => menu.pauseSettings();
+  HOOK.openControls = () => menu.pauseControls();
   HOOK.crash = cause => {
     if (cause === "shot") $("sg-down-why").textContent = t("shot");
     zone.classList.add("sg-hide"); down.classList.remove("sg-hide");
@@ -323,9 +441,15 @@ export default function init(api) {
     return { pos: new THREE.Vector3(x, y, z), hdg: Math.atan2(tx - x, -(tz - z)) };
   }
   function quit() {
+    savePerf();   // también la partida abandonada: el registro sirve igual
+    monName = null;
     down.classList.add("sg-hide"); zone.classList.add("sg-hide");
     training.stop(); combat.stop(); arcade.stop(); menu.closeOverlay();
     clearTowers();
+    S.aqNoUp = false;
+    if (api.keepLandmarks) api.keepLandmarks(false);
+    if (arena) { arena.showGates(false); arena.root.removeFromParent(); }   // se queda hecha para la próxima partida
+    turboT = 0;
     api.end();
     menu.show("home");
   }

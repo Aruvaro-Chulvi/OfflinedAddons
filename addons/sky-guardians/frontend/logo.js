@@ -1,23 +1,20 @@
 /* ═══════════════════════════════════════════════════════════════════════════
-   🛡️ Sky Guardians — logotipo: escudo con alas y la torre de comunicaciones dentro, con sus ondas.
-   SVG en línea (sin archivos), en los colores de los Guardianes: plata, rojo y blanco, y ámbar en la señal.
+   🛡️ Arcade Flow Sky Defender — logotipo: un caza que sube dejando una estela de luz en degradado (ámbar → coral → magenta)
+   y dos líneas de velocidad. SVG en línea (sin archivos).
    ═══════════════════════════════════════════════════════════════════════════ */
-
+let n = 0;
 export function logoSvg(h = 64) {
-  const wing = `<path d="M50 30 L6 16 L13 24 L2 25 L13 31 L4 34 L16 37 L8 41 L22 42 L46 44 Z" fill="#c9ced6" stroke="#8a919b" stroke-width="1.2" stroke-linejoin="round"/>
-    <path d="M44 33 L16 26 M42 37 L14 33 M44 41 L18 39" stroke="#8a919b" stroke-width="1" fill="none"/>`;
-  return `<svg class="sg-logo" viewBox="0 0 120 84" height="${h}" width="${Math.round(h * 120 / 84)}" role="img" aria-hidden="true">
-    ${wing}<g transform="translate(120,0) scale(-1,1)">${wing}</g>
-    <path d="M40 14 H80 V42 Q80 66 60 78 Q40 66 40 42 Z" fill="#b3261e" stroke="#eeeeea" stroke-width="3" stroke-linejoin="round"/>
-    <path d="M45 19 H75 V42 Q75 61 60 71 Q45 61 45 42 Z" fill="none" stroke="#7d1a15" stroke-width="1.2"/>
-    <g fill="#eeeeea">
-      <path d="M53 66 L67 66 L64 52 L56 52 Z"/>
-      <rect x="58.6" y="34" width="2.8" height="18"/>
-      <rect x="55.5" y="36" width="9" height="4" rx="1"/>
-      <rect x="56.8" y="30" width="6.4" height="3.2" rx="1"/>
-      <rect x="59.4" y="21" width="1.2" height="9"/>
+  const id = "saf-g" + (++n);
+  return `<svg class="sg-logo" viewBox="0 0 100 100" height="${h}" width="${h}" role="img" aria-hidden="true">
+    <defs><linearGradient id="${id}" x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0" stop-color="#c95a9c" stop-opacity="0"/><stop offset=".35" stop-color="#ff5d73"/><stop offset=".7" stop-color="#ff8a5c"/><stop offset="1" stop-color="#ffc56b"/>
+    </linearGradient></defs>
+    <path d="M6 94 C 30 88, 50 70, 68 40" stroke="url(#${id})" stroke-width="10" fill="none" stroke-linecap="round"/>
+    <path d="M4 74 C 20 70, 34 60, 46 46" stroke="#ff8a5c" stroke-opacity=".55" stroke-width="3.2" fill="none" stroke-linecap="round"/>
+    <path d="M30 97 C 46 94, 60 84, 70 70" stroke="#ff5d73" stroke-opacity=".45" stroke-width="3.2" fill="none" stroke-linecap="round"/>
+    <g transform="translate(75 28) rotate(-58)">
+      <path d="M17 0 L-7 -13 L-3 -3.5 L-11 -6.5 L-8.5 0 L-11 6.5 L-3 3.5 L-7 13 Z" fill="#f3f1f4" stroke="#1a1420" stroke-width="1.2" stroke-linejoin="round"/>
+      <path d="M8 0 L1 -1.6 L1 1.6 Z" fill="#ffc56b"/>
     </g>
-    <circle cx="60" cy="20.5" r="1.8" fill="#ffb020"/>
-    <path d="M54 17 Q60 11 66 17 M51 14 Q60 5 69 14" stroke="#ffb020" stroke-width="1.6" fill="none" stroke-linecap="round"/>
   </svg>`;
 }

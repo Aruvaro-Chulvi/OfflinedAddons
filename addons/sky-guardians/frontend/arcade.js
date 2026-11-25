@@ -36,7 +36,7 @@ export function createArcade(api, combat) {
   const canvas = api.renderer.domElement;
 
   // ── Ratón: se captura con un clic; mueve la dirección de apuntado ──
-  canvas.addEventListener("click", () => { if (st.on && !S.paused && !document.pointerLockElement) canvas.requestPointerLock && canvas.requestPointerLock(); });
+  canvas.addEventListener("click", () => { if (st.on && !S.paused && !document.pointerLockElement) canvas.requestPointerLock && Promise.resolve(canvas.requestPointerLock()).catch(() => { }); });
   document.addEventListener("pointerlockchange", () => { st.mouseOn = document.pointerLockElement === canvas; if (st.mouseOn) syncAimToPlane(); });
   addEventListener("mousemove", e => {
     if (!st.on || !st.mouseOn || S.paused) return;

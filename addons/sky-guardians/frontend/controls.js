@@ -6,15 +6,15 @@
 
 const LS = "sg_bindings";
 // Acciones: teclado (códigos de tecla, varias por acción) y mando (índice de botón, uno por acción)
-export const ACTIONS = ["fire1", "fire2", "target", "accel", "brake", "up", "down", "left", "right", "cam", "pause"];
+export const ACTIONS = ["fire1", "fire2", "target", "flare", "callWave", "accel", "brake", "up", "down", "left", "right", "cam", "pause"];
 const DEFAULT = {
-  kb: { fire1: ["Space"], fire2: ["KeyV"], target: ["Tab", "KeyE"], accel: ["KeyW", "ShiftLeft"], brake: ["KeyS", "ControlLeft"],
+  kb: { fire1: ["Space"], fire2: ["KeyV"], target: ["Tab", "KeyE"], flare: ["KeyF"], callWave: ["KeyN"], accel: ["KeyW", "ShiftLeft"], brake: ["KeyS", "ControlLeft"],
         up: ["ArrowDown"], down: ["ArrowUp"], left: ["ArrowLeft", "KeyA"], right: ["ArrowRight", "KeyD"], cam: ["KeyC"], pause: ["Escape"] },
-  pad: { fire1: 7, fire2: 6, target: 3, accel: 5, brake: 4, cam: 12, pause: 9 },
+  pad: { fire1: 7, fire2: 6, target: 3, flare: 1, callWave: 2, accel: 5, brake: 4, cam: 12, pause: 9 },
 };
 // Lo que no se puede tocar: Escape (pausa del motor) y las del motor que no conviene pisar
 export const KB_FIXED = { pause: true };
-export const PAD_ACTIONS = ["fire1", "fire2", "target", "accel", "brake", "cam", "pause"];
+export const PAD_ACTIONS = ["fire1", "fire2", "target", "flare", "callWave", "accel", "brake", "cam", "pause"];
 
 const B = JSON.parse(JSON.stringify(DEFAULT));
 try {

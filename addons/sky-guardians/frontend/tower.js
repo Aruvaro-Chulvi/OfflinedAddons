@@ -10,7 +10,8 @@
    11 estados: nivel 10 = 100 % … nivel 1 = 10 %, nivel 0 = ruina. El hormigón no se inclina: se quema, pierde
    trozos y le arden las ventanas; lo de encima (celosía y estaciones) se tuerce, se inclina y al final se desploma.
    Todo el daño sale de una semilla: cada torre se rompe a su manera, pero un estado siempre se ve igual.
-   createTower(THREE, { seed, wind }) → { root, level, setLevel(L, animate), update(dt, ctx), aimPoint(v), dispose() }
+   createTower(THREE, { seed, wind, scale, style }) → { root, level, setLevel(L, animate), update(dt, ctx), aimPoint(v), dispose() }
+   style: "neon" = la misma torre con la piel de la Arena Neón (estructura y hormigón oscuros, barras y luces de neón)
    ctx = { night: bool, light: 0…1, camPos: Vector3 (mundo), scale: alto del lienzo en px / (2·tan(fov/2)) }
    THREE llega de fuera: el mismo que usa el motor de Wiki Flight.
    ═══════════════════════════════════════════════════════════════════════════ */
@@ -128,7 +129,10 @@ export class Particles {
 void main() {
   vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
   gl_Position = projectionMatrix * mvPosition;
-  gl_PointSize = min(aSize * uScale / max(-mvPosition.z, 1.0), 600.0);
+  // como mucho un tercio de la pantalla, y nada pegado a la cámara: un humo que la tapa entera se pinta decenas de
+  // veces encima de sí mismo y en gráficas integradas hundía los fps al pasar por una explosión
+  float zc = -mvPosition.z;
+  gl_PointSize = zc < 6.0 ? 0.0 : min(aSize * uScale / max(zc, 1.0), uScale * 0.33) * smoothstep(6.0, 18.0, zc);
   vC = aCol;
   #include <logdepthbuf_vertex>
   #include <fog_vertex>
@@ -190,6 +194,10 @@ void main() {
 
 export function createTower(THREE, opts = {}) {
   const RS = resources(THREE), seed = opts.seed || 1, rnd = rng(seed);
+  const NEON = opts.style === "neon";
+  // Arena Neón: rojo → neón rosa, blanco → negro, galvanizado → neón cian (las de color brillan: ver barMat)
+  const COLMAP = NEON ? { [C_RED]: 0xe03cff, [C_WHITE]: 0x1b1824, [C_GALV]: 0x29e6ff } : {};
+  const glowU = { value: 1 };
   const wind = opts.wind || new THREE.Vector3(3, 0, 1.2);
   const V = (x, y, z) => new THREE.Vector3(x, y, z);
   const SQ2 = Math.SQRT2, UP = V(0, 1, 0);
@@ -204,11 +212,28 @@ export function createTower(THREE, opts = {}) {
   // Materiales propios de esta torre (se ensucian con el daño)
   const concrete = new THREE.MeshStandardMaterial({ map: RS.concreteTex, emissiveMap: RS.concreteTex, emissive: 0x000000, roughness: 0.95 });   // de noche, como iluminada por los focos
   const shell = new THREE.MeshStandardMaterial({ color: 0xe6e6e2, roughness: 0.5, metalness: 0.2 });
-  const redPaint = new THREE.MeshStandardMaterial({ color: C_RED, roughness: 0.5, metalness: 0.2 });
+  const redPaint = NEON ? new THREE.MeshStandardMaterial({ color: 0xe03cff, emissive: 0x5a1470, roughness: 0.5, metalness: 0.2 })
+    : new THREE.MeshStandardMaterial({ color: C_RED, roughness: 0.5, metalness: 0.2 });
+  const dishMat = NEON ? new THREE.MeshStandardMaterial({ color: 0x2a2633, roughness: 0.45, metalness: 0.3, side: THREE.DoubleSide }) : RS.dish;
+  // Barras: en la Arena Neón, las de color brillan (rosa y cian) y las oscuras no; el brillo baja con el daño
+  let barMat = RS.steel;
+  if (NEON) {
+    barMat = new THREE.MeshStandardMaterial({ color: 0xffffff, metalness: 0.3, roughness: 0.5 });
+    barMat.onBeforeCompile = sh => {
+      sh.uniforms.uGlow = glowU;
+      sh.fragmentShader = "uniform float uGlow;\n" + sh.fragmentShader.replace("#include <emissivemap_fragment>", `#include <emissivemap_fragment>
+        #if defined( USE_COLOR ) || defined( USE_INSTANCING_COLOR )
+          float sgSat = max(vColor.r, max(vColor.g, vColor.b)) - min(vColor.r, min(vColor.g, vColor.b));
+          totalEmissiveRadiance += vColor * smoothstep(0.3, 0.6, sgSat) * uGlow;
+        #endif`);
+    };
+    disposables.push(barMat);
+  }
   const interior = new THREE.MeshBasicMaterial({ map: RS.interiorTex });
   const winOn = new THREE.MeshBasicMaterial({ color: 0xffd9a0 }), winOff = new THREE.MeshBasicMaterial({ color: 0x15171a });
   const redStrip = new THREE.MeshBasicMaterial({ color: 0xff2a1a }), led = new THREE.MeshBasicMaterial({ color: 0xdfe8ff });
   disposables.push(concrete, shell, redPaint, interior, winOn, winOff, redStrip, led);
+  if (NEON) disposables.push(dishMat);
 
   const mesh = (geo, mat, x, y, z, sx = 1, sy = 1, sz = 1, parent = root) => {
     const o = new THREE.Mesh(geo, mat); o.position.set(x, y, z); o.scale.set(sx, sy, sz);
@@ -285,11 +310,11 @@ export function createTower(THREE, opts = {}) {
     const th = rr() * Math.PI * 2, r = 2 + rr() * 6, a = P(r, th, 65.5), b = a.clone().add(V((rr() - 0.5) * 3, 1.5 + rr() * 4, (rr() - 0.5) * 3));
     add(a, b, 0.06, "rebar", 0x5a4a3c);
   }
-  const inst = new THREE.InstancedMesh(RS.cyl, RS.steel, M.length);
+  const inst = new THREE.InstancedMesh(RS.cyl, barMat, M.length);
   inst.castShadow = true; inst.receiveShadow = true; inst.frustumCulled = false;
   root.add(inst);
   const _col = new THREE.Color();
-  M.forEach((m, i) => inst.setColorAt(i, _col.setHex(m.col)));
+  M.forEach((m, i) => inst.setColorAt(i, _col.setHex(COLMAP[m.col] ?? m.col)));
   M.forEach(m => { m.ja = V((rnd() - 0.5) * 1.6, (rnd() - 0.5) * 1.2, (rnd() - 0.5) * 1.6); m.jb = V((rnd() - 0.5) * 1.6, (rnd() - 0.5) * 1.2, (rnd() - 0.5) * 1.6); });
 
   // ═══ Base de hormigón (0–66 m) ═══
@@ -380,8 +405,8 @@ export function createTower(THREE, opts = {}) {
     const { g, f, depth } = dishGeo(D);
     const grp = new THREE.Group();
     const bowl = new THREE.Group(); bowl.rotation.x = Math.PI / 2; grp.add(bowl);   // eje del plato → +Z
-    const dm = new THREE.Mesh(g, RS.dish); dm.castShadow = true; bowl.add(dm);
-    const rim = new THREE.Mesh(own(new THREE.TorusGeometry(D / 2, 0.06, 6, 28)), RS.dish); rim.rotation.x = Math.PI / 2; rim.position.y = depth; bowl.add(rim);
+    const dm = new THREE.Mesh(g, dishMat); dm.castShadow = true; bowl.add(dm);
+    const rim = new THREE.Mesh(own(new THREE.TorusGeometry(D / 2, 0.06, 6, 28)), dishMat); rim.rotation.x = Math.PI / 2; rim.position.y = depth; bowl.add(rim);
     mesh(RS.cyl, RS.darkMetal, 0, -0.35, 0, D * 0.12, 0.7, D * 0.12, bowl);
     mesh(RS.cyl, RS.darkMetal, 0, f, 0, 0.16, 0.5, 0.16, bowl);
     for (let k = 0; k < 3; k++) {
@@ -528,7 +553,7 @@ export function createTower(THREE, opts = {}) {
   }
   function colorMembers(L) {
     M.forEach((m, i) => {
-      _col.setHex(m.col);
+      _col.setHex(COLMAP[m.col] ?? m.col);
       let dk = 0;
       const p = mid(m);
       for (let k = 9; k >= Math.max(L, 1); k--) { const d = p.distanceTo(hits[k].p); dk += Math.exp(-d * d / 72); }
@@ -663,7 +688,7 @@ export function createTower(THREE, opts = {}) {
 
   // ═══ Nivel ═══
   let L_now = -1, collapse = null;
-  const _cw = new THREE.Color(1, 1, 1), _cd = new THREE.Color(0x5e5a55), _sw = new THREE.Color(0xe6e6e2), _sd = new THREE.Color(0x4f4c48);
+  const _cw = new THREE.Color(NEON ? 0x3a3448 : 0xffffff), _cd = new THREE.Color(NEON ? 0x1c1820 : 0x5e5a55), _sw = new THREE.Color(NEON ? 0x22202c : 0xe6e6e2), _sd = new THREE.Color(NEON ? 0x141218 : 0x4f4c48);
   function setLevel(L, animate = false) {
     L = Math.max(0, Math.min(10, Math.round(L)));
     const prev = L_now;
@@ -737,12 +762,13 @@ export function createTower(THREE, opts = {}) {
     }
     // Luces de la torre: ventanas, interior de las estaciones, tiras
     const flick = L_now > 0 && L_now <= 4 && rnd() < 0.12 ? 0.25 : 1;
-    winOn.color.setHex(night ? 0xffd9a0 : 0x3d434b);
-    concrete.emissive.setHex(night && L_now > 0 ? 0x4a3a28 : 0x000000); concrete.emissiveIntensity = 0.55 * flick;
+    winOn.color.setHex(NEON ? (night ? 0x5ff0ff : 0x1f8fa8) : night ? 0xffd9a0 : 0x3d434b);
+    concrete.emissive.setHex(night && L_now > 0 ? (NEON ? 0x2a0f38 : 0x4a3a28) : 0x000000); concrete.emissiveIntensity = 0.55 * flick;
+    glowU.value = L_now === 0 ? 0 : (0.3 + 0.3 * (night ? 1 : 0)) * (0.4 + 0.06 * L_now) * flick;   // sin pasarse: con el resplandor se satura a rojo
     const ib = (night ? 1 : 0.55) * (L_now === 0 ? 0 : 0.35 + 0.065 * L_now) * flick;
     interior.color.setRGB(ib, ib, ib);
-    redStrip.color.setHex(L_now === 0 ? 0x220806 : night ? 0xff2a1a : 0x9a2018);
-    led.color.setHex(L_now === 0 ? 0x111111 : night ? 0xdfe8ff : 0x9aa3ad);
+    redStrip.color.setHex(L_now === 0 ? 0x220806 : NEON ? (night ? 0xe03cff : 0xa82cc0) : night ? 0xff2a1a : 0x9a2018);
+    led.color.setHex(L_now === 0 ? 0x111111 : NEON ? (night ? 0x29e6ff : 0x1fb8d0) : night ? 0xdfe8ff : 0x9aa3ad);
     // Balizas
     const cam = ctx.camPos;
     for (const l of lights) {
@@ -755,10 +781,10 @@ export function createTower(THREE, opts = {}) {
         if (L_now > 0 && L_now <= 3) on *= rnd() < 0.15 ? 0.1 : 1;
         if (L_now === 1 && l.kind === "tip") on *= 0.5 + 0.5 * Math.sin(time * 23) * Math.sin(time * 7.3);
       }
-      const col = l.kind === "lamp" ? 0xffc27a : red ? 0xff2a1a : 0xf4f8ff;
+      const col = NEON ? (l.kind === "lamp" ? 0x5ff0ff : red ? 0xe03cff : 0xf4f8ff) : l.kind === "lamp" ? 0xffc27a : red ? 0xff2a1a : 0xf4f8ff;
       l.house.material.color.setHex(on > 0.05 ? col : 0x2a1210);
       l.glow.material.color.setHex(col);
-      l.glow.material.opacity = on * (l.kind === "low" ? 0.7 : l.kind === "lamp" ? 0.55 : 1);
+      l.glow.material.opacity = on * (l.kind === "low" ? (NEON ? 0.4 : 0.7) : l.kind === "lamp" ? 0.55 : NEON ? 0.75 : 1);
       l.glow.visible = on > 0.01;
       if (l.glow.visible && cam) {
         l.glow.getWorldPosition(_wp);

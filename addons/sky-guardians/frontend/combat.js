@@ -8,8 +8,9 @@
 import { Particles, TOWER_SCALE as TS } from "./tower.js";
 // Una sola torre, 3× más grande: recibe una cuarta parte del daño (antes se repartía entre 5) y los kits valen más
 const TOWER_DMG_K = 0.72, KIT_REPAIR = 15;   // 0.72 desde la tanda C: las torretas paran muchos drones y misiles
-import { enemyModels } from "./models.js";
-import { bindings as B, kbHas, kbAny } from "./controls.js";
+import { enemyModels, ENEMY_RIM } from "./models.js";
+import { createSearchlights } from "./lights.js";
+import { bindings as B, kbHas, kbAny, keyName, padName } from "./controls.js";
 
 // Armas de cada nave
 export const WEAPONS = {
@@ -28,7 +29,14 @@ let ASSIST_CONE = 0.12, ASSIST_K = 0.8;   // 0,12 rad ≈ 7°
 const ASSIST_RANGE = 2300;
 const PLAYER_R = 7;
 const HULL = 100, SHIELD = 50, SHIELD_WAIT = 4, SHIELD_REGEN = 12;
-const REST = 18;                // s de respiro entre oleadas
+const REST = 18;                // s de respiro entre oleadas (desde la 7.ª)
+// Partidas rápidas: respiros cortos al principio, cuando aún hay poco que preparar; en Blitz, casi ninguno
+const restFor = (wave, mode) => mode === "blitz" ? 3 : wave <= 3 ? 8 : wave <= 6 ? 13 : REST;
+const CALL_PTS = 15;            // llamar ya a la oleada: puntos por segundo de respiro ahorrado × nº de oleada
+const BLITZ_S = 300;            // Blitz: 5 minutos
+const COMBO_MAX = 8;            // racha: multiplicador ×1…×8 (un derribo más = ×1 más)
+const LOW_AGL = 140;                   // m sobre el suelo: por debajo, el derribo vale ×1,5 (vuelo rasante)
+const comboWin = m => Math.max(3.5, 6.5 - 0.4 * (m - 1));   // s para el siguiente derribo; menos cuanto más alta
 // Potenciadores: caen a veces al derribar; se cogen pasando por encima. dur 0 = efecto al momento
 const POWER = {
   rapid:  { css: "#ffb020", dur: 15 },   // fuego rápido: cadencia ×1,6 y el arma no se calienta
@@ -40,8 +48,29 @@ const POWER_P = { boss: 1, bomber: 0.2, heli: 0.12, attacker: 0.08, escort: 0.08
 // Torretas antiaéreas: 4 en las esquinas de la explanada; se apagan con la torre por debajo del 30 %
 const AA_MIN = 30, AA_RANGE = 1500, AA_SPEED = 900, AA_RATE = 6, AA_DMG = 2, AA_SPREAD = 0.02;   // con la simulación: 25–50 derribos por partida, misma duración que sin torretas
 const SAVE_R = 900, SAVE_PTS = 100;   // «¡Salvada!»: derribar a quien ya estaba a menos de 900 m de la torre
+// Ventajas entre oleadas (v1.1): cada PERK_EVERY oleadas se elige 1 de 3, solo para esa partida. max: veces que se
+// puede coger. Los efectos se aplican donde se usan (pk("…") = nivel)
+export const PERKS = {
+  dmg:    { icon: "🎯", max: 3 },   // arma 1: +20 % de daño por nivel
+  rate:   { icon: "⚡", max: 3 },   // arma 1: +15 % de cadencia y se calienta un 15 % menos
+  sec:    { icon: "🚀", max: 2 },   // arma 2: +25 % de munición y recarga un 20 % más rápida
+  armor:  { icon: "🛡️", max: 3 },   // casco +25
+  shield: { icon: "🔷", max: 2 },   // escudo +20 y empieza a recargarse antes
+  aa:     { icon: "🗼", max: 3 },   // torretas: +35 % de daño y +15 % de alcance
+  kits:   { icon: "🔧", max: 2 },   // kits: reparan +5 % y caen un 30 % más
+  regen:  { icon: "🧱", max: 2 },   // respiro: la torre recupera +4 % más
+  magnet: { icon: "🧲", max: 1 },   // kits, anillo y potenciadores se cogen desde más lejos
+  flares: { icon: "✨", max: 2 },   // +1 bengala y se recargan un 25 % antes
+  power:  { icon: "⏳", max: 1 },   // potenciadores: +50 % de duración y caen un 40 % más
+};
+const PERK_EVERY = 3;
+// Misiles enemigos contra el jugador (cazas de escolta desde el nivel 4 y el jefe furioso) y bengalas para desviarlos
+const MSL = { lv: 4, speed0: 60, accel: 140, turn: 1.55, life: 9, fuse: 18, max: { easy: 1, normal: 2, hard: 3 }, dmg: { easy: 22, normal: 30, hard: 38 },
+  cd: { easy: 26, normal: 17, hard: 13 }, decoyP: { easy: 0.92, normal: 0.85, hard: 0.75 } };
+const FLARES = 3, FLARE_RECHARGE = 12, FLARE_GAP = 0.6;
+const WX_SPREAD = { clear: 1, rain: 1.15, snow: 1.15, storm: 1.35 };   // con mal tiempo los enemigos fallan más
 
-export function createCombat(api, { t, towers, onGameOver, sound }) {
+export function createCombat(api, { t, towers, onGameOver, sound, onWeather }) {
   const snd = (n, ...a) => { if (sound) sound.play(n, ...a); };
   const rum = (a, b, ms) => { if (sound) sound.rumble(a, b, ms); };
   const distToMe = p => (S.flight ? S.flight.pos.distanceTo(p) : 9999);
@@ -70,6 +99,7 @@ export function createCombat(api, { t, towers, onGameOver, sound }) {
   const puff = (p, n = 6, size = 4, dark = 0.3) => { for (let i = 0; i < n; i++) fx.smoke.spawn(p.x, p.y, p.z, (rnd() - 0.5) * 6, rnd() * 4, (rnd() - 0.5) * 6, 2 + rnd() * 2, size, size * 3, [dark, dark, dark, 0.5], [dark * 1.4, dark * 1.4, dark * 1.4, 0], 0.8, -0.5); };
   const sparkBurst = (p, n = 10, v0 = 18) => { for (let i = 0; i < n; i++) { const v = v0 * (0.4 + rnd()); fx.sparks.spawn(p.x, p.y, p.z, (rnd() - 0.5) * v, (rnd() - 0.3) * v, (rnd() - 0.5) * v, 0.3 + rnd() * 0.5, 0.6, 0.2, [1, 0.9, 0.6, 1], [1, 0.4, 0.1, 0], 0.5, 9.8); } };
   const boom = (p, size = 1) => {
+    if (REC.on) REC.ev.push({ t: game.time, p: [p.x, p.y, p.z], s: size });   // para la repetición
     for (let i = 0; i < 22 * size; i++) { const v = (8 + rnd() * 20) * size; fx.fire.spawn(p.x, p.y, p.z, (rnd() - 0.5) * v, (rnd() - 0.4) * v, (rnd() - 0.5) * v, 0.3 + rnd() * 0.4, 7 * size + rnd() * 5 * size, 2, [1, 0.85, 0.5, 1], [0.9, 0.25, 0.05, 0], 2.5, 0); }
     for (let i = 0; i < 10 * size; i++) fx.smoke.spawn(p.x, p.y, p.z, (rnd() - 0.5) * 10, rnd() * 6, (rnd() - 0.5) * 10, 3 + rnd() * 3, 6 * size, 22 * size, [0.12, 0.11, 0.1, 0.7], [0.25, 0.24, 0.23, 0], 0.8, -0.4);
     sparkBurst(p, 30 * size, 25 * size);
@@ -90,17 +120,31 @@ export function createCombat(api, { t, towers, onGameOver, sound }) {
 
   // ── Jugador ──
   const pl = { hull: HULL, shield: SHIELD, sinceHit: 99, heat: 0, over: false, gunCD: 0, ammo: 0, reloadT: 0, salvoLeft: 0, salvoCD: 0, salvoSide: 0,
-    locks: [], lockT: 0, lockTarget: null, streak: 0, alive: true, hitT: 0, dmgT: 0, pw: {} };
+    locks: [], lockT: 0, lockTarget: null, streak: 0, alive: true, hitT: 0, dmgT: 0, pw: {}, flares: FLARES, flareT: 0, flareCD: 0, firedT: 0 };
   let W = WEAPONS["sg-attack"], playerCruise = 120;
   const game = { on: false, wave: 0, lv: 1, phase: "rest", restT: 6, score: 0, kills: 0, spawnT: 0, banner: null, bannerT: 0, feed: [], queue: [], sectors: [],
-    D: null, diff: "normal", time: 0, shots: 0, hits: 0, killsBy: {}, bestStreak: 0, towerLost: [], kitsDelivered: 0, over: false, overT: 0, reported: false };
+    D: null, diff: "normal", time: 0, shots: 0, hits: 0, killsBy: {}, bestStreak: 0, towerLost: [], kitsDelivered: 0, over: false, overT: 0, reported: false,
+    perks: {}, perkList: [], offer: null, weather: "clear", wxMode: "auto" };
+  // Ventajas: nivel de cada una y lo que cambian
+  const pk = k => game.perks[k] || 0;
+  const maxHull = () => HULL + 25 * pk("armor"), maxShield = () => SHIELD + 20 * pk("shield");
+  const ammoMax = () => Math.round(W.sec.ammo * (1 + 0.25 * pk("sec")));
+  const flaresMax = () => FLARES + pk("flares");
+  const reach = r => r * (pk("magnet") ? 1.8 : 1);
+  // Repetición: los últimos 32 s de la partida (20 fotos por segundo) y las explosiones
+  const REC = { on: false, frames: [], ev: [], acc: 0, eid: 0 };
+  let warmCache = null;   // muestras para compilar los shaders en la carga (warmObjects)
 
   // ── Mandos ──
   const keys = new Set(); let mouseR = false, mouseL = false, padPrev = [], mouseAim = null;
   addEventListener("keydown", e => {
+    if (RP.on) { replayKey(e.code); e.preventDefault(); return; }
     if (!game.on) return;
     if (kbHas("fire1", e.code) || kbHas("fire2", e.code) || kbHas("target", e.code)) { keys.add(e.code); e.preventDefault(); }
     if (kbHas("target", e.code) && !e.repeat) cycleLock();
+    if (kbHas("flare", e.code) && !e.repeat && !S.paused) dropFlares();
+    if (kbHas("callWave", e.code) && !e.repeat && !S.paused) callWave();
+    const pi = PERK_KEYS.indexOf(e.code) % 3; if (game.offer && pi >= 0 && !e.repeat && !S.paused) choosePerk(pi);
   });
   addEventListener("keyup", e => keys.delete(e.code));
   addEventListener("blur", () => { keys.clear(); mouseR = false; mouseL = false; });
@@ -112,8 +156,11 @@ export function createCombat(api, { t, towers, onGameOver, sound }) {
     const gp = navigator.getGamepads ? [...navigator.getGamepads()].find(g => g) : null;
     // Mando: RT = arma 1, LT = arma 2 (mantener para fijar misiles), Y = siguiente objetivo
     const v = i => (gp && gp.buttons[i] ? gp.buttons[i].value || (gp.buttons[i].pressed ? 1 : 0) : 0);
-    const now = [v(B.pad.fire1) > 0.3, v(B.pad.fire2) > 0.3, v(B.pad.target) > 0.5];
+    const now = [v(B.pad.fire1) > 0.3, v(B.pad.fire2) > 0.3, v(B.pad.target) > 0.5, v(B.pad.flare) > 0.5, v(14) > 0.5, v(13) > 0.5, v(15) > 0.5, v(B.pad.callWave) > 0.5];
     if (now[2] && !padPrev[2]) cycleLock();
+    if (now[3] && !padPrev[3]) dropFlares();
+    if (now[7] && !padPrev[7] && !S.paused) callWave();
+    if (game.offer) for (let i = 0; i < 3; i++) if (now[4 + i] && !padPrev[4 + i]) { choosePerk(i); break; }   // cruceta ← ↓ →
     padPrev = now;
     return { fire1: now[0], fire2: now[1] };
   }
@@ -139,7 +186,9 @@ export function createCombat(api, { t, towers, onGameOver, sound }) {
     list.sort((a, b) => Math.hypot(a.x - from.x, a.z - from.z) - Math.hypot(b.x - from.x, b.z - from.z));
     return list[rnd() < 0.6 ? 0 : (rnd() * list.length) | 0];
   }
-  const towerAim = (o, out, y = 100) => out.set(o.x, o.tw.root.position.y + y * TS, o.z);   // y: altura en la torre sin escalar
+  // Medidas del blanco: la torre (396 m, explanada de 93 m) o un monumento 3D (su altura y su radio)
+  const tH = o => o.H || 132 * TS, tR = o => o.R || 31 * TS;
+  const towerAim = (o, out, y = 100) => out.set(o.x, o.tw.root.position.y + y / 132 * tH(o), o.z);   // y: altura en la torre sin escalar (0–132)
   function spawnPoint() {   // en el borde de la zona, por uno de los sectores de la oleada
     const s = game.sectors[(rnd() * game.sectors.length) | 0] ?? rnd() * Math.PI * 2, a = s + (rnd() - 0.5) * 0.7, r = ZONE - 150;
     return new THREE.Vector3(Math.cos(a) * r, 0, Math.sin(a) * r);
@@ -151,12 +200,12 @@ export function createCombat(api, { t, towers, onGameOver, sound }) {
     const model = models(kind === "dummy" ? "attacker" : kind); scene.add(model);
     const dir = opts.dir ? opts.dir.clone().normalize() : new THREE.Vector3(-p.x, 0, -p.z).normalize();
     const hpK = kind === "boss" ? 1 : 1 + Math.min(lv, 20) * 0.03;
-    const e = { kind, model, pos: p, dir, vel: V(), bank: 0, R: K0.R, hp: K0.hp * hpK, maxHp: K0.hp * hpK, alive: true, smokeAcc: 0, expl: null,
+    const e = { id: ++REC.eid, kind, model, pos: p, dir, vel: V(), bank: 0, R: K0.R, hp: K0.hp * hpK, maxHp: K0.hp * hpK, alive: true, smokeAcc: 0, expl: null,
       state: "go", stT: 0, fireCD: 2 + rnd() * 2, burst: 0, burstCD: 0, gunT: 0, breakDir: V(), tgt: null, turn: 1, speed: 100, cur: 0 };
     e.dmg = 2 + 0.12 * Math.min(lv, 15); e.spread = Math.max(0.016, 0.065 - lv * 0.003);
     const sp = playerCruise * game.D.speedK;
     switch (kind) {
-      case "escort":   e.speed = sp * Math.min(1.02, 0.8 + 0.018 * lv); e.turn = Math.min(1.05, 0.5 + 0.035 * lv); e.state = "attack"; e.fireCD = 3 + rnd() * 2; break;
+      case "escort":   e.speed = sp * Math.min(1.02, 0.8 + 0.018 * lv); e.turn = Math.min(1.05, 0.5 + 0.035 * lv); e.state = "attack"; e.fireCD = 3 + rnd() * 2; e.mslCD = 6 + rnd() * MSL.cd[game.diff]; break;
       case "attacker": e.speed = sp * Math.min(0.95, 0.72 + 0.012 * lv); e.turn = Math.min(0.9, 0.55 + 0.02 * lv); break;
       case "drone":    e.speed = sp * 0.85 + lv * 2; e.turn = 1.5; break;
       case "cruise":   e.speed = Math.max(200, sp * 1.1); e.turn = 0.9; break;
@@ -182,10 +231,14 @@ export function createCombat(api, { t, towers, onGameOver, sound }) {
     { const d = distToMe(e.pos); snd("explosion", d, Math.min(2, big)); if (d < 400) rum(0.35, 0.5, 160); if (d < 700) shake(2.6 * (1 - d / 700) * Math.min(2, big)); }
     if (byPlayer) { if (e.kind === "boss") { slowMo(0.3, 1600); shake(5); } else slowMo(0.15, 70); }
     if (byPlayer) {
-      pl.streak = Math.min(pl.streak + 1, 4); game.bestStreak = Math.max(game.bestStreak, pl.streak);
-      const mult = Math.max(1, pl.streak) * (pl.pw.double > 0 ? 2 : 1), pts = KIND[e.kind].pts * mult;
-      game.score += pts; game.kills++; game.killsBy[e.kind] = (game.killsBy[e.kind] || 0) + 1;
-      game.feed.push({ txt: `+${pts}${mult > 1 ? "  ×" + mult : ""}`, t: 1.6 });
+      // Racha (combo): cada derribo sube el multiplicador hasta ×8, pero hay que encadenarlos: si pasa
+      // demasiado tiempo sin derribar (cada vez menos cuanto más alta), se pierde. Daño a la torre o a ti, también.
+      pl.streak = Math.min(pl.streak + 1, COMBO_MAX); pl.comboT = comboWin(pl.streak); game.bestStreak = Math.max(game.bestStreak, pl.streak);
+      // Vuelo rasante: derribo volando a menos de LOW_AGL sobre el suelo → ×1,5
+      const fp = S.flight && S.flight.pos, low = !!fp && fp.y - api.groundAt(fp.x, fp.z) < LOW_AGL;
+      const mult = Math.max(1, pl.streak) * (pl.pw.double > 0 ? 2 : 1), pts = Math.round(KIND[e.kind].pts * mult * (low ? 1.5 : 1));
+      game.score += pts; game.kills++; game.killsBy[e.kind] = (game.killsBy[e.kind] || 0) + 1; if (low) game.lowKills = (game.lowKills || 0) + 1;
+      game.feed.push({ txt: `+${pts}${mult > 1 ? "  ×" + mult : ""}${low ? "  · " + t("lowBonus") : ""}`, t: 1.6, col: low ? "#7ff0ff" : undefined });
       // ¡Salvada!: derribado cuando ya estaba encima de la torre
       if (KIND[e.kind].tower && e.kind !== "boss" && !game.training && e.tgt && e.tgt.hp > 0 && Math.hypot(e.pos.x - e.tgt.x, e.pos.z - e.tgt.z) < SAVE_R) {
         game.score += SAVE_PTS; game.saves = (game.saves || 0) + 1; game.feed.push({ txt: t("saved", { p: SAVE_PTS }), t: 1.8, col: "#7ee08a" }); snd("saved");
@@ -223,8 +276,85 @@ export function createCombat(api, { t, towers, onGameOver, sound }) {
     if (pl.hull <= 0) { pl.hull = 0; pl.alive = false; pl.kit = false; api.crash("shot"); }
   }
   function resetPlayer() {
-    Object.assign(pl, { hull: HULL, shield: SHIELD, sinceHit: 99, heat: 0, over: false, gunCD: 0, ammo: W.sec.ammo, reloadT: 0, salvoLeft: 0, locks: [], lockT: 0, alive: true, pw: {} });
+    Object.assign(pl, { hull: maxHull(), shield: maxShield(), sinceHit: 99, heat: 0, over: false, gunCD: 0, ammo: ammoMax(), reloadT: 0, salvoLeft: 0, locks: [], lockT: 0, alive: true, pw: {},
+      flares: flaresMax(), flareT: 0 });
+    for (const m of emissiles) m.target = null;   // los misiles que te perseguían se pierden
   }
+
+  // ── Bengalas: desvían los misiles que te persiguen (se recargan de una en una) ──
+  const flares = [];   // { p, v, life }
+  function dropFlares() {
+    const f = S.flight; if (!f || !pl.alive || S.crashT > 0 || !game.on || game.over || pl.flareCD > 0) return;
+    if (pl.flares <= 0) { snd("empty"); return; }
+    pl.flares--; pl.flareCD = FLARE_GAP; game.flaresUsed = (game.flaresUsed || 0) + 1;
+    const { fwd, up, right } = f.axes();
+    const fresh = [];
+    for (let i = 0; i < 6; i++) {
+      const side = (i % 2 ? 1 : -1) * (0.6 + rnd() * 0.6);
+      const v = f.vel.clone().multiplyScalar(0.55).addScaledVector(right, side * 28).addScaledVector(up, -12 - rnd() * 14).addScaledVector(fwd, -25 - rnd() * 20);
+      const r = { p: f.pos.clone().addScaledVector(fwd, -S.P.len * 0.4), v, life: 3.2 + rnd() * 0.8 }; flares.push(r); fresh.push(r);
+    }
+    snd("flare"); rum(0.1, 0.25, 90);
+    // cada misil que te persigue se va (casi siempre) detrás de una bengala
+    for (const m of emissiles) if (m.target === "player" && m.p.distanceTo(f.pos) < 2800 && rnd() < MSL.decoyP[game.diff]) { m.target = null; m.decoy = fresh[(rnd() * fresh.length) | 0]; m.decoyed = true; }
+  }
+  function updateFlares(dt) {
+    if (pl.flareCD > 0) pl.flareCD -= dt;
+    if (pl.flares < flaresMax() && (pl.flareT += dt) >= FLARE_RECHARGE * (1 - 0.25 * pk("flares"))) { pl.flareT = 0; pl.flares++; }
+    if (pl.flares >= flaresMax()) pl.flareT = 0;
+    for (let i = flares.length - 1; i >= 0; i--) {
+      const r = flares[i]; r.life -= dt; r.v.y -= 9.8 * dt * 0.5; r.v.multiplyScalar(1 - 0.6 * dt); r.p.addScaledVector(r.v, dt);
+      fx.sparks.spawn(r.p.x, r.p.y, r.p.z, 0, 0, 0, 0.12, 4.5, 2, [1, 1, 0.9, 1], [1, 0.7, 0.3, 0], 0, 0);
+      if ((r.sm = (r.sm || 0) + dt) > 0.05) { r.sm = 0; fx.smoke.spawn(r.p.x, r.p.y, r.p.z, 0, 0.6, 0, 2, 1.5, 6, [0.9, 0.9, 0.9, 0.45], [0.95, 0.95, 0.95, 0], 0.5, -0.2); }
+      if (r.life <= 0) flares.splice(i, 1);
+    }
+  }
+
+  // ── Misiles enemigos contra el jugador ──
+  const emissiles = [];   // { mesh, p, v, life, target: "player"|null, decoy }
+  const emGeo = new THREE.CylinderGeometry(0.18, 0.18, 3, 8); emGeo.rotateX(Math.PI / 2);
+  const emMat = new THREE.MeshStandardMaterial({ color: 0x3a3d42, roughness: 0.5, metalness: 0.3 });
+  function fireAtPlayer(from, vel0) {
+    const f = S.flight; if (!f || !pl.alive || S.crashT > 0 || game.over || game.training) return false;
+    if (emissiles.filter(m => m.target === "player").length >= MSL.max[game.diff]) return false;
+    const mesh = new THREE.Mesh(emGeo, emMat); mesh.position.copy(from); scene.add(mesh);
+    const v = vel0.clone(); v.setLength(v.length() + MSL.speed0);
+    emissiles.push({ mesh, p: from.clone(), v, life: MSL.life, target: "player", decoy: null, trail: 0, sp: v.length() });
+    snd("missileLaunch", distToMe(from));
+    return true;
+  }
+  const _mW = V(), _mQ = new THREE.Quaternion();
+  function updateEMissiles(dt) {
+    const f = S.flight, alive = f && pl.alive && !(S.crashT > 0);
+    for (let i = emissiles.length - 1; i >= 0; i--) {
+      const m = emissiles[i]; m.life -= dt; _prev.copy(m.p);
+      if (m.target === "player" && !alive) m.target = null;
+      m.sp = Math.min(Math.max(playerCruise * 1.9, 330), m.sp + MSL.accel * dt);
+      const dir = _a.copy(m.v).normalize();
+      let aim = null;
+      if (m.target === "player") aim = leadPoint(m.p, _mW.set(0, 0, 0), { pos: f.pos, vel: f.vel }, m.sp, _c);
+      else if (m.decoy && m.decoy.life > 0) aim = _c.copy(m.decoy.p);
+      if (aim) {
+        const want = _b.copy(aim).sub(m.p).normalize(), ang = dir.angleTo(want);
+        const turn = MSL.turn * (game.weather === "storm" ? 0.85 : 1);
+        if (ang > 1e-4) { _mQ.setFromUnitVectors(dir, want); _mQ.slerp(_I, 1 - Math.min(1, turn * dt / ang)); dir.applyQuaternion(_mQ); }
+      }
+      m.v.copy(dir).multiplyScalar(m.sp);
+      m.p.addScaledVector(m.v, dt);
+      m.mesh.position.copy(m.p); m.mesh.lookAt(_b.copy(m.p).add(m.v));
+      if ((m.trail += dt) > 0.025) { m.trail = 0; fx.smoke.spawn(_prev.x, _prev.y, _prev.z, 0, 0.4, 0, 1.8, 1.2, 5, [0.75, 0.75, 0.75, 0.5], [0.9, 0.9, 0.9, 0], 0.6, -0.2); fx.fire.spawn(_prev.x, _prev.y, _prev.z, 0, 0, 0, 0.05, 2, 0.6, [1, 0.8, 0.4, 1], [1, 0.4, 0.1, 0], 0, 0); }
+      let done = m.life <= 0 || m.p.y < api.groundAt(m.p.x, m.p.z), hitMe = false;
+      if (!done && m.target === "player" && segSphere(_prev, m.p, f.pos, MSL.fuse)) { damagePlayer(MSL.dmg[game.diff]); done = hitMe = true; }
+      if (!done && m.decoy && m.p.distanceTo(m.decoy.p) < 16) done = true;
+      if (!done && m.decoy && m.decoy.life <= 0) m.decoy = null;
+      if (done) {
+        // esquivado: se lo llevó una bengala o se quedó sin combustible persiguiéndote
+        if (!hitMe && alive && (m.decoyed || m.target === "player")) { game.dodged = (game.dodged || 0) + 1; game.feed.push({ txt: t("dodged"), t: 1.6, col: "#7ee08a" }); }
+        boom(m.p, 0.5); snd("explosion", distToMe(m.p), 0.5); scene.remove(m.mesh); emissiles.splice(i, 1);
+      }
+    }
+  }
+  const missileOnMe = () => emissiles.some(m => m.target === "player");
 
   // ── Apuntado ──
   // La mira puede ir unos grados por encima o por debajo del morro (stick derecho ↑↓ / R-F): todo apunta a ella
@@ -285,17 +415,18 @@ export function createCombat(api, { t, towers, onGameOver, sound }) {
     pl.gunCD -= dt;
     if (pl.over || pl.gunCD > 0) return;
     const rapid = pl.pw.rapid > 0;
-    pl.gunCD += 1 / (G.rate * (rapid ? 1.6 : 1)); if (pl.gunCD < 0) pl.gunCD = 0;
+    pl.gunCD += 1 / (G.rate * (rapid ? 1.6 : 1) * (1 + 0.15 * pk("rate"))); if (pl.gunCD < 0) pl.gunCD = 0;
+    pl.firedT = 0.12;
     const fwd = aimFwd(f).clone();
     const tgt = assistTarget(f.pos, fwd, G.speed);
     for (const m of G.muzzles) {
       const p = muzzle(m, f, _b);
       const dir = assistDir(p, f, fwd, tgt, G.speed);
       dir.x += (rnd() - 0.5) * G.spread * 2; dir.y += (rnd() - 0.5) * G.spread * 2; dir.z += (rnd() - 0.5) * G.spread * 2; dir.normalize();
-      addBullet(p, _d.copy(f.vel).addScaledVector(dir, G.speed), G.dmg, "p", G.len);
+      addBullet(p, _d.copy(f.vel).addScaledVector(dir, G.speed), G.dmg * (1 + 0.2 * pk("dmg")), "p", G.len);
       fx.fire.spawn(p.x, p.y, p.z, f.vel.x, f.vel.y, f.vel.z, 0.05, 2.2, 1, [1, 0.85, 0.5, 1], [1, 0.5, 0.1, 0], 0, 0);
     }
-    if (!rapid) { pl.heat += G.heat; if (pl.heat >= 1) { pl.heat = 1; pl.over = true; } }
+    if (!rapid) { pl.heat += G.heat * (1 - 0.15 * pk("rate")); if (pl.heat >= 1) { pl.heat = 1; pl.over = true; } }
     snd(G.name === "cannon" ? "cannon" : "gun"); rum(0, 0.12, 35);
   }
   function launch(kind, p, v, target, sec) {
@@ -321,9 +452,10 @@ export function createCombat(api, { t, towers, onGameOver, sound }) {
   let fire2Prev = false;
   function secondary(dt, fire2) {
     const sec = W.sec;
-    if (pl.pw.ammo > 0) { pl.ammo = sec.ammo; pl.reloadT = 0; }
+    const AM = ammoMax(), RL = sec.reload * (1 - 0.2 * pk("sec"));
+    if (pl.pw.ammo > 0) { pl.ammo = AM; pl.reloadT = 0; }
     // Recarga: de uno en uno
-    if (pl.ammo < sec.ammo) { pl.reloadT += dt; if (pl.reloadT >= sec.reload) { pl.reloadT = 0; pl.ammo++; } } else pl.reloadT = 0;
+    if (pl.ammo < AM) { pl.reloadT += dt; if (pl.reloadT >= RL) { pl.reloadT = 0; pl.ammo++; } } else pl.reloadT = 0;
     if (sec.kind === "rockets") {
       if (fire2 && !fire2Prev && pl.salvoLeft === 0 && pl.ammo > 0) pl.salvoLeft = Math.min(sec.salvo, pl.ammo);
       if (pl.salvoLeft > 0) {
@@ -371,8 +503,8 @@ export function createCombat(api, { t, towers, onGameOver, sound }) {
     const r = Math.hypot(e.pos.x, e.pos.z); if (r > ZONE) desired.addScaledVector(_a.set(-e.pos.x, 0, -e.pos.z).normalize(), (r - ZONE) / 300);
     if (towersToo) for (const o of towers()) {
       if (o === skip) continue;
-      const dx = e.pos.x - o.x, dz = e.pos.z - o.z, hd = Math.hypot(dx, dz) || 1, top = o.tw.root.position.y + 150 * TS;
-      if (hd < 340 && e.pos.y < top) { desired.x += dx / hd * (340 - hd) / 80; desired.z += dz / hd * (340 - hd) / 80; desired.y += 0.3; }
+      const dx = e.pos.x - o.x, dz = e.pos.z - o.z, hd = Math.hypot(dx, dz) || 1, top = o.tw.root.position.y + tH(o) * 1.14 + 30, rr = Math.max(160, tR(o) * 3.66);
+      if (hd < rr && e.pos.y < top) { desired.x += dx / hd * (rr - hd) / 80; desired.z += dz / hd * (rr - hd) / 80; desired.y += 0.3; }
     }
   }
   function move(e, dt) {
@@ -396,7 +528,7 @@ export function createCombat(api, { t, towers, onGameOver, sound }) {
     e.fireCD -= dt;
     if (e.burst > 0) {
       e.burstCD -= dt;
-      if (e.burstCD <= 0) { e.burstCD = 1 / rate; e.burst--; leadPoint(from, e.vel, { pos: f.pos, vel: f.vel }, 800, _e3); shoot(e, from, _e3, 800, e.dmg, spread, "e"); }
+      if (e.burstCD <= 0) { e.burstCD = 1 / rate; e.burst--; leadPoint(from, e.vel, { pos: f.pos, vel: f.vel }, 800, _e3); shoot(e, from, _e3, 800, e.dmg, spread * (WX_SPREAD[game.weather] || 1), "e"); }
       return;
     }
     const d = f.pos.distanceTo(from);
@@ -411,6 +543,11 @@ export function createCombat(api, { t, towers, onGameOver, sound }) {
         if (dist < 230) { e.state = "break"; e.stT = 0; e.breakDir.set(rnd() - 0.5, 0.25 + rnd() * 0.3, rnd() - 0.5).normalize(); }
         const ang = e.dir.angleTo(_e1.copy(desired).normalize());
         burstAtPlayer(e, dt, _e2.copy(e.pos).addScaledVector(e.dir, 8), 950, () => ang < 0.1, 8, 12, e.spread);
+        // misil contra el jugador (desde el nivel 4): de frente o por detrás, a media distancia
+        if (game.lv >= MSL.lv && e.mslCD !== undefined && (e.mslCD -= dt) <= 0) {
+          const ma = e.dir.angleTo(_e1.copy(f.pos).sub(e.pos).normalize());
+          if (dist < 1800 && dist > 350 && ma < 0.45) e.mslCD = fireAtPlayer(_e2.copy(e.pos).addScaledVector(e.dir, 6).addScaledVector(UP, -1.5), e.vel) ? MSL.cd[game.diff] * (0.8 + 0.4 * rnd()) : 3;
+        }
       } else if (e.state === "break") {
         desired.copy(e.breakDir);
         if (e.stT > 3) { e.state = "attack"; e.stT = 0; }
@@ -514,6 +651,8 @@ export function createCombat(api, { t, towers, onGameOver, sound }) {
         if (!e.alive) banner(t("bossRam"), 3, "warn");
         return;
       }
+      // furioso: también misiles contra ti si andas cerca
+      if (e.phase >= 2 && (e.pmT = (e.pmT ?? 8) - dt) <= 0) { e.pmT = 16; if (S.flight && S.flight.pos.distanceTo(e.pos) < 2500) fireAtPlayer(_e2.copy(e.pos).addScaledVector(UP, -6), e.vel); }
       if (e.phase === 2 && (e.msT = (e.msT ?? 3) - dt) <= 0) {
         e.msT = 10; const o = pickTower(e.pos);
         if (o) for (let k = 0; k < 2; k++) spawn("hmissile", _e2.copy(e.pos).add(_e3.set((k ? 1 : -1) * 14, -8, 0)), { tgt: o, dir: _e3.set(o.x - e.pos.x, -200, o.z - e.pos.z) });
@@ -588,7 +727,7 @@ export function createCombat(api, { t, towers, onGameOver, sound }) {
       if (s.tower && s.tower.hp > 0 && s.tower.tw.hit(s.p)) { done = true; hitTower = true; }
       if (!done && s.p.y < g) {
         done = true;
-        if (s.kind === "bomb" && s.tower && Math.hypot(s.p.x - s.tower.x, s.p.z - s.tower.z) < 45 * TS) hitTower = true;
+        if (s.kind === "bomb" && s.tower && Math.hypot(s.p.x - s.tower.x, s.p.z - s.tower.z) < Math.max(60, tR(s.tower) * 1.45)) hitTower = true;
       }
       if (done) {
         if (hitTower) damageTower(s.tower, s.dmg, s.p.clone()); else if (s.p.y < g + 2) puff(s.p, 8, 6, 0.3);
@@ -708,7 +847,7 @@ export function createCombat(api, { t, towers, onGameOver, sound }) {
   }
   function maybeKit(e) {
     if (!["attacker", "bomber", "heli", "boss"].includes(e.kind) || kits.length >= 2 || game.over) return;
-    const p = game.D.kitP * Math.max(0.4, 1 - game.wave * 0.04) * (e.kind === "boss" ? 3 : e.kind === "bomber" ? 1.5 : 1);
+    const p = game.D.kitP * (1 + 0.3 * pk("kits")) * Math.max(0.4, 1 - game.wave * 0.04) * (e.kind === "boss" ? 3 : e.kind === "bomber" ? 1.5 : 1);
     if (rnd() > p) return;
     const mesh = kitMesh(); mesh.position.copy(e.pos); scene.add(mesh);
     kits.push({ p: e.pos.clone(), state: "fall", t: 0, mesh });
@@ -722,12 +861,13 @@ export function createCombat(api, { t, towers, onGameOver, sound }) {
     const f = S.flight, flying = f && pl.alive && !(S.crashT > 0);
     for (let i = kits.length - 1; i >= 0; i--) {
       const k = kits[i]; k.t += dt;
-      const g = api.groundAt(k.p.x, k.p.z);
+      const roof = api.roofAt ? api.roofAt(k.p.x, k.p.z) : null;   // si cae sobre un edificio, se queda en la azotea
+      const g = Math.max(api.groundAt(k.p.x, k.p.z), roof ?? -Infinity);
       if (k.state === "fall") { k.p.y -= 7 * dt; k.p.x += Math.sin(k.t * 0.8) * 2 * dt; if (k.p.y <= g + 0.9) { k.p.y = g + 0.9; k.state = "ground"; k.t = 0; const ch = k.mesh.getObjectByName("chute"); if (ch) ch.visible = false; } }
       else if (k.t > 45) { scene.remove(k.mesh); kits.splice(i, 1); continue; }
       k.mesh.position.copy(k.p); k.mesh.rotation.y += dt * 0.6;
       const gl = k.mesh.getObjectByName("glow"); if (gl) gl.material.opacity = 0.35 + 0.3 * Math.sin(k.t * 6);
-      if (flying && !pl.kit && f.pos.distanceTo(k.p) < 35) {
+      if (flying && !pl.kit && f.pos.distanceTo(k.p) < reach(35)) {
         pl.kit = true; scene.remove(k.mesh); kits.splice(i, 1);
         banner(t("kitGot"), 2.5, "good"); ring.for = null; snd("kit");
       }
@@ -738,14 +878,14 @@ export function createCombat(api, { t, towers, onGameOver, sound }) {
         ring.for = ringTarget();
         if (ring.for) {
           const o = ring.for, out = _e1.set(o.x, 0, o.z); if (out.lengthSq() < 1) out.set(1, 0, 0); out.normalize();
-          ring.pos.set(o.x + out.x * 300, o.tw.root.position.y + 85 * TS, o.z + out.z * 300);
+          const rd = Math.max(300, tR(o) * 3); ring.pos.set(o.x + out.x * rd, o.tw.root.position.y + Math.max(85 / 132 * tH(o), 160), o.z + out.z * rd);
           if (!ring.mesh) { ring.mesh = new THREE.Mesh(new THREE.TorusGeometry(26, 1.6, 10, 48), new THREE.MeshBasicMaterial({ color: 0x5dff7a, transparent: true, opacity: 0.85 })); scene.add(ring.mesh); }
           ring.mesh.position.copy(ring.pos); ring.mesh.lookAt(o.x, ring.pos.y, o.z);
         }
       }
       if (ring.mesh) { ring.mesh.visible = !!ring.for; ring.mesh.material.opacity = 0.55 + 0.35 * Math.sin(game.time * 5); }
-      if (ring.for && flying && f.pos.distanceTo(ring.pos) < 28) {
-        const o = ring.for; setTowerHp(o, o.hp + KIT_REPAIR, false);
+      if (ring.for && flying && f.pos.distanceTo(ring.pos) < reach(28)) {
+        const o = ring.for; setTowerHp(o, o.hp + KIT_REPAIR + 5 * pk("kits"), false);
         pl.kit = false; game.kitsDelivered++; game.score += 150;
         banner(t("repaired", { n: o.n, p: Math.round(o.hp) }), 2.5, "good"); sparkBurst(ring.pos, 40, 20); snd("repair");
         ring.for = null;
@@ -769,9 +909,9 @@ export function createCombat(api, { t, towers, onGameOver, sound }) {
     powers.push({ k, p, mesh, t: 0 }); game.feed.push({ txt: t("pw_" + k), t: 2, col: POWER[k].css });
   }
   function maybePower(e) {
-    if (game.over || game.training || powers.length >= 2 || rnd() > (POWER_P[e.kind] || 0)) return;
+    if (game.over || game.training || powers.length >= 2 || rnd() > (POWER_P[e.kind] || 0) * (pk("power") ? 1.4 : 1)) return;
     const ks = Object.keys(POWER); let k = ks[(rnd() * ks.length) | 0];
-    if (k === "repair" && pl.hull >= HULL * 0.8) k = "double";
+    if (k === "repair" && pl.hull >= maxHull() * 0.8) k = "double";
     dropPower(k, e.pos);
   }
   function updatePowers(dt) {
@@ -783,18 +923,19 @@ export function createCombat(api, { t, towers, onGameOver, sound }) {
       w.mesh.position.set(w.p.x, w.p.y + Math.sin(w.t * 2) * 3, w.p.z); w.mesh.rotation.y += dt * 2; w.mesh.rotation.x += dt * 0.7;
       w.mesh.visible = w.t < 20 || (w.t * 6 | 0) % 2 === 0;   // parpadea los 5 últimos segundos
       const gl = w.mesh.getObjectByName("glow"); if (gl) gl.material.opacity = 0.25 + 0.15 * Math.sin(w.t * 7);
-      if (flying && f.pos.distanceTo(w.p) < 45) {
+      if (flying && f.pos.distanceTo(w.p) < reach(45)) {
         scene.remove(w.mesh); powers.splice(i, 1);
-        if (w.k === "repair") { pl.hull = HULL; pl.shield = SHIELD; } else pl.pw[w.k] = POWER[w.k].dur;
-        if (w.k === "ammo") { pl.ammo = W.sec.ammo; pl.reloadT = 0; }
+        if (w.k === "repair") { pl.hull = maxHull(); pl.shield = maxShield(); } else pl.pw[w.k] = POWER[w.k].dur * (pk("power") ? 1.5 : 1);
+        if (w.k === "ammo") { pl.ammo = ammoMax(); pl.reloadT = 0; }
         if (w.k === "rapid") { pl.heat = 0; pl.over = false; }
         banner(t("pw_" + w.k), 2, "good"); snd("powerup"); rum(0.2, 0.3, 150);
       }
     }
   }
 
-  // ── Torretas antiaéreas en la explanada de la torre ──
+  // ── Torretas antiaéreas en la explanada de la torre (y, de noche, reflectores) ──
   const turrets = [];
+  const lights = createSearchlights(api);
   const tMat = new THREE.MeshStandardMaterial({ color: 0x5a6068, roughness: 0.6, metalness: 0.4 }), tDark = new THREE.MeshStandardMaterial({ color: 0x2a2e33, roughness: 0.7 });
   const tLampOn = new THREE.MeshBasicMaterial({ color: 0x6dff8a }), tLampOff = new THREE.MeshBasicMaterial({ color: 0xff4030 });
   function turretMesh() {
@@ -810,6 +951,15 @@ export function createCombat(api, { t, towers, onGameOver, sound }) {
   function buildTurrets() {
     removeTurrets();
     for (const o of towers()) {
+      if (o.kind === "monument") {   // alrededor del monumento, en el suelo (o en la azotea que haya allí)
+        for (let k = 0; k < 4; k++) {
+          const a = k * Math.PI / 2 + Math.PI / 4, r = tR(o) + 45, x = o.x + Math.cos(a) * r, z = o.z + Math.sin(a) * r;
+          const m = turretMesh(); scene.add(m.g);
+          const u = { o, m, pos: new THREE.Vector3(x, 0, z), muz: new THREE.Vector3(x, 0, z), cd: rnd() * 0.3, burstT: rnd() * 1.2, scanT: 0, tgt: null, on: true, free: true, settleT: 0 };
+          settleTurret(u); turrets.push(u);
+        }
+        continue;
+      }
       // en la explanada, delante de cada cara y a un lado (lejos de los contrafuertes y de la entrada); medidas sin escalar
       const ry = o.tw.root.rotation.y || 0, cr = Math.cos(ry), sr = Math.sin(ry);
       for (let k = 0; k < 4; k++) {
@@ -818,28 +968,43 @@ export function createCombat(api, { t, towers, onGameOver, sound }) {
         const m = turretMesh(); m.g.position.set(x, y, z); m.yaw.rotation.y = Math.atan2(x - o.x, z - o.z) + Math.PI; scene.add(m.g);
         turrets.push({ o, m, pos: new THREE.Vector3(x, y, z), muz: new THREE.Vector3(x, y + 2.9 * TS, z), cd: rnd() * 0.3, burstT: rnd() * 1.2, scanT: 0, tgt: null, on: true });
       }
+      // reflectores: en las esquinas de la explanada, entre las torretas
+      const at = [];
+      for (let k = 0; k < 4; k++) { const th = k * Math.PI / 2 + Math.PI * 0.42, lx = 27 * Math.sin(th), lz = 27 * Math.cos(th);
+        at.push({ x: o.x + (lx * cr + lz * sr) * TS, y: o.tw.root.position.y + 0.6 * TS, z: o.z + (-lx * sr + lz * cr) * TS }); }
+      lights.build(o, at, TS);
+    }
+    for (const o of towers()) if (o.kind === "monument") {   // monumento: reflectores entre las torretas
+      const at = []; for (let k = 0; k < 4; k++) { const a = k * Math.PI / 2, r = tR(o) + 40, x = o.x + Math.cos(a) * r, z = o.z + Math.sin(a) * r, rf = api.roofAt ? api.roofAt(x, z) : null; at.push({ x, y: rf ?? api.groundAt(x, z), z }); }
+      lights.build(o, at, TS);
     }
   }
-  function removeTurrets() { for (const u of turrets) scene.remove(u.m.g); turrets.length = 0; }
+  function settleTurret(u) {   // torretas sueltas (monumento): en el suelo o la azotea; el suelo se afina al llegar teselas
+    const roof = api.roofAt ? api.roofAt(u.pos.x, u.pos.z) : null, y = roof !== null && roof !== undefined ? roof : api.groundAt(u.pos.x, u.pos.z);
+    u.pos.y = y; u.muz.set(u.pos.x, y + 2.9 * TS, u.pos.z);
+    u.m.g.position.copy(u.pos); u.m.yaw.rotation.y = Math.atan2(u.pos.x - u.o.x, u.pos.z - u.o.z) + Math.PI;
+  }
+  function removeTurrets() { for (const u of turrets) scene.remove(u.m.g); turrets.length = 0; lights.clear(); }
   const _tA = V(), _tB = V(), _tZ = V();
   function updateTurrets(dt) {
     for (const u of turrets) {
+      if (u.free && game.time < 40 && (u.settleT -= dt) <= 0) { u.settleT = 2; settleTurret(u); }
       const on = u.o.hp >= AA_MIN && !game.over && !game.training;
       if (u.on !== on) { u.on = on; u.m.lamp.material = on ? tLampOn : tLampOff; }
       if (!on) { u.m.pitch.rotation.x += (-0.2 - u.m.pitch.rotation.x) * Math.min(1, dt * 2); continue; }
       if ((u.scanT -= dt) <= 0) {   // blanco: el más cercano; los que van a por la torre, primero
-        u.scanT = 0.5; u.tgt = null; let bd = AA_RANGE;
+        u.scanT = 0.5; u.tgt = null; let bd = AA_RANGE * (1 + 0.15 * pk("aa"));
         for (const e of enemies) if (e.alive && e.kind !== "dummy" && e.pos.y > u.pos.y + 15) { const d = e.pos.distanceTo(u.pos) * (KIND[e.kind].tower ? 1 : 1.6); if (d < bd) { bd = d; u.tgt = e; } }
       }
       const e = u.tgt; if (!e || !e.alive) { u.tgt = null; continue; }
       const lp = leadPoint(u.muz, _tZ, e, AA_SPEED, _tA), dir = _tB.copy(lp).sub(u.muz).normalize();
       u.m.yaw.rotation.y = Math.atan2(-dir.x, -dir.z); u.m.pitch.rotation.x = Math.asin(Math.max(-1, Math.min(1, dir.y)));
       if ((u.burstT -= dt) <= -0.9) u.burstT = 1.2;   // ráfagas de 1,2 s con 0,9 s de pausa
-      if (u.burstT > 0 && (u.cd -= dt) <= 0 && lp.distanceTo(u.muz) < AA_RANGE) {
+      if (u.burstT > 0 && (u.cd -= dt) <= 0 && lp.distanceTo(u.muz) < AA_RANGE * (1 + 0.15 * pk("aa"))) {
         u.cd = 1 / AA_RATE;
         dir.x += (rnd() - 0.5) * AA_SPREAD * 2; dir.y += (rnd() - 0.5) * AA_SPREAD * 2; dir.z += (rnd() - 0.5) * AA_SPREAD * 2; dir.normalize();
         const p0 = _tA.copy(u.muz).addScaledVector(dir, 4 * TS);
-        addBullet(p0, _tB.copy(dir).multiplyScalar(AA_SPEED), AA_DMG * game.D.aaK, "a", 10);
+        addBullet(p0, _tB.copy(dir).multiplyScalar(AA_SPEED), AA_DMG * game.D.aaK * (1 + 0.35 * pk("aa")), "a", 10);
         if (rnd() < 0.5) fx.fire.spawn(p0.x, p0.y, p0.z, 0, 0, 0, 0.05, 3, 1, [1, 0.9, 0.6, 1], [1, 0.5, 0.1, 0], 0, 0);
         snd("aa", distToMe(u.muz));
       }
@@ -929,6 +1094,53 @@ export function createCombat(api, { t, towers, onGameOver, sound }) {
     helis:    { min: 6, w: { heli: 5 } },
     lowlevel: { min: 8, w: { cruise: 5, attacker: 1.5 } },
   };
+  // ── Tiempo de la oleada ──
+  function setWx(w) {
+    if (!w || w === game.weather) return;
+    game.weather = w; if (onWeather) onWeather(w);
+    if (game.on && game.wave > 0) game.feed.push({ txt: t("wx_" + w), t: 2.2, col: "#cfe8ff" });
+  }
+
+  // ── Ventajas entre oleadas: 3 al azar (sin las que ya están al máximo); se elige con 1-2-3, la cruceta o el ratón ──
+  const PERK_KEYS = ["Digit1", "Digit2", "Digit3", "Numpad1", "Numpad2", "Numpad3"];
+  let prnd = Math.random;
+  const perkCss = document.createElement("style");
+  perkCss.textContent = `#sg-perks { position: fixed; left: 50%; top: 196px; transform: translateX(-50%); z-index: 46; font: 14px/1.35 system-ui, sans-serif; color: #e9e9ea; text-align: center; width: min(760px, calc(100vw - 32px)); }
+  #sg-perks .t { font-weight: 800; font-size: 1.15rem; margin-bottom: 8px; color: #ffd23a; } #sg-perks .t small { display: block; font-weight: 600; font-size: .8rem; color: #cfd6dd; }
+  #sg-perks .cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  #sg-perks button { font: inherit; color: inherit; text-align: center; background: rgba(23,24,26,.92); border: 1px solid #3a3d44; border-radius: 12px; padding: 12px 10px 10px; cursor: pointer; pointer-events: auto; }
+  #sg-perks button:hover { border-color: #8a8f98; background: rgba(42,44,49,.95); }
+  #sg-perks i { display: block; font-style: normal; font-size: 1.8rem; line-height: 1.2; } #sg-perks b { display: block; margin: 4px 0 3px; }
+  #sg-perks span { display: block; color: #b9c0c8; font-size: .82rem; min-height: 2.6em; } #sg-perks small { display: block; color: #8f99a5; font-size: .75rem; margin-top: 5px; }
+  #sg-perks kbd { display: inline-block; margin-top: 6px; font: 600 .75rem system-ui; background: #222327; border: 1px solid #3a3d44; border-radius: 5px; padding: 1px 7px; }
+  #sg-perks.sg-hide { display: none; }`;
+  document.head.appendChild(perkCss);
+  const perkBox = document.createElement("div"); perkBox.id = "sg-perks"; perkBox.className = "sg-hide"; document.body.appendChild(perkBox);
+  perkBox.onclick = e => { const b = e.target && e.target.closest && e.target.closest("[data-i]"); if (b) choosePerk(+b.dataset.i); };
+  function offerPerks() {
+    if (game.training || game.over) return;
+    const pool = Object.keys(PERKS).filter(k => pk(k) < PERKS[k].max && !(k === "aa" && !turrets.length)), out = [];
+    while (out.length < 3 && pool.length) out.push(pool.splice((prnd() * pool.length) | 0, 1)[0]);
+    if (!out.length) return;
+    game.offer = out; snd("waveDone");
+    const pad = navigator.getGamepads && [...navigator.getGamepads()].some(g => g);
+    perkBox.innerHTML = `<div class="t">${t("perkTitle")}<small>${t("perkSub")}</small></div><div class="cards">${out.map((k, i) => {
+      const lv = pk(k);
+      return `<button data-i="${i}"><i>${PERKS[k].icon}</i><b>${t("perk_" + k)}</b><span>${t("perkd_" + k)}</span><small>${lv ? t("perkLv", { n: lv + 1, m: PERKS[k].max }) : PERKS[k].max > 1 ? t("perkLv", { n: 1, m: PERKS[k].max }) : t("perkOnce")}</small><kbd>${pad ? ["←", "↓", "→"][i] : i + 1}</kbd></button>`; }).join("")}</div>`;
+    perkBox.classList.remove("sg-hide");
+  }
+  function choosePerk(i) {
+    const k = game.offer && game.offer[i]; if (!k) return;
+    game.perks[k] = pk(k) + 1; game.perkList.push(k); game.offer = null;
+    perkBox.classList.add("sg-hide");
+    // lo que se nota al momento
+    if (k === "armor") pl.hull = Math.min(maxHull(), pl.hull + 25);
+    if (k === "shield") pl.shield = Math.min(maxShield(), pl.shield + 20);
+    if (k === "sec") pl.ammo = ammoMax();
+    if (k === "flares") pl.flares = Math.min(flaresMax(), pl.flares + 1);
+    banner(t("perk_" + k), 2.2, "good", t("perkd_" + k)); snd("powerup"); rum(0.2, 0.3, 150);
+  }
+
   function planWave(n) {
     const lv = n + game.D.lvOff;
     let budget = 4 * Math.pow(1.18, lv - 1) * game.D.budget;
@@ -952,10 +1164,16 @@ export function createCombat(api, { t, towers, onGameOver, sound }) {
     if (!list.some(k => k !== "escort")) list.push("attacker");
     for (let i = list.length - 1; i > 0; i--) { const j = (wrnd() * (i + 1)) | 0; [list[i], list[j]] = [list[j], list[i]]; }
     if (boss) list.splice(Math.min(2, list.length), 0, "boss");
+    // Tiempo: fijo (despejado, tormenta, noche) o cambiante desde la 3.ª oleada (los jefes traen tormenta a menudo)
+    let weather = game.wxPlan || "clear";
+    if (game.wxMode === "storm") weather = "storm";
+    else if (game.wxMode !== "auto") weather = "clear";
+    else if (n >= 3) { const r = wrnd(), w = wrnd(); if (boss ? r < 0.6 : r < (game.wxPlan === "storm" ? 0.75 : 0.4)) weather = boss ? (w < 0.6 ? "storm" : game.cold ? "snow" : "rain") : (w < 0.4 ? "clear" : w < 0.75 ? (game.cold ? "snow" : "rain") : "storm"); }
+    game.wxPlan = weather;
     // Por cuántos lados entran: 1 al principio, hasta 4
     const nS = Math.min(4, 1 + Math.floor((lv - 1) / 3)), a0 = wrnd() * Math.PI * 2;
     const sectors = Array.from({ length: nS }, (_, i) => a0 + i * Math.PI * 2 / nS + (wrnd() - 0.5) * 0.5);
-    return { n, lv, list, sectors, theme };
+    return { n, lv, list, sectors, theme, weather };
   }
   // Rumbo (N, NE, E…) de un ángulo de sector: en el mundo, x = este y z = sur
   const DIRS = ["n", "ne", "e", "se", "s", "sw", "w", "nw"];
@@ -963,7 +1181,8 @@ export function createCombat(api, { t, towers, onGameOver, sound }) {
   function nextInfo() {
     const nx = game.next; if (!nx) return "";
     const ds = [...new Set(nx.sectors.map(dirOf))].map(d => t("dir_" + d)).join(", ");
-    return t("nextWave", { th: t("th_" + (nx.theme || "mixed")), d: ds });
+    const wx = nx.weather && (nx.weather !== "clear" || game.weather !== "clear") ? " · " + t("wx_" + nx.weather) : "";
+    return t("nextWave", { th: t("th_" + (nx.theme || "mixed")), d: ds }) + wx;
   }
   function victory() {
     const o = towers()[0], hp = o ? Math.round(o.hp) : 0, bonus = 2000 + hp * 50;
@@ -971,14 +1190,30 @@ export function createCombat(api, { t, towers, onGameOver, sound }) {
     game.hpLog.push([Math.round(game.time), hp]);
     banner(t("victory"), 5, "good", t("victorySub", { b: bonus.toLocaleString(api.LOCALE) })); snd("record"); rum(0.3, 0.3, 600);
   }
+  // Llamar ya a la siguiente oleada (tecla N / botón X): puntos por cada segundo de respiro que te ahorras
+  const callBonus = () => Math.round(Math.max(0, game.restT)) * CALL_PTS * (game.wave + 1);
+  const canCall = () => game.on && !game.over && !game.training && game.phase === "rest" && game.wave > 0 && !game.offer && game.restT > 1;
+  function callWave() {
+    if (!canCall()) return;
+    const b = callBonus(); game.score += b; game.restT = 0;
+    game.feed.push({ txt: t("calledEarly", { p: b.toLocaleString(api.LOCALE) }), t: 1.8, col: "#ffd23a" }); snd("click");
+  }
+  // Blitz: se acaba el tiempo con la torre en pie → puntos por lo que queda de torre
+  function timeUp() {
+    const o = towers()[0], hp = o ? Math.round(o.hp) : 0, bonus = hp * 30;
+    game.score += bonus; game.won = hp > 0; game.over = true; game.overT = 0; game.queue = []; game.next = null;
+    game.hpLog.push([Math.round(game.time), hp]);
+    banner(t("timeUp"), 5, "good", t("timeUpSub", { b: bonus.toLocaleString(api.LOCALE) })); snd("record"); rum(0.3, 0.3, 600);
+  }
   function updateWaves(dt) {
     if (game.over || game.training) return;
     if (game.phase === "rest") {
+      if (game.offer) return;   // eligiendo ventaja: el respiro espera
       game.restT -= dt;
       if (game.restT <= 0) {
         game.wave++; game.phase = "fight"; game.spawnT = 0;
         const nx = game.next && game.next.n === game.wave ? game.next : planWave(game.wave);
-        game.lv = nx.lv; game.queue = nx.list.slice(); game.sectors = nx.sectors; game.theme = nx.theme; game.next = null;
+        game.lv = nx.lv; game.queue = nx.list.slice(); game.sectors = nx.sectors; game.theme = nx.theme; game.next = null; setWx(nx.weather);
         if (nx.theme && nx.theme !== "boss") game.lastTheme = nx.theme;
         banner(game.maxWave ? t("waveOf", { n: game.wave, m: game.maxWave }) : t("wave", { n: game.wave }), 3, nx.theme === "boss" ? "boss" : "info", nx.theme && nx.theme !== "boss" ? t("th_" + nx.theme) : "");
         snd("waveStart"); game.waveTimes.push(Math.round(game.time));
@@ -999,15 +1234,16 @@ export function createCombat(api, { t, towers, onGameOver, sound }) {
       }
     }
     if (!game.queue.length && !enemies.some(e => e.alive)) {
-      game.phase = "rest"; game.restT = REST;
+      game.phase = "rest"; game.restT = restFor(game.wave, game.mode);
       const bonus = 250 * game.wave + 100 * aliveTowers().filter(o => o.hp >= 100).length; game.score += bonus;
-      for (const o of aliveTowers()) setTowerHp(o, o.hp + 5, false);   // respiro: las torres en pie recuperan un 5 %
+      for (const o of aliveTowers()) setTowerHp(o, o.hp + 5 + 4 * pk("regen"), false);   // respiro: las torres en pie recuperan un 5 % (+4 % por ventaja)
       // Al límite: superar una oleada con la torre al 10 % o menos · Intacta: oleadas seguidas sin bajar del 50 %
       if (aliveTowers().some(o => o.hp <= 10)) game.lastStand = true;
       if (!game.perfectBroken && (game.waveMinHp ?? 100) >= 50) game.perfectUpTo = game.wave; else game.perfectBroken = true;
       game.waveMinHp = 100;
       if (game.maxWave && game.wave >= game.maxWave) { victory(); return; }
-      game.next = planWave(game.wave + 1);
+      game.next = planWave(game.wave + 1); setWx(game.next.weather);   // el tiempo cambia en el respiro
+      if (game.wave % PERK_EVERY === 0 && game.mode !== "blitz") offerPerks();   // Blitz: sin pararse a elegir
       banner(t("waveDone", { n: game.wave, b: bonus }), 3.5, "good", nextInfo()); snd("waveDone");
     }
   }
@@ -1063,13 +1299,24 @@ export function createCombat(api, { t, towers, onGameOver, sound }) {
     if (wing) { const [x, y] = P(wing.pos.x, wing.pos.z); g2.fillStyle = "#8fd0ff"; g2.beginPath(); g2.arc(x, y, 3.5, 0, 7); g2.fill(); }
     for (const k of kits) { const [x, y] = P(k.p.x, k.p.z); g2.strokeStyle = "#6dff8a"; g2.lineWidth = 2; g2.beginPath(); g2.moveTo(x - 4, y); g2.lineTo(x + 4, y); g2.moveTo(x, y - 4); g2.lineTo(x, y + 4); g2.stroke(); }
     if (pl.kit && ring.for) { const [x, y] = P(ring.pos.x, ring.pos.z); g2.strokeStyle = "#6dff8a"; g2.lineWidth = 2; g2.beginPath(); g2.arc(x, y, 5, 0, 7); g2.stroke(); }
+    for (const m of emissiles) { const [x, y] = P(m.p.x, m.p.z); g2.lineWidth = 1.5; shapeIcon("cruise", x, y, 3, "#ff3b30"); }
+    // con tormenta, el radar falla a ratos (estática)
+    const jam = game.weather === "storm" && (performance.now() / 1000) % 7 < 0.6;
+    if (game.weather === "storm") { g2.fillStyle = "rgba(200,220,235,.25)"; for (let i = 0; i < (jam ? 60 : 8); i++) { const a2 = Math.random() * 7, r2 = Math.sqrt(Math.random()) * (R - 3); g2.fillRect(cx + Math.cos(a2) * r2, cy + Math.sin(a2) * r2, 1.5, 1.5); } }
     for (const e of enemies) {
-      if (!e.alive) continue;
+      if (!e.alive || jam) continue;
       const [x, y] = P(e.pos.x, e.pos.z), big = e.kind === "boss" ? 5 : e.kind === "bomber" ? 4 : 3;
       g2.lineWidth = 1.5; shapeIcon(e.kind, x, y, big, e === pl.lockTarget ? "#ffffff" : KIND[e.kind].tower ? "#ff8c2a" : "#ff5040", true); g2.lineWidth = 2;
     }
     g2.fillStyle = "#e6f2ff"; g2.beginPath(); g2.moveTo(cx, cy - 7); g2.lineTo(cx + 5, cy + 5); g2.lineTo(cx, cy + 2); g2.lineTo(cx - 5, cy + 5); g2.closePath(); g2.fill();
     g2.lineWidth = 2;
+    // ventajas que llevas: encima del radar
+    const owned = Object.keys(PERKS).filter(k => pk(k) > 0);
+    if (owned.length) {
+      let y = cy - R - 16; g2.font = "15px system-ui"; g2.textAlign = "left"; let x = 18;
+      for (const k of owned) { g2.fillStyle = "#fff"; g2.fillText(PERKS[k].icon, x, y); if (pk(k) > 1) { g2.font = "700 10px system-ui"; g2.fillStyle = "#ffd23a"; g2.fillText(String(pk(k)), x + 15, y + 3); g2.font = "15px system-ui"; } x += pk(k) > 1 ? 26 : 21; if (x > 2 * R) { x = 18; y -= 20; } }
+    }
+    if (game.weather && game.weather !== "clear") { g2.font = "600 11px system-ui"; g2.textAlign = "center"; g2.fillStyle = "#cfe8ff"; g2.fillText(t("wx_" + game.weather), cx, cy + R + 13); }
   }
   function marker(p, col, label, W2, H2, shape, f) {
     const s = toScreen(p, W2, H2), on = s.front && s.x > 0 && s.x < W2 && s.y > 0 && s.y < H2;
@@ -1178,11 +1425,27 @@ export function createCombat(api, { t, towers, onGameOver, sound }) {
     // Arriba: oleada, enemigos, bajas, puntos
     const alive = enemies.filter(e => e.alive).length + game.queue.reduce((s, k) => s + (k === "drones" ? 3 : 1), 0);
     g2.textAlign = "center"; g2.font = "700 15px system-ui, sans-serif";
-    const topTxt = `${game.maxWave ? t("waveOf", { n: Math.max(1, game.wave), m: game.maxWave }) : t("waveN", { n: Math.max(1, game.wave) })}   ·   ${t("enemies", { n: game.phase === "fight" ? alive : 0 })}   ·   ${t("kills", { n: game.kills })}   ·   ${game.score.toLocaleString(api.LOCALE)} ${t("pts")}`;
+    const blitz = game.mode === "blitz", clock = s => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
+    const topTxt = `${blitz ? `⏱ ${clock(Math.ceil(game.left))}   ·   ` : ""}${game.maxWave ? t("waveOf", { n: Math.max(1, game.wave), m: game.maxWave }) : t("waveN", { n: Math.max(1, game.wave) })}   ·   ${t("enemies", { n: game.phase === "fight" ? alive : 0 })}   ·   ${t("kills", { n: game.kills })}   ·   ${game.score.toLocaleString(api.LOCALE)} ${t("pts")}`;
     const tw = g2.measureText(topTxt).width + 34; panel(W2 / 2 - tw / 2, 52, tw, 30, 15);
-    g2.fillStyle = "#f2f4f6"; g2.fillText(topTxt, W2 / 2, 72);
-    if (pl.streak > 1) { g2.fillStyle = "#ffd23a"; g2.font = "800 18px system-ui"; g2.fillText(t("streak", { n: pl.streak }), W2 / 2, 128); }
-    if (game.phase === "rest" && game.wave > 0 && !game.over) { g2.fillStyle = "#cfe8ff"; g2.font = "600 14px system-ui"; g2.fillText(t("rest", { s: Math.ceil(game.restT) }), W2 / 2, 148); }
+    g2.fillStyle = blitz && game.left < 20 && game.wave > 0 && (performance.now() / 400 | 0) % 2 ? "#ffb020" : "#f2f4f6"; g2.fillText(topTxt, W2 / 2, 72);
+    // Racha: multiplicador grande y una barra con el tiempo que queda para el siguiente derribo
+    if (pl.streak > 1) {
+      const k = Math.min(1, pl.streak / COMBO_MAX), hot = `hsl(${48 - 40 * k}, 100%, ${60 - 6 * k}%)`;
+      g2.fillStyle = hot; g2.font = `800 ${18 + Math.round(8 * k)}px system-ui`; g2.fillText(t("streak", { n: pl.streak }), W2 / 2, 128);
+      if (game.phase === "fight") {
+        const frac = Math.max(0, Math.min(1, pl.comboT / comboWin(pl.streak))), bw = 120;
+        g2.fillStyle = "rgba(0,0,0,.45)"; g2.fillRect(W2 / 2 - bw / 2, 134, bw, 4);
+        g2.fillStyle = hot; g2.fillRect(W2 / 2 - bw / 2, 134, bw * frac, 4);
+      }
+    }
+    if (game.phase === "rest" && game.wave > 0 && !game.over) {
+      g2.fillStyle = game.offer ? "#ffd23a" : "#cfe8ff"; g2.font = "600 14px system-ui"; g2.fillText(game.offer ? t("perkWait") : t("rest", { s: Math.ceil(game.restT) }), W2 / 2, 148);
+      if (canCall()) {   // llamar ya a la oleada, con los puntos que da ahora mismo
+        const pad = navigator.getGamepads && [...navigator.getGamepads()].some(x => x), key = pad ? padName(B.pad.callWave) : keyName(B.kb.callWave[0], t);
+        g2.fillStyle = "#ffd23a"; g2.font = "700 13px system-ui"; g2.fillText(t("callHint", { k: key, p: callBonus().toLocaleString(api.LOCALE) }), W2 / 2, 190);
+      }
+    }
     // Respiro: de qué va la siguiente oleada y por dónde llega (texto, flechas en el mundo y en el radar)
     if (game.phase === "rest" && game.next && !game.over && !game.training) {
       g2.textAlign = "center"; g2.font = "700 14px system-ui"; g2.fillStyle = "#ffb020"; g2.fillText(nextInfo(), W2 / 2, 168);
@@ -1212,13 +1475,25 @@ export function createCombat(api, { t, towers, onGameOver, sound }) {
       _b.copy(e.pos).sub(f.pos).dot(f.axes().fwd) < 0 && _c.copy(f.pos).sub(e.pos).normalize().angleTo(e.dir) < 0.3);
     if (six) snd("tail");
     if (six && (performance.now() / 300 | 0) % 2 === 0) { g2.textAlign = "center"; g2.font = "800 17px system-ui"; g2.fillStyle = "#ff5040"; g2.fillText(t("tail"), W2 / 2, 168); }
+    // Misiles que te persiguen: su marca y un aviso con la tecla de las bengalas
+    for (const m of emissiles) if (m.target === "player" && m.p.distanceTo(f.pos) < 3500) marker(m.p, "#ff3b30", t("missileLbl"), W2, H2, "diamond", f);
+    if (pl.alive && missileOnMe()) {
+      const pad = navigator.getGamepads && [...navigator.getGamepads()].some(x => x), key = pad ? padName(B.pad.flare) : keyName(B.kb.flare[0], t);
+      const txt = t("missileWarn", { k: key }); g2.font = "800 18px system-ui"; const w5 = g2.measureText(txt).width + 34;
+      if ((performance.now() / 250 | 0) % 2 === 0) { g2.fillStyle = "rgba(120,16,12,.78)"; g2.beginPath(); g2.roundRect(W2 / 2 - w5 / 2, H2 * 0.62, w5, 32, 10); g2.fill(); }
+      g2.textAlign = "center"; g2.fillStyle = "#ffd2c8"; g2.fillText(txt, W2 / 2, H2 * 0.62 + 22);
+    }
     // Abajo: escudo y casco · armas
     const bx = W2 / 2 - 252, by = H2 - 66, bw = 220;
     panel(bx - 10, by - 24, bw + 20, 82);
     g2.textAlign = "left"; g2.font = "600 12px system-ui";
     const bar = (y, label, v, max, col) => { g2.fillStyle = "#cfd6dd"; g2.fillText(label, bx, y - 5); g2.fillStyle = "rgba(255,255,255,.12)"; g2.beginPath(); g2.roundRect(bx, y, bw, 8, 4); g2.fill(); g2.fillStyle = col; g2.beginPath(); g2.roundRect(bx, y, Math.max(0.01, bw * Math.max(0, v) / max), 8, 4); g2.fill(); };
-    bar(by, t("shield"), pl.shield, SHIELD, "#5ab8ff");
-    bar(by + 30, t("hull"), pl.hull, HULL, pl.hull < 30 ? ((performance.now() / 250 | 0) % 2 ? "#ff5040" : "#a8322a") : "#7ee08a");
+    bar(by, t("shield"), pl.shield, maxShield(), "#5ab8ff");
+    bar(by + 30, t("hull"), pl.hull, maxHull(), pl.hull < 30 ? ((performance.now() / 250 | 0) % 2 ? "#ff5040" : "#a8322a") : "#7ee08a");
+    { const n = flaresMax(); g2.textAlign = "right"; g2.font = "600 12px system-ui"; g2.fillStyle = "#cfd6dd";
+      for (let i = 0; i < n; i++) { const x = bx + bw - 4 - (n - 1 - i) * 11; g2.fillStyle = i < pl.flares ? "#ffe9b0" : "rgba(255,255,255,.18)"; g2.beginPath(); g2.arc(x, by + 20, 3.5, 0, 7); g2.fill(); }
+      if (pl.flares < n) { g2.fillStyle = "rgba(255,233,176,.5)"; g2.fillRect(bx + bw - (n - 1) * 11 - 8, by + 26, ((n - 1) * 11 + 8) * pl.flareT / (FLARE_RECHARGE * (1 - 0.25 * pk("flares"))), 2); }
+      g2.fillStyle = "#cfd6dd"; g2.fillText(t("flaresLbl"), bx + bw - (n - 1) * 11 - 12, by + 24); g2.textAlign = "left"; }
     const wx = W2 / 2 + 22, wy = H2 - 66;
     panel(wx - 10, wy - 24, 252, 82);
     weaponIcon(W.gun.name, wx, wy - 9, "#cfd6dd");
@@ -1228,14 +1503,15 @@ export function createCombat(api, { t, towers, onGameOver, sound }) {
     if (pl.over) { g2.fillStyle = "#ff5040"; g2.textAlign = "right"; g2.fillText(t("overheat"), wx + 230, wy - 5); g2.textAlign = "left"; }
     weaponIcon(W.sec.name, wx, wy + 21, "#cfd6dd");
     g2.fillStyle = "#cfd6dd"; g2.fillText(t(W.sec.name), wx + 18, wy + 25);
-    for (let i = 0; i < W.sec.ammo; i++) { const pw = W.sec.ammo > 8 ? 12 : 26; g2.fillStyle = i < pl.ammo ? "#f2f4f6" : "rgba(255,255,255,.15)"; g2.beginPath(); g2.roundRect(wx + i * (pw + 2), wy + 32, pw, 9, 2); g2.fill(); }
-    if (pl.ammo < W.sec.ammo) { g2.fillStyle = "rgba(255,255,255,.12)"; g2.fillRect(wx, wy + 46, 230, 3); g2.fillStyle = "#5ab8ff"; g2.fillRect(wx, wy + 46, 230 * pl.reloadT / W.sec.reload, 3); }
+    { const AM = ammoMax(), pw = Math.min(26, Math.floor((230 - 2 * (AM - 1)) / AM));
+      for (let i = 0; i < AM; i++) { g2.fillStyle = i < pl.ammo ? "#f2f4f6" : "rgba(255,255,255,.15)"; g2.beginPath(); g2.roundRect(wx + i * (pw + 2), wy + 32, pw, 9, 2); g2.fill(); }
+      if (pl.ammo < AM) { g2.fillStyle = "rgba(255,255,255,.12)"; g2.fillRect(wx, wy + 46, 230, 3); g2.fillStyle = "#5ab8ff"; g2.fillRect(wx, wy + 46, 230 * Math.min(1, pl.reloadT / (W.sec.reload * (1 - 0.2 * pk("sec")))), 3); } }
     if (pl.locks.length) { g2.fillStyle = "#ffd23a"; g2.textAlign = "right"; g2.fillText(t("locks", { n: pl.locks.length }), wx + 230, wy + 25); g2.textAlign = "left"; }
     // Potenciadores activos: columna a la derecha de las armas, con el tiempo que queda
     { let py = wy - 24; const px = wx + 250; g2.font = "700 11px system-ui"; g2.textAlign = "left";
       for (const k of Object.keys(POWER)) { const v = pl.pw[k]; if (!(v > 0)) continue;
         const txt = t("pw_" + k), w4 = g2.measureText(txt).width + 22; panel(px, py, w4, 24, 12);
-        g2.fillStyle = POWER[k].css; g2.fillText(txt, px + 11, py + 15); g2.fillRect(px + 11, py + 19, (w4 - 22) * v / POWER[k].dur, 2); py += 29; } }
+        g2.fillStyle = POWER[k].css; g2.fillText(txt, px + 11, py + 15); g2.fillRect(px + 11, py + 19, (w4 - 22) * Math.min(1, v / (POWER[k].dur * (pk("power") ? 1.5 : 1))), 2); py += 29; } }
     // Aviso fijo mientras no se apunta con el ratón (ni hay mando)
     if (mouseHint) {
       g2.font = "600 13px system-ui"; const txt = t("clickAim"), w3 = g2.measureText(txt).width + 30;
@@ -1245,17 +1521,202 @@ export function createCombat(api, { t, towers, onGameOver, sound }) {
     if (pl.dmgT > 0) { pl.dmgT -= dt; const gr = g2.createRadialGradient(W2 / 2, H2 / 2, Math.min(W2, H2) * 0.3, W2 / 2, H2 / 2, Math.max(W2, H2) * 0.7); gr.addColorStop(0, "rgba(255,0,0,0)"); gr.addColorStop(1, `rgba(255,30,20,${pl.dmgT})`); g2.fillStyle = gr; g2.fillRect(0, 0, W2, H2); }
   }
 
+  // ══ Repetición de los últimos 30 s ══
+  // Se graban 20 fotos por segundo (nave, enemigos, compañero, proyectiles, vida de la torre) y las explosiones.
+  // Al verla, lo vivo se esconde y se ponen «fantasmas» en su sitio; la cámara la lleva el addon (HOOK.camera)
+  // con planos de cine: detrás de la nave, pasada, desde la torre y, si cayó, la torre viniéndose abajo.
+  const q4 = o => [o.quaternion.x, o.quaternion.y, o.quaternion.z, o.quaternion.w];
+  function recFrame() {
+    const f = S.flight, m = S.model, o = towers()[0];
+    const fr = { t: game.time, p: null, fire: pl.firedT > 0, e: [], w: null, hp: o ? o.hp : 0, s: [] };
+    if (m && f && pl.alive && !(S.crashT > 0)) fr.p = [m.position.x, m.position.y, m.position.z, ...q4(m)];
+    for (const e of enemies) if (e.alive) fr.e.push([e.id, e.kind, e.model.position.x, e.model.position.y, e.model.position.z, ...q4(e.model)]);
+    if (wing) fr.w = [wing.model.position.x, wing.model.position.y, wing.model.position.z, ...q4(wing.model)];
+    for (const x of shots) fr.s.push([x.p.x, x.p.y, x.p.z]);
+    for (const x of eshots) fr.s.push([x.p.x, x.p.y, x.p.z]);
+    for (const x of emissiles) fr.s.push([x.p.x, x.p.y, x.p.z]);
+    REC.frames.push(fr);
+    while (REC.frames.length > 2 && fr.t - REC.frames[0].t > 31) REC.frames.shift();
+    while (REC.ev.length && fr.t - REC.ev[0].t > 32) REC.ev.shift();
+  }
+  const RP = { on: false, t: 0, t0: 0, t1: 0, i: 0, lastI: -1, speed: 1, ghosts: new Map(), me: null, wg: null, evI: 0, onEnd: null,
+    shot: -1, shotT: 0, anchor: V(), camP: V(), camL: V(), lvl: -1, hidden: [], tracers: [], fireAcc: 0, fell: false, padPrev: [] };
+  const rpBar = document.createElement("div"); rpBar.id = "sg-rpbar"; rpBar.className = "sg-hide";
+  { const c = document.createElement("style");
+    c.textContent = `#sg-rpbar { position: fixed; left: 50%; bottom: 3.75vh; transform: translate(-50%, 50%); z-index: 46; display: flex; gap: 6px; font: 600 13px system-ui, sans-serif; }
+    #sg-rpbar button { font: inherit; color: #e9e9ea; background: rgba(23,24,26,.9); border: 1px solid #3a3d44; border-radius: 9px; padding: 6px 14px; cursor: pointer; }
+    #sg-rpbar button:hover { border-color: #8a8f98; } #sg-rpbar button.on { background: rgba(42,44,49,.95); border-color: #8a8f98; } #sg-rpbar.sg-hide { display: none; }`;
+    document.head.appendChild(c); }
+  document.body.appendChild(rpBar);
+  rpBar.onclick = e => { const b = e.target && e.target.closest && e.target.closest("button"); if (!b) return; if (b.dataset.sp) setRpSpeed(+b.dataset.sp); else replayStop(); };
+  function setRpSpeed(v) {
+    RP.speed = v;
+    rpBar.innerHTML = `<button data-sp="0.5" class="${v === 0.5 ? "on" : ""}">×½</button><button data-sp="1" class="${v === 1 ? "on" : ""}">×1</button><button data-sp="2" class="${v === 2 ? "on" : ""}">×2</button><button>${t("rpSkip")}</button>`;
+  }
+  function replayKey(code) {
+    if (code === "Escape" || code === "Enter" || code === "Backspace") replayStop();
+    else if (code === "Space") setRpSpeed(RP.speed === 1 ? 2 : RP.speed === 2 ? 0.5 : 1);
+  }
+  function replayStart(onEnd) {
+    if (RP.on || REC.frames.length < 40) return false;
+    REC.on = false;
+    const F = REC.frames;
+    Object.assign(RP, { on: true, onEnd, t0: F[0].t, t1: F[F.length - 1].t, i: 0, lastI: -1, shot: -1, shotT: 0, lvl: -1, fireAcc: 0, tracers: [] });
+    RP.t = RP.t0; RP.evI = REC.ev.findIndex(ev => ev.t >= RP.t0); if (RP.evI < 0) RP.evI = REC.ev.length;
+    RP.fell = F[F.length - 1].hp <= 0;
+    RP.finalHp = towers().map(o => o.hp);
+    S.timeScale = 1; slowUntil = 0; api.rig.shake = 0;
+    // lo vivo, escondido mientras dura
+    RP.hidden = [];
+    const hide = o => { if (o && o.visible) { o.visible = false; RP.hidden.push(o); } };
+    for (const e of enemies) hide(e.model);
+    hide(S.model); if (wing) hide(wing.model);
+    for (const x of shots) hide(x.mesh); for (const x of eshots) hide(x.mesh); for (const x of emissiles) hide(x.mesh);
+    for (const k of kits) hide(k.mesh); for (const w of powers) hide(w.mesh); hide(ring.mesh);
+    for (const p of Object.values(fx)) p.clear();
+    flares.length = 0; bullets.length = 0; bMesh.count = 0;
+    perkBox.classList.add("sg-hide");
+    setRpSpeed(1); rpBar.classList.remove("sg-hide"); document.body.classList.add("sg-replay");
+    return true;
+  }
+  function replayStop(silent) {
+    if (!RP.on) return;
+    RP.on = false; rpBar.classList.add("sg-hide"); document.body.classList.remove("sg-replay");
+    for (const g of RP.ghosts.values()) scene.remove(g);
+    RP.ghosts.clear();
+    if (RP.me) scene.remove(RP.me); if (RP.wg) scene.remove(RP.wg); RP.me = RP.wg = null;
+    for (const o of RP.hidden) o.visible = true;
+    RP.hidden = []; RP.tracers = []; bMesh.count = 0;
+    for (const p of Object.values(fx)) p.clear();
+    // la torre, como quedó (si se estaba viniendo abajo, termina sola en ruina)
+    towers().forEach((o, i) => { const hp = RP.finalHp ? RP.finalHp[i] : o.hp, L = Math.ceil(hp / 10); if (o.tw.level !== L) o.tw.setLevel(L, false); o.hp = hp; });
+    g2.setTransform(1, 0, 0, 1, 0, 0); g2.clearRect(0, 0, hc.width, hc.height);
+    const cb = RP.onEnd; RP.onEnd = null; if (cb && !silent) cb();
+  }
+  const _rq1 = new THREE.Quaternion(), _rq2 = new THREE.Quaternion(), _rF = V(), _rU = V(), _rR = V();
+  function poseLerp(obj, a, b, k, off = 0) {
+    obj.position.set(a[off] + (b[off] - a[off]) * k, a[off + 1] + (b[off + 1] - a[off + 1]) * k, a[off + 2] + (b[off + 2] - a[off + 2]) * k);
+    _rq1.set(a[off + 3], a[off + 4], a[off + 5], a[off + 6]); _rq2.set(b[off + 3], b[off + 4], b[off + 5], b[off + 6]);
+    obj.quaternion.slerpQuaternions(_rq1, _rq2, k);
+  }
+  function plainModel(P) { const m = api.buildModel(P); m.traverse(c => { if (c.name === "cockpit" || c.name === "gear") c.visible = false; }); scene.add(m); return m; }
+  const visibleGhost = () => { for (const g of RP.ghosts.values()) if (g.visible) return g.position; return null; };
+  function replayFrame(dt) {
+    // mando: A = velocidad, B o Start = saltar
+    { const gp = navigator.getGamepads ? [...navigator.getGamepads()].find(g => g) : null, b = i => !!(gp && gp.buttons[i] && gp.buttons[i].pressed);
+      const now = [b(0), b(1) || b(9)]; if (now[0] && !RP.padPrev[0]) replayKey("Space"); if (now[1] && !RP.padPrev[1]) { RP.padPrev = now; replayStop(); return; } RP.padPrev = now; }
+    const sp = dt * RP.speed; RP.t += sp;
+    if (RP.t >= RP.t1 + (RP.fell ? 4 : 2)) { replayStop(); return; }
+    const F = REC.frames;
+    while (RP.i < F.length - 2 && F[RP.i + 1].t <= RP.t) RP.i++;
+    const a = F[RP.i], b = F[Math.min(F.length - 1, RP.i + 1)], k = b.t > a.t ? Math.max(0, Math.min(1, (RP.t - a.t) / (b.t - a.t))) : 0;
+    // enemigos
+    const bm = new Map(b.e.map(x => [x[0], x])), seen = new Set();
+    for (const x of a.e) {
+      let g = RP.ghosts.get(x[0]);
+      if (!g) { g = models(x[1] === "dummy" ? "attacker" : x[1]); scene.add(g); RP.ghosts.set(x[0], g); }
+      g.visible = true; poseLerp(g, x, bm.get(x[0]) || x, k, 2); seen.add(x[0]);
+      if (x[1] === "heli") { const r = g.getObjectByName("rotor"); if (r) r.rotation.y += sp * 28; const r2 = g.getObjectByName("trotor"); if (r2) r2.rotation.x += sp * 40; }
+    }
+    for (const [id, g] of RP.ghosts) if (!seen.has(id)) g.visible = false;
+    // tu nave y el compañero
+    if (a.p) { if (!RP.me) RP.me = plainModel(S.P); RP.me.visible = true; poseLerp(RP.me, a.p, b.p || a.p, k); const bl = RP.me.getObjectByName("blades"); if (bl) bl.rotation.z += sp * 40; }
+    else if (RP.me) RP.me.visible = false;
+    if (a.w) { if (!RP.wg) RP.wg = plainModel(S.P); RP.wg.visible = true; poseLerp(RP.wg, a.w, b.w || a.w, k); } else if (RP.wg) RP.wg.visible = false;
+    // trazadoras de tu arma 1
+    if (a.fire && RP.me && RP.me.visible) {
+      RP.fireAcc += sp; const step = 1 / W.gun.rate;
+      _rF.set(0, 0, -1).applyQuaternion(RP.me.quaternion);
+      while (RP.fireAcc > step) { RP.fireAcc -= step; RP.tracers.push({ p: RP.me.position.clone().addScaledVector(_rF, 6), v: _rF.clone().multiplyScalar(W.gun.speed + 150), life: 1.2 }); }
+    } else RP.fireAcc = 0;
+    let n = 0;
+    for (let i = RP.tracers.length - 1; i >= 0; i--) { const r = RP.tracers[i]; r.life -= sp; r.p.addScaledVector(r.v, sp); if (r.life <= 0 || r.p.y < api.groundAt(r.p.x, r.p.z)) RP.tracers.splice(i, 1); }
+    for (const r of RP.tracers) { if (n >= MAXB) break; _q.setFromUnitVectors(_z, _a.copy(r.v).normalize()); _m4.compose(r.p, _q, _s3.set(1, 1, W.gun.len)); bMesh.setMatrixAt(n, _m4); bMesh.setColorAt(n, C_PB); n++; }
+    bMesh.count = n; bMesh.instanceMatrix.needsUpdate = true; if (bMesh.instanceColor) bMesh.instanceColor.needsUpdate = true;
+    // estelas de cohetes, misiles y bombas (al pasar a cada foto nueva)
+    if (RP.i !== RP.lastI) { RP.lastI = RP.i; for (const x of a.s) { fx.smoke.spawn(x[0], x[1], x[2], 0, 0.5, 0, 1.6, 1.2, 4.5, [0.8, 0.8, 0.8, 0.45], [0.9, 0.9, 0.9, 0], 0.6, -0.2); fx.fire.spawn(x[0], x[1], x[2], 0, 0, 0, 0.08, 2, 0.6, [1, 0.8, 0.4, 1], [1, 0.4, 0.1, 0], 0, 0); } }
+    // explosiones
+    while (RP.evI < REC.ev.length && REC.ev[RP.evI].t <= RP.t) { const ev = REC.ev[RP.evI++]; _rU.set(ev.p[0], ev.p[1], ev.p[2]); boom(_rU, ev.s); snd("explosion", _rU.distanceTo(camera.position), Math.min(2, ev.s)); }
+    // la torre: su vida en cada momento (si cae, se ve caer)
+    { const o = towers()[0]; if (o) { const L = Math.ceil(a.hp / 10); if (L !== RP.lvl) { o.tw.setLevel(L, RP.lvl >= 0 && L < RP.lvl); if (L === 0 && RP.lvl > 0) snd("collapse"); RP.lvl = L; } } }
+    const scale = api.pointScale(), light = 1 - 0.85 * (api.SKY.night || 0);
+    fx.fire.update(sp, 0, 0, scale); fx.smoke.update(sp, 2, 1, scale, light); fx.sparks.update(sp, 0, 0, scale);
+    const gl = []; for (const g of RP.ghosts.values()) if (g.visible) gl.push({ pos: g.position, alive: true, kind: "x" });
+    lights.update(sp, api.SKY.night || 0, gl, () => true);
+    drawReplayHud();
+  }
+  // Cámara de cine: un plano cada 4,5 s (detrás de la nave, pasada, desde la torre); al final, la torre si cae
+  function replayCam(dt) {
+    if (!RP.on) return false;
+    const o = towers()[0], me = RP.me && RP.me.visible ? RP.me : null;
+    const by = o ? o.tw.root.position.y : api.groundAt(0, 0);
+    const tx = o ? o.x : 0, tz = o ? o.z : 0, H = o ? tH(o) : 300;
+    const tail = RP.fell && RP.t > RP.t1 - 6;
+    const kk = 1 - Math.exp(-dt * 4), kc = 1 - Math.exp(-dt * 9);
+    if (tail) {
+      if (RP.shot !== 9) { const ref = me ? me.position : camera.position, ax = ref.x - tx, az = ref.z - tz, l = Math.hypot(ax, az) || 1; RP.anchor.set(ax / l, 0, az / l); RP.shot = 9; RP.shotT = 0; RP.camP.copy(camera.position); }
+      RP.shotT += dt;
+      const d = H * 2.4 + 650 - RP.shotT * 25, want = _rR.set(tx + RP.anchor.x * d, by + H * 0.45 + 120, tz + RP.anchor.z * d);
+      want.y = Math.max(want.y, api.groundAt(want.x, want.z) + 30);
+      RP.camP.lerp(want, kk); RP.camL.lerp(_rU.set(tx, by + H * 0.4, tz), kk);
+    } else {
+      if ((RP.shotT -= dt) <= 0 || (!me && RP.shot !== 2)) {
+        RP.shot = me ? (RP.shot + 1) % 3 : 2; RP.shotT = 4.5;
+        if (me) { _rF.set(0, 0, -1).applyQuaternion(me.quaternion); _rR.set(1, 0, 0).applyQuaternion(me.quaternion); }
+        if (RP.shot === 1 && me) {   // pasada: un punto por delante de la nave, a un lado
+          // a qué velocidad va (de las fotos grabadas): la nave pasa junto a la cámara hacia la mitad del plano
+          const F = REC.frames, f0 = F[RP.i], f1 = F[Math.min(F.length - 1, RP.i + 4)];
+          const v = f0 && f1 && f0.p && f1.p && f1.t > f0.t ? Math.hypot(f1.p[0] - f0.p[0], f1.p[1] - f0.p[1], f1.p[2] - f0.p[2]) / (f1.t - f0.t) : 150;
+          RP.anchor.copy(me.position).addScaledVector(_rF, Math.max(120, Math.min(700, v * 2))).addScaledVector(_rR, 28 + v * 0.06); RP.anchor.y += 8;
+          RP.anchor.y = Math.max(RP.anchor.y, api.groundAt(RP.anchor.x, RP.anchor.z) + 15);
+          RP.camP.copy(RP.anchor); RP.camL.copy(me.position);
+        } else if (RP.shot === 2) {   // desde el pie de la torre, mirando la pelea
+          const ref = me ? me.position : visibleGhost() || _rU.set(tx + 500, by + 300, tz);
+          const ang = Math.atan2(ref.z - tz, ref.x - tx) + 0.7, r = (o ? tR(o) : 93) * 2.2 + 160;
+          RP.anchor.set(tx + Math.cos(ang) * r, 0, tz + Math.sin(ang) * r); RP.anchor.y = api.groundAt(RP.anchor.x, RP.anchor.z) + 22;
+          RP.camP.copy(RP.anchor); RP.camL.copy(ref);
+        } else if (me) { RP.camP.copy(me.position).addScaledVector(_rF, -40); RP.camL.copy(me.position); }
+      }
+      if (RP.shot === 0 && me) {   // detrás de la nave
+        _rF.set(0, 0, -1).applyQuaternion(me.quaternion); _rU.set(0, 1, 0).applyQuaternion(me.quaternion);
+        const L = (S.P && S.P.len) || 10;
+        RP.camP.lerp(_rR.copy(me.position).addScaledVector(_rF, -(L * 2.6 + 18)).addScaledVector(_rU, L * 0.6 + 4), kc);
+        RP.camL.lerp(_rR.copy(me.position).addScaledVector(_rF, 60), kc);
+      } else if (RP.shot === 1 && me) RP.camL.lerp(me.position, 1 - Math.exp(-dt * 10));
+      else if (RP.shot === 2) { const tgt = me ? me.position : visibleGhost(); if (tgt) RP.camL.lerp(tgt, 1 - Math.exp(-dt * 6)); }
+    }
+    camera.position.copy(RP.camP); camera.up.set(0, 1, 0); camera.lookAt(RP.camL);
+    return true;
+  }
+  function drawReplayHud() {
+    const dpr = Math.min(devicePixelRatio, 2), W2 = innerWidth, H2 = innerHeight;
+    if (hc.width !== innerWidth * dpr || hc.height !== innerHeight * dpr) { hc.width = innerWidth * dpr; hc.height = innerHeight * dpr; }
+    g2.setTransform(dpr, 0, 0, dpr, 0, 0); g2.clearRect(0, 0, W2, H2);
+    const bar = Math.round(H2 * 0.075);
+    g2.fillStyle = "#000"; g2.fillRect(0, 0, W2, bar); g2.fillRect(0, H2 - bar, W2, bar);   // bandas de cine
+    g2.textAlign = "left"; g2.font = "700 15px system-ui"; g2.fillStyle = (performance.now() / 600 | 0) % 2 ? "#ff5040" : "#a8322a";
+    g2.beginPath(); g2.arc(28, bar / 2, 6, 0, 7); g2.fill();
+    g2.fillStyle = "#f2f4f6"; g2.fillText(t("rpTitle"), 42, bar / 2 + 5);
+    const k = Math.max(0, Math.min(1, (RP.t - RP.t0) / Math.max(1, RP.t1 - RP.t0)));
+    g2.fillStyle = "rgba(255,255,255,.18)"; g2.fillRect(W2 - 236, bar / 2 - 2, 200, 4); g2.fillStyle = "#f2f4f6"; g2.fillRect(W2 - 236, bar / 2 - 2, 200 * k, 4);
+    g2.textAlign = "right"; g2.font = "600 12px system-ui"; g2.fillStyle = "#cfd6dd"; g2.fillText(`-${Math.max(0, Math.ceil(RP.t1 - RP.t))} s`, W2 - 244, bar / 2 + 4);
+    const pad = navigator.getGamepads && [...navigator.getGamepads()].some(g => g);
+    g2.textAlign = "center"; g2.fillStyle = "rgba(220,226,232,.7)"; g2.fillText(pad ? t("rpKeysPad") : t("rpKeys"), W2 / 2, bar / 2 + 4);
+  }
+
   function stats() {
     return { wave: game.wave, score: game.score, kills: game.kills, killsBy: { ...game.killsBy }, time: game.time, diff: game.diff,
       accuracy: game.shots ? Math.min(1, game.hits / game.shots) : 0, bestStreak: game.bestStreak, kits: game.kitsDelivered, towerLost: game.towerLost.slice(),
-      shots: game.shots, lastStand: !!game.lastStand, perfectUpTo: game.perfectUpTo || 0, saves: game.saves || 0, aaKills: game.aaKills || 0, mode: game.mode, won: !!game.won, wing: !!game.wing, wingKills: game.wingKills || 0, hpLog: game.hpLog.slice(), waveTimes: game.waveTimes.slice() };
+      shots: game.shots, lastStand: !!game.lastStand, perfectUpTo: game.perfectUpTo || 0, saves: game.saves || 0, aaKills: game.aaKills || 0, mode: game.mode, won: !!game.won, wing: !!game.wing, wingKills: game.wingKills || 0, perks: game.perkList.slice(), weather: game.wxMode, dodged: game.dodged || 0, flaresUsed: game.flaresUsed || 0, hpLog: game.hpLog.slice(), waveTimes: game.waveTimes.slice() };
   }
   // ── Cada fotograma ──
   function frame(dt, frozen) {
     if (slowUntil && performance.now() > slowUntil) { slowUntil = 0; S.timeScale = 1; }
+    if (RP.on) { replayFrame(dt); return; }
     if (!game.on) { drawHud(0); return; }
     if (frozen) { drawHud(0); return; }
     const f = S.flight, playing = f && pl.alive && !(S.crashT > 0);
+    if (pl.firedT > 0) pl.firedT -= dt;
     const pad = readPad();
     if (playing) {
       // la nave tocada echa humo (y fuego con poco casco)
@@ -1270,9 +1731,16 @@ export function createCombat(api, { t, towers, onGameOver, sound }) {
       if (pl.over && pl.heat < 0.35) pl.over = false;
       secondary(dt, fire2);
       pl.sinceHit += dt;
-      if (pl.sinceHit > SHIELD_WAIT) pl.shield = Math.min(SHIELD, pl.shield + SHIELD_REGEN * dt);
+      if (pl.sinceHit > SHIELD_WAIT - 0.8 * pk("shield")) pl.shield = Math.min(maxShield(), pl.shield + SHIELD_REGEN * (1 + 0.3 * pk("shield")) * dt);
     }
     game.time += dt;
+    // Racha: el reloj solo corre en combate (en el respiro no hay a quién derribar)
+    if (pl.streak > 0 && game.phase === "fight" && !game.over && !game.training && (pl.comboT -= dt) <= 0) {
+      if (pl.streak > 1) game.feed.push({ txt: t("comboLost"), t: 1.6, col: "#ff9a6a" });
+      pl.streak = 0;
+    }
+    // Blitz: 5 minutos desde la primera oleada
+    if (game.mode === "blitz" && !game.over && game.wave > 0 && (game.left -= dt) <= 0) { game.left = 0; timeUp(); }
     // vida de la torre a lo largo de la partida (para la gráfica de los resultados), cada 2 s
     if (!game.over && (game.logT = (game.logT || 0) + dt) >= 2) { game.logT = 0; const o = towers()[0]; if (o) game.hpLog.push([Math.round(game.time), Math.round(o.hp)]); }
     if (sound) {
@@ -1294,8 +1762,14 @@ export function createCombat(api, { t, towers, onGameOver, sound }) {
     updateKits(dt);
     updatePowers(dt);
     updateTurrets(dt);
+    updateFlares(dt);
+    updateEMissiles(dt);
+    lights.update(dt, api.SKY.night || 0, enemies, e => KIND[e.kind].tower);
+    if (missileOnMe() && pl.alive && !(S.crashT > 0)) snd("missileWarn");
     if (!game.over) updateWing(dt);
     if (game.cruiseWarnT > 0) game.cruiseWarnT -= dt;
+    // repetición: 20 fotos por segundo de lo que pasa (hasta que salen los resultados)
+    if (REC.on && !game.reported && !game.training && (REC.acc += dt) >= 0.05) { REC.acc = 0; recFrame(); }
     if (game.over && !game.reported && (game.overT += dt) > 4) { game.reported = true; if (onGameOver) onGameOver(stats()); }
     const scale = api.pointScale(), light = 1 - 0.85 * api.SKY.night;
     fx.fire.update(dt, 0, 0, scale); fx.smoke.update(dt, 2, 1, scale, light); fx.sparks.update(dt, 0, 0, scale);
@@ -1313,6 +1787,9 @@ export function createCombat(api, { t, towers, onGameOver, sound }) {
     kits.length = 0; if (ring.mesh) ring.mesh.visible = false; ring.for = null; pl.kit = false;
     for (const w of powers) scene.remove(w.mesh);
     powers.length = 0;
+    for (const m of emissiles) scene.remove(m.mesh);
+    emissiles.length = 0; flares.length = 0;
+    perkBox.classList.add("sg-hide");
     for (const p of Object.values(fx)) p.clear();
   }
 
@@ -1323,17 +1800,20 @@ export function createCombat(api, { t, towers, onGameOver, sound }) {
       clearAll();
       Object.assign(game, { on: true, wave: 0, lv: 1, phase: "rest", restT: 6, score: 0, kills: 0, banner: null, bannerT: 0, feed: [], queue: [], sectors: [], lastStand: false, recordShown: false, training: false, perfectUpTo: 0, perfectBroken: false, waveMinHp: 100, hpLog: [[0, 100]], waveTimes: [], logT: 0,
         D: DIFF[diff] || DIFF.normal, diff, time: 0, shots: 0, hits: 0, killsBy: {}, bestStreak: 0, towerLost: [], kitsDelivered: 0, over: false, overT: 0, reported: false, saves: 0, aaKills: 0,
-        mode: opts.mode || "survival", maxWave: opts.mode === "short" ? 10 : 0, won: false, next: null, theme: null, lastTheme: null });
+        mode: opts.mode || "survival", maxWave: opts.mode === "short" ? 10 : 0, left: BLITZ_S, won: false, next: null, theme: null, lastTheme: null,
+        perks: {}, perkList: [], offer: null, dodged: 0, flaresUsed: 0, wxMode: ["clear", "storm", "night"].includes(opts.weather) ? opts.weather : "auto", cold: !!opts.cold, wxPlan: null, weather: null });
       wrnd = opts.seed ? seeded(opts.seed) : Math.random;
+      prnd = opts.seed ? seeded(opts.seed ^ 0x5bd1e995) : Math.random;   // ventajas: su propio azar (no cambia las oleadas de la diaria)
+      replayStop(true); REC.frames = []; REC.ev = []; REC.acc = 0; REC.on = true;
       game.wing = !!opts.wing; game.wingKills = 0;
       if (opts.wing) makeWing(planeId); else removeWing();
-      game.next = planWave(1);
+      game.next = planWave(1); setWx(game.next.weather);
       towers().forEach((o, i) => { o.hp = 100; o.n = i + 1; o.attackedT = 0; o.warnT = 0; });
       buildTurrets();
-      pl.streak = 0; resetPlayer();
+      pl.streak = 0; pl.comboT = 0; resetPlayer();
       banner(t("getReady"), 3);
     },
-    stop() { game.on = false; slowUntil = 0; removeTurrets(); removeWing(); S.timeScale = 1; api.rig.shake = 0; clearAll(); g2.clearRect(0, 0, hc.width, hc.height); keys.clear(); },
+    stop() { replayStop(true); REC.on = false; REC.frames = []; REC.ev = []; game.on = false; slowUntil = 0; removeTurrets(); removeWing(); S.timeScale = 1; api.rig.shake = 0; clearAll(); g2.clearRect(0, 0, hc.width, hc.height); keys.clear(); },
     resetPlayer,
     frame,
     respawnDelay: () => (game.D || DIFF.normal).respawn,
@@ -1356,6 +1836,46 @@ export function createCombat(api, { t, towers, onGameOver, sound }) {
       if (pl.lockTarget && pl.lockTarget.alive) return pl.lockTarget;
       cycleLock(); return pl.lockTarget && pl.lockTarget.alive ? pl.lockTarget : null;
     },
-    get state() { return { game, pl, enemies, kits, turrets, wing, kill: killEnemy }; },   // para pruebas desde la consola
+    /** Puerta «Flow» cruzada: +1 a la racha (y su tiempo, entero) y puntos según la oleada */
+    flowGate() {
+      if (game.over || !game.on) return 0;
+      pl.streak = Math.min(pl.streak + 1, COMBO_MAX); pl.comboT = comboWin(pl.streak); game.bestStreak = Math.max(game.bestStreak, pl.streak);
+      const p = 40 * (game.wave + 1) * Math.max(1, pl.streak); game.score += p; game.gates = (game.gates || 0) + 1;
+      game.feed.push({ txt: t("flowGate", { p: p.toLocaleString(api.LOCALE) }), t: 1.8, col: "#7ff0ff" }); snd("powerup"); rum(0.25, 0.2, 140);
+      return p;
+    },
+    /** Arena Neón: antiaéreos oscuros con neón, reflectores de colores y perfil luminoso en los enemigos (null = normal) */
+    setNeon(pal) {
+      tMat.color.setHex(pal ? 0x2a2633 : 0x5a6068); tDark.color.setHex(pal ? 0x141218 : 0x2a2e33);
+      tMat.emissive.set(pal ? pal.accB : 0x000000); tMat.emissiveIntensity = pal ? 0.35 : 1;
+      tLampOn.color.set(pal ? pal.accA : 0x6dff8a);
+      lights.setTint(pal ? pal.accA : null, pal ? pal.accB : null);
+      ENEMY_RIM.k.value = pal ? 0.9 : 0; if (pal) (ENEMY_RIM.col.value || (ENEMY_RIM.col.value = new THREE.Color())).set(pal.accB);
+    },
+    get state() { return { game, pl, enemies, kits, turrets, wing, kill: killEnemy, callWave, emissiles, choosePerk, offerPerks, fireAtPlayer, dropFlares, REC }; },   // para pruebas desde la consola
+    /** Muestras de todo lo que aparece durante la partida (enemigos, kits, potenciadores, proyectiles, torretas,
+     *  reflector), para que el motor compile sus shaders en la pantalla de carga y no a mitad de combate.
+     *  No se liberan: así sus programas siguen en la tarjeta toda la sesión */
+    warmObjects() {
+      if (warmCache) return warmCache;
+      const g = new THREE.Group(); g.name = "sg-warm";
+      for (const k of Object.keys(KIND)) if (k !== "dummy") g.add(models(k));
+      g.add(kitMesh()); for (const k of Object.keys(POWER)) g.add(powerMesh(k));
+      g.add(new THREE.Mesh(rGeo, rMat), new THREE.Mesh(mGeo, rMat), new THREE.Mesh(bombGeo, bombMat), new THREE.Mesh(emGeo, emMat));
+      g.add(turretMesh().g);
+      const tl = createSearchlights(api); tl.build(null, [{ x: 0, y: 0, z: 0 }], TS); for (const L of tl.list) { scene.remove(L.base); g.add(L.base); }
+      if (!ring.mesh) { ring.mesh = new THREE.Mesh(new THREE.TorusGeometry(26, 1.6, 10, 48), new THREE.MeshBasicMaterial({ color: 0x5dff7a, transparent: true, opacity: 0.85 })); ring.mesh.visible = false; scene.add(ring.mesh); }
+      g.position.set(0, -5000, 0);   // lejos de todo (el motor la quita al acabar de compilar)
+      return (warmCache = g);
+    },
+    /** Repetición de los últimos 30 s (al acabar la partida): false si no hay bastante grabado */
+    replay(onEnd) { return replayStart(onEnd); },
+    stopReplay() { replayStop(); },
+    get replaying() { return RP.on; },
+    get canReplay() { return REC.frames.length >= 40; },
+    replayCamera: dt => replayCam(dt),
+    /** Teclas que usa el juego en este momento además de las de los controles (las ventajas, 1-2-3) */
+    ownsKey: code => RP.on || (!!game.offer && PERK_KEYS.includes(code)),
+    get weather() { return game.weather; },
   };
 }

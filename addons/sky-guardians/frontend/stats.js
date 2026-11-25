@@ -20,7 +20,7 @@ const modeOf = r => r.mode || "survival";
 export function rankFor(bestWave) { let r = RANKS[0]; for (const k of RANKS) if (bestWave >= k.wave) r = k; return r; }
 export function nextRank(bestWave) { return RANKS.find(k => k.wave > bestWave) || null; }
 
-// 30 logros. test(run, tot, ctx): run = la partida que acaba de terminar, tot = acumulados del perfil (ya con ella)
+// 33 logros. test(run, tot, ctx): run = la partida que acaba de terminar, tot = acumulados del perfil (ya con ella)
 export const ACHIEVEMENTS = [
   { id: "first_blood", icon: "🎯", test: (r, T) => T.kills >= 1 },
   { id: "wave5", icon: "5️⃣", test: r => r.wave >= 5 },
@@ -52,16 +52,47 @@ export const ACHIEVEMENTS = [
   { id: "short_hard", icon: "🏆", test: r => r.mode === "short" && r.won && r.diff === "hard" },
   { id: "daily1", icon: "📅", test: (r, T) => (T.dailyDays || []).length >= 1 },
   { id: "daily7", icon: "🗓️", test: (r, T) => (T.dailyDays || []).length >= 7 },
+  // v1.1
+  { id: "flares10", icon: "🎆", test: (r, T) => (T.dodged || 0) >= 10 },
+  { id: "monument10", icon: "🏛️", test: r => !!r.lm && r.wave >= 10 },
+  { id: "night10", icon: "🦉", test: r => r.weather === "night" && r.wave >= 10 },
 ];
+
+// Registro de rendimiento (perf.js) solo para depurar: panel.html?perf o
+// localStorage «sg-perf» = "1". Antes se guardaba en cada partida (~240 KB, con
+// el nombre de la tarjeta gráfica) en el almacén del addon.
+const PERF_DEBUG = (() => {
+  try { return new URLSearchParams(location.search).has("perf") || localStorage.getItem("sg-perf") === "1"; } catch { return false; }
+})();
+
+// Reglas de puntuación: desde la 1.3 (arena, puertas Flow, vuelo rasante, reto diario en la arena) las partidas
+// no se comparan con las de antes. Las anteriores (sin «rules») siguen en el historial y cuentan para logros y rango
+export const RULES = 2;
+const sameRules = r => (r.rules || 1) === RULES;
 
 export function createStats() {
   let data = { v: 1, runs: [], totals: {}, ach: {} };
   let user = { id: "local", name: "" };
+  // Solo se guarda si el almacén se leyó bien: si la lectura falló (backend
+  // ocupado, error), guardar los valores por defecto borraría para siempre el
+  // ranking y los logros de toda la familia.
+  let loaded = false;
   const ready = (async () => {
     try { const s = await fetch("/api/users/session").then(r => r.json()); const u = (s.users || []).find(x => x.id === (s.active || s.last_user)); if (u) user = { id: u.id, name: u.name, color: u.color }; } catch { }
-    try { const r = await fetch(`/api/addons/${ID}/storage`).then(r => r.json()); if (r && r.data && r.data.v) data = Object.assign(data, r.data); } catch { }
+    try {
+      const res = await fetch(`/api/addons/${ID}/storage`);
+      if (res.ok) {
+        const r = await res.json();
+        if (r && r.data && r.data.v) data = Object.assign(data, r.data);
+        loaded = true;
+      }
+    } catch { }
   })();
-  const save = () => fetch(`/api/addons/${ID}/storage`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ data }) }).catch(() => { });
+  const save = () => {
+    if (!loaded) return Promise.resolve();
+    if (!PERF_DEBUG) delete data.perf;   // limpia el registro que guardaban las versiones anteriores
+    return fetch(`/api/addons/${ID}/storage`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ data }) }).catch(() => { });
+  };
   const tot = uid => (data.totals[uid] ||= { games: 0, kills: 0, killsBy: {}, kits: 0, time: 0, bestWave: 0, bestScore: 0, wave5Planes: [], trained: false });
   const achOf = uid => (data.ach[uid] ||= {});
 
@@ -70,7 +101,7 @@ export function createStats() {
     get user() { return user; },
     /** Mejor partida del perfil activo en esa dificultad (o en todas) */
     best(diff, mode = "survival") {
-      const l = data.runs.filter(r => r.uid === user.id && modeOf(r) === mode && (mode === "daily" ? r.day === today() : !diff || r.diff === diff));
+      const l = data.runs.filter(r => sameRules(r) && r.uid === user.id && modeOf(r) === mode && (mode === "daily" ? r.day === today() : !diff || r.diff === diff));
       return l.reduce((b, r) => (!b || r.score > b.score ? r : b), null);
     },
     totals() { return tot(user.id); },
@@ -78,20 +109,23 @@ export function createStats() {
     rank() { return rankFor(tot(user.id).bestWave); },
     /** Ranking: las mejores 10 de una dificultad; mine = solo del perfil activo */
     top(diff, mine = false, mode = "survival") {
-      let l = data.runs.filter(r => modeOf(r) === mode && (mode === "daily" ? r.day === today() : r.diff === diff) && (!mine || r.uid === user.id));
+      let l = data.runs.filter(r => sameRules(r) && modeOf(r) === mode && (mode === "daily" ? r.day === today() : r.diff === diff) && (!mine || r.uid === user.id));
       l.sort((a, b) => b.score - a.score || b.wave - a.wave);
       if (mode === "daily" && !mine) { const seen = new Set(); l = l.filter(r => !seen.has(r.uid) && seen.add(r.uid)); }   // diaria: la mejor de cada uno
       return l.slice(0, 10);
     },
+    /** ¿Hay partidas con las reglas de antes de la 1.3? (para avisar en el ranking) */
+    hasOldRuns() { return data.runs.some(r => !sameRules(r)); },
     history(n = 20) { return data.runs.filter(r => r.uid === user.id).slice(-n).reverse(); },
     /** Guarda la partida; devuelve { run, record, place, newAch: [ids], rankUp } */
     addRun(stats, extra) {
       const { hpLog, waveTimes, ...keep } = stats;   // la gráfica de la torre no se guarda (solo para los resultados)
-      const run = { uid: user.id, name: user.name, date: new Date().toISOString(), ...extra, ...keep };
+      const run = { uid: user.id, name: user.name, date: new Date().toISOString(), ...extra, ...keep, rules: RULES };
       run.mode = modeOf(run);
       const prevBest = this.best(run.diff, run.mode);
       const T = tot(user.id), rank0 = rankFor(T.bestWave);
       T.games++; T.kills += run.kills; T.kits += run.kits; T.time += run.time;
+      T.dodged = (T.dodged || 0) + (run.dodged || 0);
       for (const [k, n] of Object.entries(run.killsBy)) T.killsBy[k] = (T.killsBy[k] || 0) + n;
       T.bestWave = Math.max(T.bestWave, run.wave); T.bestScore = Math.max(T.bestScore, run.score);
       if (run.wave >= 5 && !T.wave5Planes.includes(run.plane)) T.wave5Planes.push(run.plane);
@@ -109,6 +143,8 @@ export function createStats() {
       for (const a of ACHIEVEMENTS) if (!A[a.id] && a.test(run || {}, T)) { A[a.id] = new Date().toISOString(); out.push(a.id); }
       return out;
     },
+    /** Registro de rendimiento de la última partida (perf.js): data.perf, para encontrar tirones */
+    savePerf(r) { if (!PERF_DEBUG) return; data.perf = r; save(); },
     /** Entrenamiento terminado */
     trained() { const T = tot(user.id); T.trained = true; const n = this.checkAch({ killsBy: {} }); save(); return n; },
   };

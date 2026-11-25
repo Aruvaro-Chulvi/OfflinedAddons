@@ -2,10 +2,12 @@
    🌐 Sky Guardians — textos. Español e inglés; los otros 8 idiomas de Offlined llegan en la fase 7
    (mientras tanto, en inglés). {x} = parámetro.
    ═══════════════════════════════════════════════════════════════════════════ */
-export const NAME = { es: "Guardianes del Cielo", en: "Sky Guardians", fr: "Gardiens du Ciel", pt: "Guardiões do Céu", it: "Guardiani del Cielo",
-  de: "Himmelswächter", zh: "天空守护者", hi: "आकाश के रक्षक", ar: "حراس السماء", ru: "Стражи неба" };
+export const NAME = { es: "Arcade Flow Sky Defender", en: "Arcade Flow Sky Defender", fr: "Arcade Flow Sky Defender", pt: "Arcade Flow Sky Defender", it: "Arcade Flow Sky Defender",
+  de: "Arcade Flow Sky Defender", zh: "Arcade Flow Sky Defender", hi: "Arcade Flow Sky Defender", ar: "Arcade Flow Sky Defender", ru: "Arcade Flow Sky Defender" };
 
 import { MORE } from "./texts_i18n.js";
+import { V11 } from "./texts_v11.js";
+import { V12 } from "./texts_v12.js";
 
 export const TX = {
   es: {
@@ -133,3 +135,5 @@ export const TX = {
   },
 };
 Object.assign(TX, MORE);   // francés, portugués, italiano, alemán, chino, hindi, árabe y ruso
+for (const L in V11) Object.assign(TX[L], V11[L]);   // v1.1: ventajas, misiles, tiempo, monumentos y repetición
+for (const L in V12) Object.assign(TX[L], V12[L]);   // v1.2: partidas rápidas (Blitz, llamar a la oleada, racha con tiempo)

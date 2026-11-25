@@ -88,6 +88,21 @@ function bomber(THREE, K, P) {
 }
 
 /** Fábrica de modelos: cada tipo se hace una vez y se clona */
+// Perfil de neón de los enemigos (Arena Neón): intensidad 0 = apagado (en «Tu ciudad»)
+export const ENEMY_RIM = { k: { value: 0 }, col: { value: null } };
+function addRim(THREE, mat) {
+  if (!mat || mat.userData.sgRim || !mat.isMeshStandardMaterial) return;
+  mat.userData.sgRim = true;
+  if (!ENEMY_RIM.col.value) ENEMY_RIM.col.value = new THREE.Color(0xff3fb4);
+  mat.onBeforeCompile = sh => {
+    sh.uniforms.uRimK = ENEMY_RIM.k; sh.uniforms.uRimC = ENEMY_RIM.col;
+    sh.fragmentShader = "uniform float uRimK;\nuniform vec3 uRimC;\n" + sh.fragmentShader.replace("#include <emissivemap_fragment>", `#include <emissivemap_fragment>
+      { float rim = 1.0 - abs(dot(normalize(normal), normalize(vViewPosition))); totalEmissiveRadiance += uRimC * pow(rim, 2.2) * uRimK; }`);
+  };
+  mat.customProgramCacheKey = () => "sgRim";
+  mat.needsUpdate = true;
+}
+
 export function enemyModels(api) {
   const base = api.AIRCRAFT.find(a => a.id === "fighter");
   const cache = {};
@@ -107,6 +122,7 @@ export function enemyModels(api) {
       const m = make[kind]();
       m.traverse(o => { if (o.name === "cockpit" || o.name === "gear") o.visible = false; });
       if (kind === "hmissile") m.scale.setScalar(0.45);
+      m.traverse(o => { if (o.isMesh) for (const mm of [].concat(o.material)) addRim(api.THREE, mm); });
       cache[kind] = m;
     }
     const c = cache[kind].clone(true);
