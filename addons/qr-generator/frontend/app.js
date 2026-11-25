@@ -23,6 +23,7 @@
     document.title = t('appName');
     document.querySelectorAll('[data-t]').forEach((el) => { el.textContent = t(el.dataset.t); });
     document.querySelectorAll('[data-tt]').forEach((el) => { el.title = t(el.dataset.tt); el.setAttribute('aria-label', t(el.dataset.tt)); });
+    document.querySelectorAll('#tabs button').forEach((b) => { b.title = b.textContent.trim(); });
     $('search').placeholder = t('search');
     $('nameIn').placeholder = t('namePh');
     $('caption').placeholder = t('captionPh');
@@ -78,7 +79,8 @@
   }
   function me() {
     const u = DB.users[UID] || (DB.users[UID] = {});
-    u.settings = Object.assign({}, DEF_SETTINGS, u.settings || {});
+    if (!u.settings || typeof u.settings !== 'object') u.settings = {};
+    for (const k in DEF_SETTINGS) if (!(k in u.settings)) u.settings[k] = DEF_SETTINGS[k];   // same object every call
     u.items = Array.isArray(u.items) ? u.items : [];
     return u;
   }
@@ -179,6 +181,7 @@
       mt.append(t('t_' + it.type) + ' · ' + fmtDate(it.updated));
       tx.append(nm, mt);
       b.append(th, tx);
+      b.title = displayName(it);
       b.onclick = () => open(it);
       list.append(b);
     }
@@ -378,12 +381,6 @@
       b.classList.toggle('on', Object.keys(p).every((k) => k === 'fg2' && !d.gradient ? true : String(d[k]) === String(p[k]) || (k === 'eyeColor' && d.eyeSame !== false)));
     });
     $('logoOpts').hidden = !d.logo;
-    const sw2 = (c) => '<i style="background:' + c + '"></i>';
-    $('sumColors').innerHTML = sw2(d.fg) + (d.gradient ? sw2(d.fg2) : '') + (d.eyeSame === false ? sw2(d.eyeColor) : '') + (d.transparent ? '' : sw2(d.bg));
-    $('sumShapes').textContent = t('body_' + d.body) + ' · ' + t('eyes_' + d.eyes);
-    $('sumLogo').textContent = d.logo ? '✓' : '';
-    $('sumText').textContent = (d.caption || '').trim() ? '«' + d.caption.trim().slice(0, 14) + '»' : String(d.margin);
-    $('sumEcc').textContent = ecl + ' · ' + t('ecc_' + ecl);
     $('logoDel').hidden = !d.logo;
     $('logoPrev').innerHTML = d.logo ? '<img alt="" src="' + d.logo.src + '">' : '<svg class="i"><use href="#i-image"/></svg>';
     if (d.logo) $('logoSize').value = Math.round((d.logo.size || 0.22) * 100);
@@ -402,7 +399,8 @@
     const box = $('qrBox'), emp = $('qrEmpty'), warns = $('warns');
     warns.innerHTML = '';
     $('payload').textContent = r.payload || '';
-    document.querySelector('.payload').hidden = !r.payload;
+    $('payloadBtn').hidden = !r.payload;
+    if (!r.payload) showPayload(false);
     const exp = ['pngBtn', 'svgBtn', 'copyBtn', 'printBtn'];
     lastQR = r.qr || null;
     if (!r.qr) {
@@ -472,7 +470,19 @@
       toast(t('copied'));
     } catch (_) { toast(t('copyFail'), true); }
   };
-  document.querySelectorAll('#expSeg button').forEach((b) => { b.onclick = () => { settings().size = +b.dataset.v; renderSettings(); save(); }; });
+  // Size menu (applies to PNG, copy and the SVG's width/height)
+  const sizeMenu = $('sizeMenu');
+  $('sizeBtn').onclick = (e) => { e.stopPropagation(); sizeMenu.classList.toggle('show'); };
+  sizeMenu.querySelectorAll('button').forEach((b) => { b.onclick = () => { settings().size = +b.dataset.v; renderSettings(); save(); sizeMenu.classList.remove('show'); }; });
+  // What the code contains
+  function showPayload(on) { $('payloadPop').classList.toggle('show', !!on); $('payloadBtn').classList.toggle('on', !!on); }
+  $('payloadBtn').onclick = (e) => { e.stopPropagation(); showPayload(!$('payloadPop').classList.contains('show')); };
+  $('payloadClose').onclick = () => showPayload(false);
+  document.addEventListener('pointerdown', (e) => {
+    if (!e.target.closest('#sizeMenu, #sizeBtn')) sizeMenu.classList.remove('show');
+    if (!e.target.closest('#payloadPop, #payloadBtn')) showPayload(false);
+  });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { sizeMenu.classList.remove('show'); showPayload(false); } });
 
   // Print
   let printN = 1, printCap = true;
@@ -544,22 +554,67 @@
   $('search').oninput = renderList;
   document.querySelector('#setSec .sec-h').onclick = () => $('setSec').classList.toggle('closed');
   document.querySelectorAll('#themeSeg button').forEach((b) => { b.onclick = () => { settings().theme = b.dataset.v; renderSettings(); applyTheme(); save(); }; });
-  function initGroups() {
-    const open = settings().groups;
-    document.querySelectorAll('details.grp').forEach((g) => {
-      if (open && typeof open[g.dataset.g] === 'boolean') g.open = open[g.dataset.g];
-      g.addEventListener('toggle', () => { const o = settings().groups = settings().groups || {}; o[g.dataset.g] = g.open; save(); });
-    });
-  }
   function renderSettings() {
     document.querySelectorAll('#themeSeg button').forEach((b) => b.classList.toggle('on', b.dataset.v === settings().theme));
-    document.querySelectorAll('#expSeg button').forEach((b) => b.classList.toggle('on', +b.dataset.v === +settings().size));
+    const size = +settings().size || 1024;
+    sizeMenu.querySelectorAll('button').forEach((b) => b.classList.toggle('on', +b.dataset.v === size));
+    $('sizeVal').textContent = size;
   }
-  const openDrawer = () => $('app').classList.add('drawer');
-  const closeDrawer = () => $('app').classList.remove('drawer');
-  $('menuBtn').onclick = openDrawer;
+
+  // ── Layout: three zones, two zones (tabbed panel + QR) or stacked, by the width actually available ──────
+  const app = $('app'), main = $('main');
+  const phone = matchMedia('(max-width: 760px)');
+  let mode = '', tab = 'style';
+  function setTab(name) {
+    if (name === 'content' && mode === 'wide') name = settings().tab && settings().tab !== 'content' ? settings().tab : 'style';
+    tab = name;
+    document.querySelectorAll('#tabs button').forEach((b) => { const on = b.dataset.tab === name; b.classList.toggle('on', on); b.setAttribute('aria-selected', on); });
+    document.querySelectorAll('.pane').forEach((p) => p.classList.toggle('on', p.dataset.pane === name));
+    const titles = { content: 'content', style: 'presets', colors: 'colors', shapes: 'shapes', logo: 'logo', text: 'textMargin', ecc: 'ecc' };
+    $('paneTitle').textContent = t(titles[name]);
+    $('resetDesign').hidden = name === 'content';
+    $('paneHead').hidden = name === 'content';
+  }
+  document.querySelectorAll('#tabs button').forEach((b) => {
+    b.setAttribute('role', 'tab');
+    b.onclick = () => { setTab(b.dataset.tab); if (DB) { settings().tab = tab; save(); } };
+  });
+  function layout() {
+    const w = main.clientWidth;
+    const m = w >= 980 ? 'wide' : w >= 620 ? 'mid' : 'narrow';
+    app.classList.toggle('compact', w < 860);
+    app.classList.toggle('tiny', w < 520);
+    if (m === mode) return;
+    const was = mode;
+    mode = m;
+    app.classList.remove('wide', 'mid', 'narrow');
+    app.classList.add(m);
+    const body = $('contentBody');
+    if (m === 'wide') { $('contentZone').append(body); if (tab === 'content' || !was) setTab('content'); }
+    else { $('contentPane').append(body); if (was === 'wide' || !was) setTab('content'); }
+  }
+  new ResizeObserver(layout).observe(main);
+
+  // Sidebar: folded to thumbnails on wide windows, a drawer on phones
+  const openDrawer = () => app.classList.add('drawer');
+  const closeDrawer = () => app.classList.remove('drawer');
+  function renderSide() {
+    const slim = !phone.matches && !!settings().slim;
+    app.classList.toggle('slim', slim);
+    const k = phone.matches ? 'menu' : slim ? 'expand' : 'collapse';
+    $('sideBtn').title = t(k); $('sideBtn').setAttribute('aria-label', t(k));
+  }
+  $('sideBtn').onclick = () => {
+    if (phone.matches) { openDrawer(); return; }
+    settings().slim = !settings().slim; save(); renderSide();
+  };
+  phone.addEventListener('change', () => { closeDrawer(); renderSide(); });
   $('drawerClose').onclick = closeDrawer;
-  $('main').addEventListener('pointerdown', (e) => { if (!e.target.closest('#menuBtn')) closeDrawer(); });
+  $('main').addEventListener('pointerdown', (e) => { if (!e.target.closest('#sideBtn')) closeDrawer(); });
+  // In the folded strip, the settings button unfolds the list first
+  document.querySelector('#setSec .sec-h').addEventListener('click', () => {
+    if (app.classList.contains('slim')) { settings().slim = false; save(); renderSide(); $('setSec').classList.remove('closed'); }
+  });
 
   function renderUser() {
     $('userName').textContent = USER.name || t('appName');
@@ -579,7 +634,9 @@
     buildDesignStatic();
     applyTexts();
     renderSettings();
-    initGroups();
+    renderSide();
+    layout();
+    setTab(mode === 'wide' ? 'content' : tab);
     const u = me();
     open(u.items.find((x) => x.id === u.current) || u.items[0] || newItem('url'));
   })();
