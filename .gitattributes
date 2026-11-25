@@ -15,3 +15,5 @@
 *.webm binary
 *.wasm binary
 *.zip binary
+# Kept byte-for-byte: the published catalogue hashes these with CRLF
+addons/*/frontend/sounds/LICENSE-*.txt -text
