@@ -178,8 +178,9 @@
       const partner = (p + 2) % 4;
       if (L.asked && !L.asked.includes(partner) && L.seats.includes(partner)) { L.asked.push(partner); h.turn = partner; return; }
       const bt = team(L.bettor);
-      closeLance(g, { status: 'noquiero', team: bt, pts: L.prev });
+      // score first: if this «deje» reaches the target, closeLance ends the hand instead of opening the next lance
       award(g, bt, L.prev);
+      closeLance(g, { status: 'noquiero', team: bt, pts: L.prev });
       return;
     }
     // raise or órdago

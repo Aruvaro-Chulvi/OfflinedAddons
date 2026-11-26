@@ -79,6 +79,7 @@
 
   const FX = {
     deal: (t, n) => { for (let i = 0; i < Math.min(n || 4, 8); i++) sample('slide', t + i * 0.075, 0.55); },
+    card: (t) => sample('slide', t, 0.55),   // one card leaving the deck (each flight plays its own, in step with the animation)
     play: (t) => sample('place', t, 0.8),
     take: (t) => sample('shove', t, 0.7),
     shuffle: (t) => sample('shuffle', t, 0.45),

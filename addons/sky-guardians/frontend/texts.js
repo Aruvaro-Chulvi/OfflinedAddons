@@ -1,6 +1,6 @@
 /* ═══════════════════════════════════════════════════════════════════════════
-   🌐 Sky Guardians — textos. Español e inglés; los otros 8 idiomas de Offlined llegan en la fase 7
-   (mientras tanto, en inglés). {x} = parámetro.
+   🌐 Arcade Flow Sky Defender — textos. Aquí, español e inglés; los otros 8 idiomas de Offlined, en texts_i18n.js,
+   y lo de cada versión en texts_v11/v12/v13.js (los 10 idiomas). Lo que falte en un idioma sale en inglés. {x} = parámetro.
    ═══════════════════════════════════════════════════════════════════════════ */
 export const NAME = { es: "Arcade Flow Sky Defender", en: "Arcade Flow Sky Defender", fr: "Arcade Flow Sky Defender", pt: "Arcade Flow Sky Defender", it: "Arcade Flow Sky Defender",
   de: "Arcade Flow Sky Defender", zh: "Arcade Flow Sky Defender", hi: "Arcade Flow Sky Defender", ar: "Arcade Flow Sky Defender", ru: "Arcade Flow Sky Defender" };
@@ -8,6 +8,7 @@ export const NAME = { es: "Arcade Flow Sky Defender", en: "Arcade Flow Sky Defen
 import { MORE } from "./texts_i18n.js";
 import { V11 } from "./texts_v11.js";
 import { V12 } from "./texts_v12.js";
+import { V13 } from "./texts_v13.js";
 
 export const TX = {
   es: {
@@ -137,3 +138,4 @@ export const TX = {
 Object.assign(TX, MORE);   // francés, portugués, italiano, alemán, chino, hindi, árabe y ruso
 for (const L in V11) Object.assign(TX[L], V11[L]);   // v1.1: ventajas, misiles, tiempo, monumentos y repetición
 for (const L in V12) Object.assign(TX[L], V12[L]);   // v1.2: partidas rápidas (Blitz, llamar a la oleada, racha con tiempo)
+for (const L in V13) Object.assign(TX[L], V13[L]);   // v1.4: «Reducir efectos», entrenamiento ampliado, ranking con reglas nuevas

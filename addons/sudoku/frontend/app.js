@@ -9,7 +9,7 @@
   const params = new URLSearchParams(location.search);
 
   // ── Language ────────────────────────────────────────────────────────────────────────────────────────
-  const I18N = window.SUDOKU_I18N, TECH = window.SUDOKU_TECH;
+  const I18N = window.SUDOKU_I18N, TECH = window.SUDOKU_TECH, TECH_DESC = window.SUDOKU_TECH_DESC || {};
   let lang = (params.get('lang') || navigator.language || 'en').slice(0, 2).toLowerCase();
   if (!I18N[lang]) lang = 'en';
   const t = (k, vars) => {
@@ -19,6 +19,9 @@
   };
   const lvName = (l) => t('lv')[l - 1] || String(l);
   const techName = (id) => (TECH[lang] && TECH[lang][id]) || TECH.en[id] || id || '—';
+  // the general rule of a technique (never where it applies); English, then nothing, as fallback
+  const techDesc = (id) => (TECH_DESC[lang] && TECH_DESC[lang][id]) || (TECH_DESC.en && TECH_DESC.en[id]) || '';
+  const techLine = (id) => { const d = techDesc(id); return t('hintTech', { t: techName(id) }) + (d ? '\n' + d : ''); };
   document.documentElement.lang = lang;
   if (lang === 'ar') document.documentElement.dir = 'rtl';
   function applyTexts() {
@@ -46,7 +49,10 @@
   applyTheme();
 
   // ── Storage: one JSON object for the addon, a section per Offlined user ─────────────────────────────
-  const DEFAULTS = { errMode: 'free', peers: true, same: true, autoclean: true, timer: true, theme: 'auto', level: 3 };
+  const DEFAULTS = { errMode: 'free', peers: true, same: true, autoclean: true, timer: true, sound: 'soft', theme: 'auto', level: 3 };
+  // sounds and effects (engine/puzzle-fx.js)
+  const SFX = window.PuzzleFX;
+  const snd = (name, opts) => { try { SFX.play(name, opts); } catch (_) {} };
   function normalize(d) {
     d = d && typeof d === 'object' ? d : {};
     d.v = 1;
@@ -99,6 +105,7 @@
   let given = [], sol = [];
   let sel = 40, notesMode = false, paused = false, showErrors = false, busy = false;
   let undoStack = [], redoStack = [], hint = null, hl = { region: [], cells: [], target: -1, wrong: [] };
+  let hintSeen = null;             // { key, step, data } of the last position whose hint was counted
   let uiLevel = 3, statLevel = 3, popCell = -1;
   const bit = (d) => 1 << (d - 1);
 
@@ -114,7 +121,7 @@
     settings().level = p.level;
     me().game = G;
     uiLevel = statLevel = p.level;
-    undoStack = []; redoStack = []; hint = null; hl = { region: [], cells: [], target: -1, wrong: [] };
+    undoStack = []; redoStack = []; hint = null; hintSeen = null; hl = { region: [], cells: [], target: -1, wrong: [] };
     showErrors = false; notesMode = false; setPause(false);
     sel = G.values.findIndex((v) => !v); if (sel < 0) sel = 40;
     hideToast();
@@ -312,6 +319,7 @@
     document.querySelectorAll('.sw').forEach((s) => s.classList.toggle('on', !!S[s.dataset.k]));
     document.querySelectorAll('#errMode button').forEach((b) => b.classList.toggle('on', b.dataset.v === S.errMode));
     document.querySelectorAll('#themeSeg button').forEach((b) => b.classList.toggle('on', b.dataset.v === S.theme));
+    document.querySelectorAll('#soundSeg button').forEach((b) => b.classList.toggle('on', b.dataset.v === S.sound));
   }
   function renderUser() {
     const name = USER.name || 'Sudoku';
@@ -349,19 +357,37 @@
     if (forceNote || notesMode) {
       if (G.values[sel]) return;
       change(patch, sel, 0, G.notes[sel] ^ bit(n));
-      commit(patch);
+      if (commit(patch)) snd('note');
       return;
     }
     const nv = G.values[sel] === n ? 0 : n;
     placeDigit(patch, sel, nv);
-    if (nv && settings().errMode === 'strict' && nv !== sol[sel]) G.errors++;
+    const wrong = nv && settings().errMode === 'strict' && nv !== sol[sel];
+    if (wrong) G.errors++;
     if (nv) popCell = sel;
-    if (commit(patch)) checkComplete();
+    if (commit(patch)) {
+      if (!nv) snd('erase');
+      else if (wrong) { snd('error'); SFX.shake(cells[sel]); }
+      else if (!unitsDone(sel)) snd('tap');
+      checkComplete();
+    }
+  }
+  /** A row, column or box just filled with nine different digits: it lights up from the cell outwards.
+   *  (Not when the whole board is solved: the win has its own wave.) Returns true if something lit up. */
+  function unitsDone(i) {
+    if (G.values.every((v, k) => v === sol[k])) return true;
+    const full = E.UNITS.filter((u) => u.includes(i) && new Set(u.map((k) => G.values[k]).filter(Boolean)).size === 9);
+    if (!full.length) return false;
+    const delay = new Map();
+    for (const u of full) u.forEach((k, pos) => { const d = Math.abs(pos - u.indexOf(i)) * 40; delay.set(k, Math.min(delay.has(k) ? delay.get(k) : 1e9, d)); });
+    SFX.sweep([...delay].map(([k, d]) => [cells[k], d]));
+    snd('unit', { n: full.length });
+    return true;
   }
   function erase() {
     if (!canEdit() || given[sel]) return;
     clearHint();
-    const patch = []; change(patch, sel, 0, 0); commit(patch);
+    const patch = []; change(patch, sel, 0, 0); if (commit(patch)) snd('erase');
   }
   function autoNotes() {
     if (!canEdit()) return;
@@ -373,7 +399,7 @@
       for (const p of E.PEERS[i]) if (G.values[p]) m &= ~bit(G.values[p]);
       change(patch, i, 0, m);
     }
-    commit(patch);
+    if (commit(patch)) snd('note');
   }
   function undo() {
     if (!canEdit() || !undoStack.length) return;
@@ -381,7 +407,7 @@
     const p = undoStack.pop();
     for (let k = p.length - 1; k >= 0; k--) { const [i, ov, on] = p[k]; G.values[i] = ov; G.notes[i] = on; }
     redoStack.push(p); sel = p[0][0];
-    renderBoard(); renderTools(); save();
+    renderBoard(); renderTools(); save(); snd('erase');
   }
   function redo() {
     if (!canEdit() || !redoStack.length) return;
@@ -389,11 +415,12 @@
     const p = redoStack.pop();
     for (const [i, , , nv, nn] of p) { G.values[i] = nv; G.notes[i] = nn; }
     undoStack.push(p); sel = p[0][0];
-    renderBoard(); renderTools(); save();
+    renderBoard(); renderTools(); save(); snd('tap');
   }
   function checkComplete() {
     if (G.values.some((v) => !v)) return;
     if (G.values.every((v, i) => v === sol[i])) { win(); return; }
+    snd('error');
     if (settings().errMode !== 'strict') showToast(t('fullWrong'), t('showErrors'), () => { showErrors = true; renderBoard(); hideToast(); }, 'alert');
   }
 
@@ -404,10 +431,15 @@
     if (toastKind === 'hint') hideToast();
     renderBoard();
   }
+  // One hint = one board position: asking again on the same position shows the same step and is not
+  // counted again; the steps of a hint («Más ayuda») are part of that same hint (see hintSeen).
   function hintPress() {
     if (!canEdit()) return;
     const key = G.values.join('');
-    if (!hint || hint.key !== key) hint = { key, step: 0, data: E.hint(Int8Array.from(G.values), Int8Array.from(sol)) };
+    if (!hint || hint.key !== key) {
+      const seen = hintSeen && hintSeen.key === key ? hintSeen : null; // same position: same hint, same step
+      hint = { key, step: seen ? seen.step : 0, data: seen ? seen.data : E.hint(Int8Array.from(G.values), Int8Array.from(sol)) };
+    }
     showHintStep();
   }
   function nextHint() { if (hint) { hint.step++; showHintStep(); } }
@@ -415,7 +447,9 @@
     const d = hint.data;
     hl.region = []; hl.cells = []; hl.target = -1; hl.wrong = [];
     if (!d) { hint = null; showToast(t('hintNone'), null, null, 'hint'); renderBoard(); return; }
-    G.hints++;
+    if (!hintSeen || hintSeen.key !== hint.key) G.hints++;
+    hintSeen = { key: hint.key, step: hint.step, data: d };
+    snd('hint');
     if (d.wrong) {
       hl.wrong = d.wrong.slice();
       showToast(t('hintWrong', { n: d.wrong.length }), t('removeThem'), () => {
@@ -427,7 +461,7 @@
       showToast(t('hintRegion'), t('moreHelp'), nextHint, 'hint');
     } else if (hint.step === 1) {
       hl.cells = d.techCells.slice(); hl.target = d.cell;
-      showToast(t('hintTech', { t: techName(d.tech) }), t('moreHelp'), nextHint, 'hint');
+      showToast(techLine(d.tech), t('moreHelp'), nextHint, 'hint');
     } else {
       sel = d.cell;
       const patch = []; placeDigit(patch, d.cell, d.digit); popCell = d.cell;
@@ -477,7 +511,7 @@
     G.done = true;
     const s = statsOf(G.level);
     s.won++; s.total += G.time;
-    const record = !s.best || G.time < s.best;
+    const record = G.hints === 0 && (!s.best || G.time < s.best); // records only without hints
     if (record) s.best = G.time;
     const st = me().streak;
     if (st.last !== today()) { st.days = st.last === today(1) ? st.days + 1 : 1; st.last = today(); }
@@ -492,7 +526,10 @@
     $('winErr').textContent = G.errors;
     $('winHints').textContent = G.hints;
     $('winStreak').textContent = daysText(st.days);
-    setTimeout(() => $('winDlg').classList.add('show'), 350);
+    // a diagonal wave across the board with the fanfare, then the result
+    const wave = SFX.sweep(cells.map((el, i) => [el, (((i / 9) | 0) + (i % 9)) * 40]), { scale: 1.08 });
+    snd('win');
+    setTimeout(() => $('winDlg').classList.add('show'), Math.max(350, wave - 150));
   }
   $('winAgain').onclick = () => { $('winDlg').classList.remove('show'); go(G.level); };
   $('winLevel').onclick = () => { $('winDlg').classList.remove('show'); openDrawer(); const s = $('levels').closest('.sec'); s.classList.remove('closed'); };
@@ -538,6 +575,7 @@
   document.querySelectorAll('.sw').forEach((s) => { s.onclick = () => { const S = settings(); S[s.dataset.k] = !S[s.dataset.k]; renderSettings(); renderBoard(); save(); }; });
   document.querySelectorAll('#errMode button').forEach((b) => { b.onclick = () => { settings().errMode = b.dataset.v; renderSettings(); renderBoard(); save(); }; });
   document.querySelectorAll('#themeSeg button').forEach((b) => { b.onclick = () => { settings().theme = b.dataset.v; renderSettings(); applyTheme(); save(); }; });
+  document.querySelectorAll('#soundSeg button').forEach((b) => { b.onclick = () => { settings().sound = b.dataset.v; SFX.setLevel(b.dataset.v); renderSettings(); save(); snd('tap'); }; });
   const openDrawer = () => $('app').classList.add('drawer');
   const closeDrawer = () => $('app').classList.remove('drawer');
   $('menuBtn').onclick = openDrawer;
@@ -591,6 +629,7 @@
     renderBoard(); renderTools();
     await Promise.all([loadUser(), loadDB()]);
     $('storeNote').hidden = storeMode !== 'local';
+    SFX.init({ level: settings().sound });
     applyTheme();
     renderUser();
     uiLevel = statLevel = settings().level;

@@ -92,7 +92,9 @@
   const newId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
   function newItem(type) {
     const last = me().items[0];
-    const design = Object.assign({}, DEF_DESIGN, last ? JSON.parse(JSON.stringify(last.design)) : {}, { caption: '' });
+    // reuse the last colours and shapes, but not its logo: copying the picture into every new code made the
+    // storage grow with each one (add it again when this code needs it)
+    const design = Object.assign({}, DEF_DESIGN, last ? JSON.parse(JSON.stringify(last.design)) : {}, { caption: '', logo: null });
     return { id: newId(), name: '', type: type || 'url', fields: {}, design, created: Date.now(), updated: Date.now() };
   }
   const fieldsOf = (it) => it.fields[it.type] || (it.fields[it.type] = defaultFields(it.type));

@@ -17,18 +17,21 @@ repetirse dentro de una jaula si no están en la misma fila o columna.
 
 - **Seis niveles**:
 
-  | Nivel | Cuadrícula | Operaciones |
-  |---|---|---|
-  | Muy fácil | 4×4 | + |
-  | Fácil | 5×5 | + − |
-  | Medio | 6×6 | + − × ÷ |
-  | Difícil | 7×7 | + − × ÷ |
-  | Experto | 8×8 | + − × ÷ |
-  | Maestro | 9×9 | + − × ÷ |
+  | Nivel | Cuadrícula | Operaciones | Técnica más difícil que pide |
+  |---|---|---|---|
+  | Muy fácil | 4×4 | + | Combinaciones de jaula |
+  | Fácil | 5×5 | + − | Combinaciones de jaula (a veces jaula y línea) |
+  | Medio | 6×6 | + − × ÷ | Jaula y línea, o pares desnudos / ocultos |
+  | Difícil | 7×7 | + − × ÷ | Pares, o la suma de la línea |
+  | Experto | 8×8 | + − × ÷ | Suma de la línea, trío desnudo o X-Wing |
+  | Maestro | 9×9 | + − × ÷ | Trío desnudo o X-Wing |
+
+  Los niveles se distinguen por el razonamiento que exigen, no solo por el tamaño: cada tablero de un nivel necesita
+  al menos su técnica y nada más difícil de lo que el nivel permite.
 
 - **Cada tablero es nuevo.** El generador crea un cuadrado latino al azar, lo corta en jaulas y elige las
-  operaciones; solo se queda con el tablero si un solucionador lógico lo termina (combinaciones de jaula, jaula y
-  línea, únicas, pares), lo que además demuestra que la solución es única.
+  operaciones; solo se queda con el tablero si un solucionador lógico lo termina (únicas, combinaciones de jaula,
+  jaula y línea, pares desnudos y ocultos, suma de la línea, tríos desnudos, X-Wing), lo que además demuestra que la solución es única.
 - **Códigos de partida** (`XXXX-XXXX`): el mismo código da siempre el mismo tablero.
 - Notas, autonotas, deshacer/rehacer, resaltado de fila, columna y del mismo número.
 - **Pistas en tres escalones**: la zona, luego la técnica y al final el número.

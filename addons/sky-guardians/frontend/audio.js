@@ -17,7 +17,9 @@ const UM = import("/games-common/user-music.js?v=1.1.0").catch(() => null);
 export function createAudio() {
   let ctx = null, master, sfx, mus, syn, trk, comp, noiseBuf, orig, usr;
   let choice = null, uplayer = null, um = null;      // tu música: la elección, lo que suena y el módulo
-  const vol = { sfx: 0.8, music: 0.5 };
+  const vol = { sfx: 0.15, music: 0.85 };   // por defecto: música al 85 %, efectos al 15 % (como Wiki Flight)
+  // una sola vez (27-11-2026): el volumen guardado pasa a los nuevos valores por defecto; luego se respeta lo que elijas
+  try { if (!localStorage.getItem("sg_vol_v2")) { localStorage.setItem("sg_vol", JSON.stringify(vol)); localStorage.setItem("sg_vol_v2", "1"); } } catch { }
   try { const v = JSON.parse(localStorage.getItem("sg_vol") || "{}"); Object.assign(vol, v); } catch { }
   let hidden = false, muted = false, gm = false;   // muted: botón 🔊 / tecla M de Wiki Flight (HOOK.mute) · gm: silencio general de Offlined
   const gain = () => (muted || gm ? 0 : 0.9);
@@ -56,6 +58,7 @@ export function createAudio() {
     let node = g; if (pan && ctx.createStereoPanner) { const p = ctx.createStereoPanner(); p.pan.value = pan; g.connect(p); node = p; }
     s.connect(fl).connect(g); node.connect(out);
     s.start(t, Math.random()); s.stop(t + a + dur + 0.05);
+    return { s, g };
   }
   function tone(t, dur, { type = "sine", f = 440, f2 = null, peak = 0.3, a = 0.005, out = sfx, sus = 0.0001, filter = null } = {}) {
     const o = ctx.createOscillator(); o.type = type; o.frequency.setValueAtTime(f, t);
@@ -63,12 +66,25 @@ export function createAudio() {
     const g = ctx.createGain(); env(g, t, a, peak, dur, sus);
     let n = o; if (filter) { const fl = ctx.createBiquadFilter(); fl.type = "lowpass"; fl.frequency.value = filter; o.connect(fl); n = fl; }
     n.connect(g).connect(out); o.start(t); o.stop(t + a + dur + 0.05);
+    return { s: o, g };
   }
   const ok = () => init() && ctx.state !== "closed";
   const dist = d => Math.max(0.05, Math.min(1, 300 / Math.max(300, d)));   // atenuación por distancia (m)
 
   // ── Efectos ──
   const lastAt = {};
+  // Explosiones: como mucho EXP_MAX sonando a la vez. Con el cupo lleno, la nueva le quita el sitio a la más lejana
+  // (a igual distancia, a la más antigua); si la nueva es la más lejana de todas, no suena
+  const EXP_MAX = 6, expV = [];
+  function expSlot(t, d) {
+    for (let i = expV.length - 1; i >= 0; i--) if (expV[i].end <= t) expV.splice(i, 1);
+    if (expV.length < EXP_MAX) return true;
+    let fi = 0; for (let i = 1; i < expV.length; i++) if (expV[i].d > expV[fi].d) fi = i;   // la primera es la más antigua
+    if (expV[fi].d < d) return false;
+    for (const n of expV[fi].nodes) { try { n.g.gain.cancelScheduledValues(t); n.g.gain.setValueAtTime(Math.max(0.0001, n.g.gain.value), t); n.g.gain.exponentialRampToValueAtTime(0.0001, t + 0.06); n.s.stop(t + 0.08); } catch { } }
+    expV.splice(fi, 1);
+    return true;
+  }
   const throttle = (k, s) => { const t = performance.now(); if (lastAt[k] && t - lastAt[k] < s * 1000) return false; lastAt[k] = t; return true; };
   const FX = {
     gun() { const t = now(); noise(t, 0.05, { f: 1500, q: 0.8, peak: 0.22 }); noise(t, 0.04, { type: "lowpass", f: 400, peak: 0.25 }); },
@@ -80,9 +96,13 @@ export function createAudio() {
     hit() { if (throttle("hit", 0.05)) { const t = now(); tone(t, 0.03, { type: "triangle", f: 2600, peak: 0.08 }); } },
     explosion(d = 0, size = 1) {
       const t = now(), k = dist(d) * Math.min(1.5, size);
-      noise(t, 1.1 * size, { type: "lowpass", f: 900, f2: 120, peak: 0.55 * k, a: 0.005 });
-      tone(t, 0.8 * size, { f: 90, f2: 32, peak: 0.6 * k, a: 0.004 });
-      noise(t + 0.02, 0.25, { f: 2500, q: 0.5, peak: 0.12 * k });
+      if (!expSlot(t, d)) return;
+      const nodes = [
+        noise(t, 1.1 * size, { type: "lowpass", f: 900, f2: 120, peak: 0.55 * k, a: 0.005 }),
+        tone(t, 0.8 * size, { f: 90, f2: 32, peak: 0.6 * k, a: 0.004 }),
+        noise(t + 0.02, 0.25, { f: 2500, q: 0.5, peak: 0.12 * k }),
+      ];
+      expV.push({ end: t + Math.max(1.1 * size, 0.8 * size, 0.27) + 0.06, d, nodes });
     },
     playerHit() { if (throttle("phit", 0.08)) { const t = now(); noise(t, 0.12, { f: 3000, q: 3, peak: 0.25 }); tone(t, 0.1, { type: "square", f: 300, f2: 180, peak: 0.08, filter: 1500 }); } },
     shieldDown() { const t = now(); tone(t, 0.35, { type: "sawtooth", f: 900, f2: 200, peak: 0.08, filter: 2000 }); },

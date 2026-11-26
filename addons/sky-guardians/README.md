@@ -35,7 +35,8 @@ Offlined's **Wiki Flight** engine.
 Enemies come from the directions shown during the break between waves (text, orange arrows and the radar), and
 many waves have a theme: tower strike, fighters, drone swarm, bomber squadron, helicopters, low-level run.
 
-**Training** (2 minutes) teaches flying, shooting, locking targets and repairing the tower.
+**Training** (about 3 minutes) teaches flying, shooting, chaining a streak, locking targets, dropping flares,
+repairing the tower, picking upgrades and calling the wave, with whatever keys or buttons you have assigned.
 
 When the game ends you can **watch a replay of the last 30 seconds** with film cameras (behind your plane, fly-bys,
 from the foot of the tower and, if it falls, the tower coming down), at ×½, ×1 or ×2.
@@ -112,6 +113,11 @@ Arcade controls for **controller** and **keyboard and mouse**, both remappable i
 | Speed up · Slow down | W or Shift · S or Ctrl | RB · LB |
 | Camera · Pause | C · Esc | D-pad up · Start |
 
+Menus, pause and results also work with the controller (D-pad or left stick to move, A to choose, B to go back,
+Start to resume) or the keyboard (arrows or Tab, Enter or Space, Esc; R plays again on the results screen). On
+option selectors, ← → change the choice. In Settings, «Reduce effects» turns off slow motion and softens camera shake
+and red flashes.
+
 The game pauses by itself when the window loses focus, when Offlined is minimised or when the controller is
 disconnected. Leaving the addon in the middle of a game asks first: an unfinished game does not count.
 
@@ -119,8 +125,9 @@ disconnected. Leaving the addon in the middle of a game asks first: an unfinishe
 
 Ranks (Cadet, Pilot, Lieutenant, Captain, Ace, Guardian) by the best wave reached, 33 achievements, your history
 and a **family ranking** for each mode and difficulty, with every Offlined user who plays on this computer.
-Since version 1.3 the ranking only compares games played with the new rules (Neon Arena, Flow gates, low flying);
-older games stay in your history and achievements.
+When the scoring rules change, the ranking only compares games played with the new rules: since version 1.4
+(streak, final waves, boss and tower bonus); before that, since 1.3 (Neon Arena, Flow gates, low flying). Older
+games stay in your history and achievements.
 
 ## Sound
 

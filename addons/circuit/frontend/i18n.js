@@ -1,6 +1,7 @@
 /* Texts of the Circuit addon in Offlined's ten languages. {x} are placeholders. */
 window.CIRCUIT_I18N = {
   en: {
+    sound: "Sound", soundOff: "Off", soundSoft: "Soft", soundNormal: "Normal",
     appName: "Circuit",
     lv: ["Very easy", "Easy", "Medium", "Hard", "Expert", "Master"],
     newGame: "New game", generate: "New circuit", useCode: "Use a code", codeLabel: "Game code", copied: "Copied",
@@ -27,6 +28,7 @@ window.CIRCUIT_I18N = {
     t_color: "Inside and outside", t_contradiction: "Assumption and contradiction", t_trial: "Trial",
   },
   es: {
+    sound: "Sonido", soundOff: "Apagado", soundSoft: "Suave", soundNormal: "Normal",
     appName: "Circuito",
     lv: ["Muy fácil", "Fácil", "Medio", "Difícil", "Experto", "Maestro"],
     newGame: "Nueva partida", generate: "Nuevo circuito", useCode: "Usar código", codeLabel: "Código de partida", copied: "Copiado",
@@ -53,6 +55,7 @@ window.CIRCUIT_I18N = {
     t_color: "Dentro y fuera", t_contradiction: "Hipótesis y contradicción", t_trial: "Prueba",
   },
   fr: {
+    sound: "Son", soundOff: "Coupé", soundSoft: "Doux", soundNormal: "Normale",
     appName: "Circuit",
     lv: ["Très facile", "Facile", "Moyen", "Difficile", "Expert", "Maître"],
     newGame: "Nouvelle partie", generate: "Nouveau circuit", useCode: "Utiliser un code", codeLabel: "Code de partie", copied: "Copié",
@@ -79,6 +82,7 @@ window.CIRCUIT_I18N = {
     t_color: "Intérieur et extérieur", t_contradiction: "Hypothèse et contradiction", t_trial: "Essai",
   },
   pt: {
+    sound: "Som", soundOff: "Desligado", soundSoft: "Suave", soundNormal: "Normal",
     appName: "Circuito",
     lv: ["Muito fácil", "Fácil", "Médio", "Difícil", "Especialista", "Mestre"],
     newGame: "Novo jogo", generate: "Novo circuito", useCode: "Usar código", codeLabel: "Código do jogo", copied: "Copiado",
@@ -105,6 +109,7 @@ window.CIRCUIT_I18N = {
     t_color: "Dentro e fora", t_contradiction: "Hipótese e contradição", t_trial: "Tentativa",
   },
   it: {
+    sound: "Suono", soundOff: "Spento", soundSoft: "Leggero", soundNormal: "Normale",
     appName: "Circuito",
     lv: ["Molto facile", "Facile", "Medio", "Difficile", "Esperto", "Maestro"],
     newGame: "Nuova partita", generate: "Nuovo circuito", useCode: "Usa un codice", codeLabel: "Codice partita", copied: "Copiato",
@@ -131,6 +136,7 @@ window.CIRCUIT_I18N = {
     t_color: "Dentro e fuori", t_contradiction: "Ipotesi e contraddizione", t_trial: "Tentativo",
   },
   de: {
+    sound: "Ton", soundOff: "Aus", soundSoft: "Leise", soundNormal: "Normal",
     appName: "Rundweg",
     lv: ["Sehr leicht", "Leicht", "Mittel", "Schwer", "Experte", "Meister"],
     newGame: "Neues Spiel", generate: "Neuer Rundweg", useCode: "Code verwenden", codeLabel: "Spielcode", copied: "Kopiert",
@@ -157,6 +163,7 @@ window.CIRCUIT_I18N = {
     t_color: "Innen und außen", t_contradiction: "Annahme und Widerspruch", t_trial: "Probieren",
   },
   zh: {
+    sound: "声音", soundOff: "关闭", soundSoft: "轻柔", soundNormal: "正常",
     appName: "回路",
     lv: ["非常简单", "简单", "中等", "困难", "专家", "大师"],
     newGame: "新游戏", generate: "新回路", useCode: "使用代码", codeLabel: "游戏代码", copied: "已复制",
@@ -183,6 +190,7 @@ window.CIRCUIT_I18N = {
     t_color: "内外判断", t_contradiction: "假设与矛盾", t_trial: "试探",
   },
   hi: {
+    sound: "ध्वनि", soundOff: "बंद", soundSoft: "धीमी", soundNormal: "सामान्य",
     appName: "सर्किट",
     lv: ["बहुत आसान", "आसान", "मध्यम", "कठिन", "विशेषज्ञ", "मास्टर"],
     newGame: "नया खेल", generate: "नया सर्किट", useCode: "कोड इस्तेमाल करें", codeLabel: "खेल कोड", copied: "कॉपी हो गया",
@@ -209,6 +217,7 @@ window.CIRCUIT_I18N = {
     t_color: "अंदर और बाहर", t_contradiction: "अनुमान और विरोधाभास", t_trial: "प्रयास",
   },
   ar: {
+    sound: "الصوت", soundOff: "مطفأ", soundSoft: "خافت", soundNormal: "عادية",
     appName: "الدائرة",
     lv: ["سهل جدًا", "سهل", "متوسط", "صعب", "خبير", "أستاذ"],
     newGame: "لعبة جديدة", generate: "دائرة جديدة", useCode: "استخدام رمز", codeLabel: "رمز اللعبة", copied: "تم النسخ",
@@ -235,6 +244,7 @@ window.CIRCUIT_I18N = {
     t_color: "الداخل والخارج", t_contradiction: "افتراض وتناقض", t_trial: "تجربة",
   },
   ru: {
+    sound: "Звук", soundOff: "Выкл.", soundSoft: "Тихо", soundNormal: "Обычно",
     appName: "Контур",
     lv: ["Очень лёгкий", "Лёгкий", "Средний", "Сложный", "Эксперт", "Мастер"],
     newGame: "Новая игра", generate: "Новый контур", useCode: "Ввести код", codeLabel: "Код игры", copied: "Скопировано",
@@ -260,4 +270,99 @@ window.CIRCUIT_I18N = {
     t_basic: "Базовые правила", t_pattern: "Шаблон вокруг числа", t_loop: "Без маленьких петель", t_pair: "Шаблон из двух чисел",
     t_color: "Внутри и снаружи", t_contradiction: "Предположение и противоречие", t_trial: "Проба",
   },
+};
+
+/* One short sentence per technique, shown with its name at the «technique» step of a hint.
+   It explains the general rule only, never where it applies. */
+window.CIRCUIT_TECH_DESC = {
+ "en": {
+  "basic": "Each number says how many of its four sides are lines, and every dot has either two lines or none.",
+  "pattern": "Some numbers, because of where they are, always force the same lines and crosses around them, such as a 3 in a corner.",
+  "loop": "There is only one loop, so a line can't close a smaller loop before the whole circuit is done.",
+  "pair": "Two neighbouring numbers, such as two 3s side by side, force lines and crosses between and around them.",
+  "color": "Each cell is inside or outside the loop; a line separates cells on different sides, and none separates cells on the same side.",
+  "contradiction": "Assume a line is there, or isn't; if that leads to a contradiction, the opposite is true.",
+  "trial": "Try a line and follow its consequences; if they end in a contradiction, that line is wrong."
+ },
+ "es": {
+  "basic": "Cada número indica cuántos de sus cuatro lados son línea, y cada punto tiene dos líneas o ninguna.",
+  "pattern": "Algunos números, por su posición, obligan siempre a las mismas líneas y cruces a su alrededor, como un 3 en una esquina.",
+  "loop": "Solo hay un circuito, así que una línea no puede cerrar un circuito más pequeño antes de terminar.",
+  "pair": "Dos números vecinos, como dos 3 juntos, obligan a ciertas líneas y cruces entre ellos y a su alrededor.",
+  "color": "Cada casilla está dentro o fuera del circuito; entre casillas de lados distintos hay línea, y entre las del mismo lado, no.",
+  "contradiction": "Supón que una línea está, o que no está; si eso lleva a una contradicción, lo cierto es lo contrario.",
+  "trial": "Prueba una línea y sigue sus consecuencias; si acaban en contradicción, esa línea no va."
+ },
+ "fr": {
+  "basic": "Chaque chiffre indique combien de ses quatre côtés sont des traits, et chaque point a deux traits ou aucun.",
+  "pattern": "Certains chiffres, selon leur place, imposent toujours les mêmes traits et croix autour d'eux, comme un 3 dans un coin.",
+  "loop": "Il n'y a qu'une seule boucle : un trait ne peut pas fermer une boucle plus petite avant la fin.",
+  "pair": "Deux chiffres voisins, comme deux 3 côte à côte, imposent des traits et des croix entre eux et autour d'eux.",
+  "color": "Chaque case est à l'intérieur ou à l'extérieur de la boucle ; un trait sépare les cases de côtés différents, jamais celles du même côté.",
+  "contradiction": "Supposez qu'un trait est là, ou non ; si cela mène à une contradiction, c'est l'inverse qui est vrai.",
+  "trial": "Essayez un trait et suivez ses conséquences ; s'il mène à une contradiction, ce trait est faux."
+ },
+ "pt": {
+  "basic": "Cada número indica quantos dos seus quatro lados são linha, e cada ponto tem duas linhas ou nenhuma.",
+  "pattern": "Alguns números, pela sua posição, obrigam sempre às mesmas linhas e cruzes à sua volta, como um 3 num canto.",
+  "loop": "Só há um circuito, por isso uma linha não pode fechar um circuito mais pequeno antes do fim.",
+  "pair": "Dois números vizinhos, como dois 3 lado a lado, obrigam a certas linhas e cruzes entre eles e à sua volta.",
+  "color": "Cada casa está dentro ou fora do circuito; entre casas de lados diferentes há linha, e entre as do mesmo lado não.",
+  "contradiction": "Supõe que uma linha está lá, ou não; se isso levar a uma contradição, o certo é o contrário.",
+  "trial": "Experimenta uma linha e segue as suas consequências; se acabarem numa contradição, essa linha está errada."
+ },
+ "it": {
+  "basic": "Ogni numero indica quanti dei suoi quattro lati sono linea, e ogni punto ha due linee o nessuna.",
+  "pattern": "Alcuni numeri, per la loro posizione, impongono sempre le stesse linee e croci attorno, come un 3 in un angolo.",
+  "loop": "C'è un solo circuito, quindi una linea non può chiudere un circuito più piccolo prima della fine.",
+  "pair": "Due numeri vicini, come due 3 affiancati, impongono certe linee e croci tra loro e attorno.",
+  "color": "Ogni casella è dentro o fuori dal circuito; tra caselle di lati diversi c'è una linea, tra quelle dello stesso lato no.",
+  "contradiction": "Supponi che una linea ci sia, o no; se ciò porta a una contraddizione, è vero il contrario.",
+  "trial": "Prova una linea e seguine le conseguenze; se portano a una contraddizione, quella linea è sbagliata."
+ },
+ "de": {
+  "basic": "Jede Zahl gibt an, wie viele ihrer vier Seiten Linien sind, und jeder Punkt hat zwei Linien oder keine.",
+  "pattern": "Manche Zahlen erzwingen je nach Lage immer dieselben Linien und Kreuze um sich, etwa eine 3 in einer Ecke.",
+  "loop": "Es gibt nur eine Schleife, also darf eine Linie vor dem Ende keine kleinere Schleife schließen.",
+  "pair": "Zwei benachbarte Zahlen, etwa zwei 3en nebeneinander, erzwingen Linien und Kreuze zwischen und um sie.",
+  "color": "Jedes Feld liegt innerhalb oder außerhalb der Schleife; zwischen Feldern verschiedener Seiten liegt eine Linie, zwischen Feldern derselben Seite keine.",
+  "contradiction": "Nimm an, eine Linie ist da oder nicht; führt das zu einem Widerspruch, gilt das Gegenteil.",
+  "trial": "Probiere eine Linie aus und verfolge die Folgen; enden sie in einem Widerspruch, ist die Linie falsch."
+ },
+ "zh": {
+  "basic": "每个数字表示其四条边中有几条是线，每个点要么连两条线，要么一条也没有。",
+  "pattern": "某些数字因其位置，周围总会形成相同的线和叉，例如角落里的3。",
+  "loop": "只有一个回路，所以在完成之前，线不能先围成一个更小的回路。",
+  "pair": "相邻的两个数字（如并排的两个3）会决定它们之间和周围的一些线和叉。",
+  "color": "每个格子都在回路内或外；分属内外两侧的相邻格之间有线，同侧的格之间没有线。",
+  "contradiction": "假设某条边有线或没有线；如果导致矛盾，那么相反的情况成立。",
+  "trial": "试画一条线并推导下去；如果出现矛盾，这条线就是错的。"
+ },
+ "hi": {
+  "basic": "हर अंक बताता है कि उसकी चार भुजाओं में से कितनी रेखा हैं, और हर बिंदु पर दो रेखाएँ होती हैं या कोई नहीं।",
+  "pattern": "कुछ अंक अपनी जगह के कारण हमेशा अपने आसपास वही रेखाएँ और क्रॉस तय करते हैं, जैसे कोने में 3।",
+  "loop": "सर्किट एक ही है, इसलिए कोई रेखा अंत से पहले छोटा सर्किट बंद नहीं कर सकती।",
+  "pair": "दो पड़ोसी अंक, जैसे साथ-साथ दो 3, अपने बीच और आसपास कुछ रेखाएँ और क्रॉस तय करते हैं।",
+  "color": "हर खाना सर्किट के अंदर या बाहर है; अलग-अलग तरफ़ के खानों के बीच रेखा होती है, एक ही तरफ़ वालों के बीच नहीं।",
+  "contradiction": "मान लें कि कोई रेखा है, या नहीं है; अगर इससे विरोधाभास होता है, तो उल्टा सही है।",
+  "trial": "कोई रेखा आज़माएँ और उसके परिणाम देखें; अगर विरोधाभास निकले, तो वह रेखा गलत है।"
+ },
+ "ar": {
+  "basic": "كل رقم يبيّن كم من أضلاعه الأربعة خطوط، وكل نقطة يمر بها خطان أو لا شيء.",
+  "pattern": "بعض الأرقام تفرض دائمًا بحسب موقعها الخطوط والعلامات نفسها حولها، مثل 3 في زاوية.",
+  "loop": "توجد دائرة واحدة فقط، لذا لا يمكن لخط أن يغلق دائرة أصغر قبل النهاية.",
+  "pair": "رقمان متجاوران، مثل 3 بجانب 3، يفرضان خطوطًا وعلامات بينهما وحولهما.",
+  "color": "كل خانة داخل الدائرة أو خارجها؛ بين خانتين في جهتين مختلفتين خط، وبين خانتين في الجهة نفسها لا خط.",
+  "contradiction": "افترض أن خطًا موجود أو غير موجود؛ إن أدى ذلك إلى تناقض، فالعكس صحيح.",
+  "trial": "جرّب خطًا وتتبّع نتائجه؛ إن انتهت إلى تناقض، فهذا الخط خاطئ."
+ },
+ "ru": {
+  "basic": "Каждое число показывает, сколько его сторон — линии, а в каждой точке сходятся две линии или ни одной.",
+  "pattern": "Некоторые числа из-за своего положения всегда задают одни и те же линии и крестики вокруг, например 3 в углу.",
+  "loop": "Петля только одна, поэтому линия не может замкнуть меньшую петлю раньше конца.",
+  "pair": "Два соседних числа, например две 3 рядом, задают линии и крестики между ними и вокруг.",
+  "color": "Каждая клетка внутри или снаружи петли; между клетками разных сторон есть линия, между клетками одной стороны — нет.",
+  "contradiction": "Предположите, что линия есть или её нет; если это ведёт к противоречию, верно обратное.",
+  "trial": "Попробуйте линию и проследите следствия; если они ведут к противоречию, линия неверна."
+ }
 };

@@ -42,7 +42,7 @@ export function setPad(action, index) {
 export function resetBindings() { const d = JSON.parse(JSON.stringify(DEFAULT)); B.kb = d.kb; B.pad = d.pad; save(); }
 
 // Nombres para mostrar
-const KEY_NAMES = { Space: "Espacio", ArrowUp: "↑", ArrowDown: "↓", ArrowLeft: "←", ArrowRight: "→", ShiftLeft: "Shift", ShiftRight: "Shift", ControlLeft: "Ctrl", ControlRight: "Ctrl",
+const KEY_NAMES = { ArrowUp: "↑", ArrowDown: "↓", ArrowLeft: "←", ArrowRight: "→", ShiftLeft: "Shift", ShiftRight: "Shift", ControlLeft: "Ctrl", ControlRight: "Ctrl",
   AltLeft: "Alt", Escape: "Esc", Tab: "Tab", Enter: "Enter", Backspace: "⌫" };
 export function keyName(code, t) {
   if (code === "Space") return t ? t("kSpace") : "Space";
@@ -54,3 +54,15 @@ export function keyName(code, t) {
 }
 const PAD_NAMES = ["A", "B", "X", "Y", "LB", "RB", "LT", "RT", "Back", "Start", "L3", "R3", "↑", "↓", "←", "→", "Home"];
 export const padName = i => PAD_NAMES[i] || "B" + i;
+
+// El primer mando conectado, leído como mucho una vez por fotograma: navigator.getGamepads() crea una
+// lista nueva en cada llamada y varios módulos lo preguntan en el mismo fotograma (vuelo, menús, entrenamiento)
+let padT = -1, padV = null;
+export function firstPad() {
+  const now = performance.now();
+  if (now - padT < 4) return padV;
+  padT = now; padV = null;
+  const list = navigator.getGamepads ? navigator.getGamepads() : null;
+  if (list) for (let i = 0; i < list.length; i++) if (list[i] && list[i].connected !== false) { padV = list[i]; break; }
+  return padV;
+}

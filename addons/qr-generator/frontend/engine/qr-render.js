@@ -6,11 +6,18 @@
   const escWifi = (s) => String(s || '').replace(/([\\;,:"])/g, '\\$1');
   const escV = (s) => String(s || '').replace(/\\/g, '\\\\').replace(/\r?\n/g, '\\n').replace(/([;,])/g, '\\$1');
   const digits = (s) => String(s || '').replace(/[^\d+]/g, '');
-  const icsDate = (v, allDay) => {
+  // plusDay: an all-day DTEND is exclusive in iCalendar (the event ends *before* that day), so the last day
+  // the person picked must become the next day or a one-day event would last nothing.
+  const icsDate = (v, allDay, plusDay) => {
     if (!v) return '';
     const m = String(v).match(/^(\d{4})-(\d{2})-(\d{2})(?:T(\d{2}):(\d{2}))?/);
     if (!m) return '';
-    return allDay || !m[4] ? m[1] + m[2] + m[3] : m[1] + m[2] + m[3] + 'T' + m[4] + m[5] + '00';
+    if (allDay || !m[4]) {
+      if (!plusDay) return m[1] + m[2] + m[3];
+      const d = new Date(Date.UTC(+m[1], +m[2] - 1, +m[3] + 1));
+      return d.getUTCFullYear() + String(d.getUTCMonth() + 1).padStart(2, '0') + String(d.getUTCDate()).padStart(2, '0');
+    }
+    return m[1] + m[2] + m[3] + 'T' + m[4] + m[5] + '00';
   };
 
   const TYPES = {
@@ -86,7 +93,7 @@
         const ad = !!f.allDay;
         const L = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'BEGIN:VEVENT', 'SUMMARY:' + escV(v('summary'))];
         L.push('DTSTART' + (ad ? ';VALUE=DATE:' : ':') + icsDate(v('start'), ad));
-        if (v('end')) L.push('DTEND' + (ad ? ';VALUE=DATE:' : ':') + icsDate(v('end'), ad));
+        if (v('end')) L.push('DTEND' + (ad ? ';VALUE=DATE:' : ':') + icsDate(v('end'), ad, ad));
         if (v('location')) L.push('LOCATION:' + escV(v('location')));
         if (v('description')) L.push('DESCRIPTION:' + escV(v('description')));
         L.push('END:VEVENT', 'END:VCALENDAR');

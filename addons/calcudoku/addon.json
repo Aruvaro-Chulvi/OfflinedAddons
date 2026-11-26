@@ -1,7 +1,7 @@
 {
   "id": "calcudoku",
   "name": "Calcudoku",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "author": "Álvaro C. Chulvi",
   "description": "Fill the grid so every row and column has each number once and every cage gives its result with + − × ÷. Six sizes, from 4×4 to 9×9, with its own puzzle generator.",
   "icon": "🧮",

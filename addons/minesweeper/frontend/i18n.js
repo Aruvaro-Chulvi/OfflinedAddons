@@ -1,6 +1,7 @@
 /* Texts of the Minesweeper addon in Offlined's ten languages. {x} are placeholders. */
 window.MINES_I18N = {
   en: {
+    sound: "Sound", soundOff: "Off", soundSoft: "Soft", soundNormal: "Normal",
     appName: "Minesweeper", lv: ["Beginner", "Intermediate", "Expert", "Master"], minesN: "{n} mines",
     newGame: "New game", start: "New game", thisGame: "This game", level: "Level", size: "Size", mines: "Mines", flags: "Flags",
     cleared: "Cleared", hintsUsed: "Hints used",
@@ -24,6 +25,7 @@ window.MINES_I18N = {
     offlineStore: "Saved only in this browser (Offlined's storage is not available).",
   },
   es: {
+    sound: "Sonido", soundOff: "Apagado", soundSoft: "Suave", soundNormal: "Normal",
     appName: "Buscaminas", lv: ["Principiante", "Intermedio", "Experto", "Maestro"], minesN: "{n} minas",
     newGame: "Nueva partida", start: "Nueva partida", thisGame: "Esta partida", level: "Nivel", size: "Tamaño", mines: "Minas", flags: "Banderas",
     cleared: "Descubierto", hintsUsed: "Ayudas usadas",
@@ -47,6 +49,7 @@ window.MINES_I18N = {
     offlineStore: "Guardado solo en este navegador (el almacén de Offlined no está disponible).",
   },
   fr: {
+    sound: "Son", soundOff: "Coupé", soundSoft: "Doux", soundNormal: "Normale",
     appName: "Démineur", lv: ["Débutant", "Intermédiaire", "Expert", "Maître"], minesN: "{n} mines",
     newGame: "Nouvelle partie", start: "Nouvelle partie", thisGame: "Cette partie", level: "Niveau", size: "Taille", mines: "Mines", flags: "Drapeaux",
     cleared: "Découvert", hintsUsed: "Aides utilisées",
@@ -70,6 +73,7 @@ window.MINES_I18N = {
     offlineStore: "Enregistré seulement dans ce navigateur (le stockage d'Offlined n'est pas disponible).",
   },
   pt: {
+    sound: "Som", soundOff: "Desligado", soundSoft: "Suave", soundNormal: "Normal",
     appName: "Campo minado", lv: ["Principiante", "Intermédio", "Especialista", "Mestre"], minesN: "{n} minas",
     newGame: "Novo jogo", start: "Novo jogo", thisGame: "Este jogo", level: "Nível", size: "Tamanho", mines: "Minas", flags: "Bandeiras",
     cleared: "Descoberto", hintsUsed: "Ajudas usadas",
@@ -93,6 +97,7 @@ window.MINES_I18N = {
     offlineStore: "Guardado só neste navegador (o armazenamento do Offlined não está disponível).",
   },
   it: {
+    sound: "Suono", soundOff: "Spento", soundSoft: "Leggero", soundNormal: "Normale",
     appName: "Campo minato", lv: ["Principiante", "Intermedio", "Esperto", "Maestro"], minesN: "{n} mine",
     newGame: "Nuova partita", start: "Nuova partita", thisGame: "Questa partita", level: "Livello", size: "Dimensione", mines: "Mine", flags: "Bandierine",
     cleared: "Scoperto", hintsUsed: "Aiuti usati",
@@ -116,6 +121,7 @@ window.MINES_I18N = {
     offlineStore: "Salvato solo in questo browser (l'archivio di Offlined non è disponibile).",
   },
   de: {
+    sound: "Ton", soundOff: "Aus", soundSoft: "Leise", soundNormal: "Normal",
     appName: "Minensuche", lv: ["Anfänger", "Fortgeschritten", "Experte", "Meister"], minesN: "{n} Minen",
     newGame: "Neues Spiel", start: "Neues Spiel", thisGame: "Dieses Spiel", level: "Stufe", size: "Größe", mines: "Minen", flags: "Fahnen",
     cleared: "Aufgedeckt", hintsUsed: "Benutzte Hilfen",
@@ -139,6 +145,7 @@ window.MINES_I18N = {
     offlineStore: "Nur in diesem Browser gespeichert (der Speicher von Offlined ist nicht verfügbar).",
   },
   zh: {
+    sound: "声音", soundOff: "关闭", soundSoft: "轻柔", soundNormal: "正常",
     appName: "扫雷", lv: ["初级", "中级", "高级", "大师"], minesN: "{n} 颗雷",
     newGame: "新游戏", start: "新游戏", thisGame: "本局", level: "难度", size: "尺寸", mines: "地雷", flags: "旗子",
     cleared: "已翻开", hintsUsed: "已用提示",
@@ -162,6 +169,7 @@ window.MINES_I18N = {
     offlineStore: "仅保存在此浏览器中（Offlined 存储不可用）。",
   },
   hi: {
+    sound: "ध्वनि", soundOff: "बंद", soundSoft: "धीमी", soundNormal: "सामान्य",
     appName: "माइनस्वीपर", lv: ["शुरुआती", "मध्यम", "विशेषज्ञ", "मास्टर"], minesN: "{n} माइन",
     newGame: "नया खेल", start: "नया खेल", thisGame: "यह खेल", level: "स्तर", size: "आकार", mines: "माइन", flags: "झंडे",
     cleared: "खोला गया", hintsUsed: "इस्तेमाल किए संकेत",
@@ -185,6 +193,7 @@ window.MINES_I18N = {
     offlineStore: "केवल इस ब्राउज़र में सहेजा गया (Offlined का स्टोरेज उपलब्ध नहीं है)।",
   },
   ar: {
+    sound: "الصوت", soundOff: "مطفأ", soundSoft: "خافت", soundNormal: "عادية",
     appName: "كاسحة الألغام", lv: ["مبتدئ", "متوسط", "خبير", "أستاذ"], minesN: "{n} لغمًا",
     newGame: "لعبة جديدة", start: "لعبة جديدة", thisGame: "هذه اللعبة", level: "المستوى", size: "الحجم", mines: "الألغام", flags: "الأعلام",
     cleared: "المكشوف", hintsUsed: "التلميحات المستخدمة",
@@ -208,6 +217,7 @@ window.MINES_I18N = {
     offlineStore: "محفوظ في هذا المتصفح فقط (تخزين Offlined غير متاح).",
   },
   ru: {
+    sound: "Звук", soundOff: "Выкл.", soundSoft: "Тихо", soundNormal: "Обычно",
     appName: "Сапёр", lv: ["Новичок", "Любитель", "Эксперт", "Мастер"], minesN: "мин: {n}",
     newGame: "Новая игра", start: "Новая игра", thisGame: "Эта игра", level: "Уровень", size: "Размер", mines: "Мины", flags: "Флажки",
     cleared: "Открыто", hintsUsed: "Подсказок использовано",

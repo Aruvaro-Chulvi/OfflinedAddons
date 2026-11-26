@@ -1,6 +1,7 @@
 /* Texts of the Chess addon in Offlined's ten languages. {x} are placeholders. */
 window.CHESS_I18N = {
   en: {
+    sound: "Sound", soundOff: "Off", soundSoft: "Soft", soundNormal: "Normal",
     lv: ["Beginner", "Amateur", "Advanced", "Master"],
     lvDesc: ["Looks 1 move ahead, makes mistakes", "Thinks 2–3 moves ahead", "Thinks 4–6 moves ahead", "Thinks deeply, no mistakes"],
     newGame: "New game", playAs: "You play", white: "White", black: "Black", random: "Random", clock: "Clock", noClock: "None",
@@ -22,6 +23,7 @@ window.CHESS_I18N = {
     offlineStore: "Saved only in this browser (Offlined's storage is not available).",
   },
   es: {
+    sound: "Sonido", soundOff: "Apagado", soundSoft: "Suave", soundNormal: "Normal",
     lv: ["Principiante", "Aficionado", "Avanzado", "Maestro"],
     lvDesc: ["Mira 1 jugada y se equivoca", "Piensa 2–3 jugadas", "Piensa 4–6 jugadas", "Piensa a fondo, sin errores"],
     newGame: "Nueva partida", playAs: "Juegas con", white: "Blancas", black: "Negras", random: "Al azar", clock: "Reloj", noClock: "Sin reloj",
@@ -43,6 +45,7 @@ window.CHESS_I18N = {
     offlineStore: "Guardado solo en este navegador (el almacén de Offlined no está disponible).",
   },
   fr: {
+    sound: "Son", soundOff: "Coupé", soundSoft: "Doux", soundNormal: "Normale",
     lv: ["Débutant", "Amateur", "Avancé", "Maître"],
     lvDesc: ["Voit 1 coup, fait des erreurs", "Calcule 2–3 coups", "Calcule 4–6 coups", "Réfléchit à fond, sans erreurs"],
     newGame: "Nouvelle partie", playAs: "Vous jouez", white: "Blancs", black: "Noirs", random: "Au hasard", clock: "Pendule", noClock: "Sans",
@@ -64,6 +67,7 @@ window.CHESS_I18N = {
     offlineStore: "Enregistré seulement dans ce navigateur (le stockage d'Offlined n'est pas disponible).",
   },
   pt: {
+    sound: "Som", soundOff: "Desligado", soundSoft: "Suave", soundNormal: "Normal",
     lv: ["Principiante", "Amador", "Avançado", "Mestre"],
     lvDesc: ["Vê 1 lance e erra", "Pensa 2–3 lances", "Pensa 4–6 lances", "Pensa a fundo, sem erros"],
     newGame: "Novo jogo", playAs: "Jogas com", white: "Brancas", black: "Pretas", random: "Ao acaso", clock: "Relógio", noClock: "Sem",
@@ -85,6 +89,7 @@ window.CHESS_I18N = {
     offlineStore: "Guardado só neste navegador (o armazenamento do Offlined não está disponível).",
   },
   it: {
+    sound: "Suono", soundOff: "Spento", soundSoft: "Leggero", soundNormal: "Normale",
     lv: ["Principiante", "Dilettante", "Avanzato", "Maestro"],
     lvDesc: ["Vede 1 mossa, sbaglia", "Calcola 2–3 mosse", "Calcola 4–6 mosse", "Pensa a fondo, senza errori"],
     newGame: "Nuova partita", playAs: "Giochi con", white: "Bianco", black: "Nero", random: "A caso", clock: "Orologio", noClock: "Senza",
@@ -106,6 +111,7 @@ window.CHESS_I18N = {
     offlineStore: "Salvato solo in questo browser (l'archivio di Offlined non è disponibile).",
   },
   de: {
+    sound: "Ton", soundOff: "Aus", soundSoft: "Leise", soundNormal: "Normal",
     lv: ["Anfänger", "Hobbyspieler", "Fortgeschritten", "Meister"],
     lvDesc: ["Sieht 1 Zug, macht Fehler", "Rechnet 2–3 Züge", "Rechnet 4–6 Züge", "Denkt gründlich, ohne Fehler"],
     newGame: "Neue Partie", playAs: "Du spielst", white: "Weiß", black: "Schwarz", random: "Zufall", clock: "Uhr", noClock: "Ohne",
@@ -127,6 +133,7 @@ window.CHESS_I18N = {
     offlineStore: "Nur in diesem Browser gespeichert (der Speicher von Offlined ist nicht verfügbar).",
   },
   zh: {
+    sound: "声音", soundOff: "关闭", soundSoft: "轻柔", soundNormal: "正常",
     lv: ["新手", "业余", "进阶", "大师"],
     lvDesc: ["只看 1 步，会犯错", "计算 2–3 步", "计算 4–6 步", "深入思考，不犯错"],
     newGame: "新对局", playAs: "你执", white: "白棋", black: "黑棋", random: "随机", clock: "计时", noClock: "不计时",
@@ -148,6 +155,7 @@ window.CHESS_I18N = {
     offlineStore: "仅保存在此浏览器中（Offlined 存储不可用）。",
   },
   hi: {
+    sound: "ध्वनि", soundOff: "बंद", soundSoft: "धीमी", soundNormal: "सामान्य",
     lv: ["शुरुआती", "शौक़िया", "उन्नत", "मास्टर"],
     lvDesc: ["1 चाल आगे देखता है, गलती करता है", "2–3 चालें सोचता है", "4–6 चालें सोचता है", "गहराई से सोचता है, कोई गलती नहीं"],
     newGame: "नया खेल", playAs: "आप खेलेंगे", white: "सफ़ेद", black: "काला", random: "कोई भी", clock: "घड़ी", noClock: "नहीं",
@@ -169,6 +177,7 @@ window.CHESS_I18N = {
     offlineStore: "केवल इस ब्राउज़र में सहेजा गया (Offlined का स्टोरेज उपलब्ध नहीं है)।",
   },
   ar: {
+    sound: "الصوت", soundOff: "مطفأ", soundSoft: "خافت", soundNormal: "عادية",
     lv: ["مبتدئ", "هاوٍ", "متقدم", "أستاذ"],
     lvDesc: ["ينظر نقلة واحدة ويخطئ", "يفكر 2–3 نقلات", "يفكر 4–6 نقلات", "يفكر بعمق بلا أخطاء"],
     newGame: "مباراة جديدة", playAs: "تلعب بـ", white: "الأبيض", black: "الأسود", random: "عشوائي", clock: "الساعة", noClock: "بلا ساعة",
@@ -190,6 +199,7 @@ window.CHESS_I18N = {
     offlineStore: "محفوظ في هذا المتصفح فقط (تخزين Offlined غير متاح).",
   },
   ru: {
+    sound: "Звук", soundOff: "Выкл.", soundSoft: "Тихо", soundNormal: "Обычно",
     lv: ["Новичок", "Любитель", "Продвинутый", "Мастер"],
     lvDesc: ["Видит 1 ход, ошибается", "Считает 2–3 хода", "Считает 4–6 ходов", "Думает глубоко, без ошибок"],
     newGame: "Новая партия", playAs: "Вы играете", white: "Белыми", black: "Чёрными", random: "Случайно", clock: "Часы", noClock: "Без часов",

@@ -47,14 +47,22 @@ void main() {
   let time = 0;
 
   /** o: lo que se defiende; at: [{ x, y, z }] posiciones del suelo de cada reflector */
+  // Geometrías: una vez por escala (antes, nuevas en cada partida y sin liberar)
+  const geoCache = new Map(), drumGeo = new THREE.CylinderGeometry(1.1, 1.1, 1.6, 14);
+  function geos(scale) {
+    let g = geoCache.get(scale);
+    if (!g) { const hy = 2.2 * scale / 3 + 1.4; g = { hy, stand: new THREE.CylinderGeometry(0.35, 0.6, hy, 8), glass: new THREE.CircleGeometry(1.0 * scale / 2, 16) }; geoCache.set(scale, g); }
+    return g;
+  }
   function build(o, at, scale = 3) {
+    const G = geos(scale);
     for (const p of at) {
       const base = new THREE.Group(); base.position.set(p.x, p.y, p.z); scene.add(base);
-      const drum = new THREE.Mesh(new THREE.CylinderGeometry(1.1, 1.1, 1.6, 14), housingMat); drum.rotation.x = Math.PI / 2;
-      const head = new THREE.Group(); head.position.y = 2.2 * scale / 3 + 1.4; base.add(head);
-      const stand = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.6, head.position.y, 8), housingMat); stand.position.y = head.position.y / 2; base.add(stand);
+      const drum = new THREE.Mesh(drumGeo, housingMat); drum.rotation.x = Math.PI / 2;
+      const head = new THREE.Group(); head.position.y = G.hy; base.add(head);
+      const stand = new THREE.Mesh(G.stand, housingMat); stand.position.y = head.position.y / 2; base.add(stand);
       drum.scale.setScalar(scale / 2); head.add(drum);
-      const glass = new THREE.Mesh(new THREE.CircleGeometry(1.0 * scale / 2, 16), glassOff); glass.position.z = 0.82 * scale / 2; head.add(glass);
+      const glass = new THREE.Mesh(G.glass, glassOff); glass.position.z = 0.82 * scale / 2; head.add(glass);
       const beam = new THREE.Mesh(beamGeo, beamMat); beam.frustumCulled = false; beam.renderOrder = 3; head.add(beam);
       const glow = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color: 0xfff1d0, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
       glow.scale.setScalar(6); glow.position.z = 1.2 * scale / 2; head.add(glow);
@@ -68,7 +76,7 @@ void main() {
     const I = Math.max(0, Math.min(1, (night - 0.3) / 0.4));
     beamMat.uniforms.uI.value = I;
     // a quién sigue cada uno: los enemigos cercanos que van a por la torre, primero; cada reflector a uno distinto
-    const taken = new Set();
+    const taken = _taken; taken.clear();
     for (const L of list) {
       const on = I > 0.01;
       L.beam.visible = on; L.glow.visible = on; L.glass.material = on ? glassOn : glassOff;
@@ -93,7 +101,9 @@ void main() {
       _q.setFromUnitVectors(_z, L.dir); L.head.quaternion.copy(_q);
     }
   }
-  function clear() { for (const L of list) scene.remove(L.base); list.length = 0; }
+  const _taken = new Set();
+  // el material del brillo es de cada reflector: se libera (geometrías y demás materiales son compartidos)
+  function clear() { for (const L of list) { scene.remove(L.base); L.glow.material.dispose(); } list.length = 0; }
   // Arena Neón: haces de colores (a, b alternos); null = el blanco cálido de siempre
   const beamMatB = beamMat.clone(); beamMatB.uniforms.uI = beamMat.uniforms.uI;
   const warm = new THREE.Color(1.0, 0.96, 0.86), warmGlow = new THREE.Color(0xfff1d0);

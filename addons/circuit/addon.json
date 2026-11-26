@@ -1,7 +1,7 @@
 {
   "id": "circuit",
   "name": "Circuit",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "author": "Álvaro C. Chulvi",
   "description": "Draw a single closed loop through a grid of dots so that every number shows how many of its sides the loop uses. Six levels, from 5×5 to 15×15, with its own puzzle generator.",
   "icon": "⭕",

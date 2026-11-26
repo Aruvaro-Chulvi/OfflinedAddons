@@ -65,9 +65,10 @@ const PERF_DEBUG = (() => {
   try { return new URLSearchParams(location.search).has("perf") || localStorage.getItem("sg-perf") === "1"; } catch { return false; }
 })();
 
-// Reglas de puntuación: desde la 1.3 (arena, puertas Flow, vuelo rasante, reto diario en la arena) las partidas
-// no se comparan con las de antes. Las anteriores (sin «rules») siguen en el historial y cuentan para logros y rango
-export const RULES = 2;
+// Reglas de puntuación: cada vez que cambian, las partidas nuevas no se comparan con las de antes. Las anteriores
+// siguen en el historial y cuentan para logros y rango. 1 = hasta la 1.2 (sin «rules») · 2 = 1.3 (arena, puertas Flow,
+// vuelo rasante, reto diario en la arena) · 3 = 1.4 (racha, oleadas finales, jefe y bonus de la torre nuevos)
+export const RULES = 3;
 const sameRules = r => (r.rules || 1) === RULES;
 
 export function createStats() {
@@ -114,7 +115,7 @@ export function createStats() {
       if (mode === "daily" && !mine) { const seen = new Set(); l = l.filter(r => !seen.has(r.uid) && seen.add(r.uid)); }   // diaria: la mejor de cada uno
       return l.slice(0, 10);
     },
-    /** ¿Hay partidas con las reglas de antes de la 1.3? (para avisar en el ranking) */
+    /** ¿Hay partidas con reglas anteriores a las de ahora? (para avisar en el ranking) */
     hasOldRuns() { return data.runs.some(r => !sameRules(r)); },
     history(n = 20) { return data.runs.filter(r => r.uid === user.id).slice(-n).reverse(); },
     /** Guarda la partida; devuelve { run, record, place, newAch: [ids], rankUp } */

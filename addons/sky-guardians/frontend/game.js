@@ -15,11 +15,11 @@ import { createMenu } from "./menu.js";
 import { createTraining } from "./training.js";
 import { NAME, TX } from "./texts.js";
 import { createAudio } from "./audio.js";
-import { bindings as KB, ACTIONS } from "./controls.js";
+import { bindings as KB, ACTIONS, firstPad } from "./controls.js";
 import { createPerf } from "./perf.js";
 import { createArena, ARENA_LL, PALETTES, PALETTE_IDS } from "./arena.js";
 
-const VERSION = "1.3.0";
+const VERSION = "1.4.0";   // con stats.RULES = 3 (racha, oleadas finales, jefe y bonus de torre nuevos)
 const PLANES = [{ key: "p_attack", id: SG_ATTACK }, { key: "p_fighter", id: SG_FIGHTER }];
 const SITE_MAX = 1200;                // la torre puede apartarse del punto elegido hasta esto para encontrar sitio
 const PLAZA = BASE_HALF * TOWER_SCALE; // media anchura de la explanada a escala (93 m)
@@ -227,7 +227,9 @@ export default function init(api) {
   HOOK.sky = (SKY, dir) => (arena && arena.root.parent && S.arena ? arena.skyTint(SKY, dir) : null);
   const menu = createMenu(api, {
     t, stats, state: st, save, PLANES, title, version: VERSION, overlay: battleOverlay, sound, arenaOK: ARENA_OK,
-    applySettings: s => { if (api.setResolutionCap) api.setResolutionCap(GFX_CAP[s.gfx] || 0); if (api.gameBudget) api.gameBudget(GFX_TERRAIN[s.gfx] || GFX_TERRAIN.bal); S.invert = !!s.invert; arcade.setSens(s.sens); combat.setAssist(s.assist); combat.setHudScale({ s: 0.85, m: 1, l: 1.2 }[s.hud] || 1); settingsCache = s; },
+    applySettings: s => { if (api.setResolutionCap) api.setResolutionCap(GFX_CAP[s.gfx] || 0); if (api.gameBudget) api.gameBudget(GFX_TERRAIN[s.gfx] || GFX_TERRAIN.bal); S.invert = !!s.invert; arcade.setSens(s.sens); combat.setAssist(s.assist); combat.setHudScale({ s: 0.85, m: 1, l: 1.2 }[s.hud] || 1);
+      if (combat.setCalm) combat.setCalm(!!s.calm);   // «Reducir efectos»: menos sacudidas, sin cámara lenta, destellos suaves
+      settingsCache = s; },
     setLivery: id => { st.livery = id; save(); applyLivery(api.AIRCRAFT, id); },
     previewLivery: id => applyLivery(api.AIRCRAFT, id || st.livery),
     onPlay: () => launch("game"), onTraining: () => launch("training"),
@@ -236,6 +238,8 @@ export default function init(api) {
     canReplay: () => combat.canReplay && (api.version || 1) >= 2,   // la cámara de la repetición necesita HOOK.camera (motor v2)
     onResume: () => { api.pause(false); recapture(); }, onQuit: () => quit(), onAgain: () => restart(),
   });
+  // Start del mando (arcade.js): no quita la pausa con los resultados o el fin del entrenamiento delante
+  arcade.startBlocked = () => menu.overlayKind === "results" || menu.overlayKind === "trainDone";
   stats.ready.then(() => menu.show("home"));
 
   // Partida diaria: Normal, el avión del día y las mismas oleadas para toda la familia
@@ -270,7 +274,7 @@ export default function init(api) {
   }
   function recapture() {   // volver a capturar el ratón al seguir (si no se juega con mando)
     const c = api.renderer.domElement;
-    if (!navigator.getGamepads || ![...navigator.getGamepads()].some(g => g)) c.requestPointerLock && Promise.resolve(c.requestPointerLock()).catch(() => { });
+    if (!firstPad()) c.requestPointerLock && Promise.resolve(c.requestPointerLock()).catch(() => { });
   }
 
   // ── Enganches con el motor ──
@@ -317,7 +321,7 @@ export default function init(api) {
     arcade.start();
     if (mode === "game") perf.start(); else perf.stop();
     if (mode === "training") training.start();
-    else api.flash(navigator.getGamepads && [...navigator.getGamepads()].some(g => g) ? t("keysPad") : t("keys"), 8000);
+    else api.flash(firstPad() ? t("keysPad") : t("keys"), 8000);
   }
   // Shaders de todo lo del juego (enemigos, efectos, la torre…) compilados en la pantalla de carga (motor v2)
   let warmTower = null;
@@ -366,8 +370,8 @@ export default function init(api) {
       const f = S.flight, v = f.vel.length(), tgt = S.P.vmax * 1.25;
       if (v > 1 && v < tgt) f.vel.multiplyScalar(Math.min(tgt / v, 1 + 1.4 * dt));
     }
-    // «Clic para apuntar»: mientras no hay ratón capturado ni mando
-    combat.setMouseHint(!S.paused && !(S.crashT > 0) && !arcade.mouseOn && !(navigator.getGamepads && [...navigator.getGamepads()].some(x => x)));
+    // «Clic para apuntar»: mientras no hay ratón capturado ni mando (firstPad: una lectura por fotograma, compartida)
+    combat.setMouseHint(!S.paused && !(S.crashT > 0) && !arcade.mouseOn && !firstPad());
     { const G = combat.state.game; api.clock.speed = wxMode !== "night" && G.phase === "rest" && G.wave > 0 && !G.over && !G.training ? 40 : 1; }
     if (frozen && !combat.replaying) dt = 0;   // en la repetición la torre sí se mueve (se ve caer)
     // Al empezar llegan teselas con más detalle: durante 30 s se revisa que ninguna torre haya quedado sobre un

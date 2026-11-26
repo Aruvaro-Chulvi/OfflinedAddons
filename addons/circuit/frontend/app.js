@@ -20,6 +20,10 @@
   };
   const lvName = (l) => t('lv')[l - 1] || String(l);
   const techName = (id) => (id ? t('t_' + id) : '—');
+  // the general rule of a technique (never where it applies); English, then nothing, as fallback
+  const TECH_DESC = window.CIRCUIT_TECH_DESC || {};
+  const techDesc = (id) => (TECH_DESC[lang] && TECH_DESC[lang][id]) || (TECH_DESC.en && TECH_DESC.en[id]) || '';
+  const techLine = (id) => { const d = techDesc(id); return t('hintTech', { t: techName(id) }) + (d ? '\n' + d : ''); };
   const sizeOf = (l) => E.LEVELS[l].R + '×' + E.LEVELS[l].C;
   document.documentElement.lang = lang;
   if (lang === 'ar') document.documentElement.dir = 'rtl';
@@ -49,7 +53,10 @@
   applyTheme();
 
   // ── Storage ─────────────────────────────────────────────────────────────────────────────────────────
-  const DEFAULTS = { errMode: 'free', dimDone: true, timer: true, theme: 'auto', level: 2 };
+  const DEFAULTS = { errMode: 'free', dimDone: true, timer: true, sound: 'soft', theme: 'auto', level: 2 };
+  // sounds and effects (engine/puzzle-fx.js)
+  const SFX = window.PuzzleFX;
+  const snd = (name, opts) => { try { SFX.play(name, opts); } catch (_) {} };
   function normalize(d) {
     d = d && typeof d === 'object' ? d : {};
     d.v = 1;
@@ -99,6 +106,7 @@
   let G = null, geom = null, clues = null, sol = null, noClues = null;
   let crossMode = false, paused = false, busy = false, showErrors = false;
   let undoStack = [], redoStack = [], hint = null, hl = { cells: [], edges: [], wrong: [] };
+  let hintSeen = null;             // { key, step, data } of the last position whose hint was counted
   let uiLevel = 2, statLevel = 2, paint = null;
 
   function derive() {
@@ -115,7 +123,7 @@
     settings().level = p.level;
     me().game = G;
     uiLevel = statLevel = p.level;
-    undoStack = []; redoStack = []; hint = null; hl = { cells: [], edges: [], wrong: [] };
+    undoStack = []; redoStack = []; hint = null; hintSeen = null; hl = { cells: [], edges: [], wrong: [] };
     showErrors = false; crossMode = false; setPause(false);
     hideToast();
     renderAll();
@@ -296,6 +304,7 @@
     document.querySelectorAll('.sw').forEach((s) => s.classList.toggle('on', !!S[s.dataset.k]));
     document.querySelectorAll('#errMode button').forEach((b) => b.classList.toggle('on', b.dataset.v === S.errMode));
     document.querySelectorAll('#themeSeg button').forEach((b) => b.classList.toggle('on', b.dataset.v === S.theme));
+    document.querySelectorAll('#soundSeg button').forEach((b) => b.classList.toggle('on', b.dataset.v === S.sound));
   }
   function renderUser() {
     const name = USER.name || t('appName');
@@ -320,11 +329,23 @@
     if (vc >= 0 && vc <= g.C && vr >= 0 && vr < g.R) { const d = Math.abs(x - vc); if (d < bd) { bd = d; best = g.v(vr, vc); } }
     return best;
   }
+  /** Returns 0 if nothing changed, 1 if it changed, 2 if it changed into a strict-mode error. */
   function setEdge(patch, e, v) {
-    if (G.edges[e] === v) return;
+    if (G.edges[e] === v) return 0;
     patch.push([e, G.edges[e], v]);
-    if (settings().errMode === 'strict' && ((v === LINE && sol[e] !== LINE) || (v === CROSS && sol[e] === LINE))) G.errors++;
+    let r = 1;
+    if (settings().errMode === 'strict' && ((v === LINE && sol[e] !== LINE) || (v === CROSS && sol[e] === LINE))) { G.errors++; r = 2; }
     G.edges[e] = v;
+    return r;
+  }
+  // one sound per changed edge, but never more than one every ~35 ms while dragging
+  let lastEdgeSnd = 0;
+  function edgeSound(v, r) {
+    if (!r) return;
+    const now = performance.now();
+    if (r !== 2 && now - lastEdgeSnd < 35) return;
+    lastEdgeSnd = now;
+    snd(r === 2 ? 'error' : v === LINE ? 'line' : v === CROSS ? 'cross' : 'unline');
   }
   board.addEventListener('contextmenu', (e) => e.preventDefault());
   board.addEventListener('pointerdown', (ev) => {
@@ -338,7 +359,7 @@
     if (ev.button === 2 || crossMode) v = cur === CROSS ? UNK : CROSS;
     else v = cur === UNK ? LINE : cur === LINE ? CROSS : UNK;
     paint = { v, patch: [], seen: new Set([e]), last: { x: ev.clientX, y: ev.clientY } };
-    setEdge(paint.patch, e, v);
+    edgeSound(v, setEdge(paint.patch, e, v));
     board.setPointerCapture(ev.pointerId);
     renderBoard();
   });
@@ -347,16 +368,17 @@
     // sample the path since the last event so a fast drag does not skip edges
     const last = paint.last || { x: ev.clientX, y: ev.clientY };
     const steps = Math.max(1, Math.ceil(Math.hypot(ev.clientX - last.x, ev.clientY - last.y) / 6));
-    let changed = false;
+    let changed = false, res = 0;
     for (let k = 1; k <= steps; k++) {
       const pt = { clientX: last.x + ((ev.clientX - last.x) * k) / steps, clientY: last.y + ((ev.clientY - last.y) * k) / steps };
       const e = edgeAt(pt);
       if (e < 0 || paint.seen.has(e)) continue;
       paint.seen.add(e);
-      setEdge(paint.patch, e, paint.v);
+      res = Math.max(res, setEdge(paint.patch, e, paint.v));
       changed = true;
     }
     paint.last = { x: ev.clientX, y: ev.clientY };
+    edgeSound(paint.v, res);
     if (changed) renderBoard();
   });
   function endPaint() {
@@ -379,21 +401,21 @@
     clearHint();
     const p = undoStack.pop();
     for (let k = p.length - 1; k >= 0; k--) G.edges[p[k][0]] = p[k][1];
-    redoStack.push(p); renderBoard(); renderTools(); save();
+    redoStack.push(p); renderBoard(); renderTools(); save(); snd('unline');
   }
   function redo() {
     if (!canEdit() || !redoStack.length) return;
     clearHint();
     const p = redoStack.pop();
     for (const [e, , v] of p) G.edges[e] = v;
-    undoStack.push(p); renderBoard(); renderTools(); save();
+    undoStack.push(p); renderBoard(); renderTools(); save(); snd('line');
   }
   function restart() {
     if (!canEdit()) return;
     confirmBox(t('confirmRestart'), t('yesRestart'), () => {
       clearHint();
       const patch = []; for (let e = 0; e < geom.NE; e++) if (G.edges[e]) patch.push([e, G.edges[e], UNK]), G.edges[e] = UNK;
-      commit(patch);
+      commit(patch); if (patch.length) snd('erase');
     });
   }
   function checkComplete() {
@@ -413,10 +435,15 @@
     if (toastKind === 'hint') hideToast();
     renderBoard();
   }
+  // One hint = one board position: asking again on the same position shows the same step and is not
+  // counted again; the steps of a hint («Más ayuda») are part of that same hint (see hintSeen).
   function hintPress() {
     if (!canEdit()) return;
-    const key = G.edges.join('');
-    if (!hint || hint.key !== key) hint = { key, step: 0, data: E.hint(G.R, G.C, G.clues, G.solution, Int8Array.from(G.edges)) };
+    const key = G.edges.join(',');
+    if (!hint || hint.key !== key) {
+      const seen = hintSeen && hintSeen.key === key ? hintSeen : null; // same position: same hint, same step
+      hint = { key, step: seen ? seen.step : 0, data: seen ? seen.data : E.hint(G.R, G.C, G.clues, G.solution, Int8Array.from(G.edges)) };
+    }
     showHintStep();
   }
   function nextHint() { if (hint) { hint.step++; showHintStep(); } }
@@ -424,7 +451,9 @@
     const d = hint.data;
     hl.cells = []; hl.edges = []; hl.wrong = [];
     if (!d) { hint = null; showToast(t('hintNone'), null, null, 'hint'); renderBoard(); return; }
-    G.hints++;
+    if (!hintSeen || hintSeen.key !== hint.key) G.hints++;
+    hintSeen = { key: hint.key, step: hint.step, data: d };
+    snd('hint');
     if (d.wrong) {
       hl.wrong = d.wrong.slice();
       showToast(t('hintWrong', { n: d.wrong.length }), t('removeThem'), () => {
@@ -436,7 +465,7 @@
       showToast(t('hintRegion'), t('moreHelp'), nextHint, 'hint');
     } else if (hint.step === 1) {
       hl.cells = d.cells.slice(); hl.edges = d.deductions.map((x) => x[0]);
-      showToast(t('hintTech', { t: techName(d.tech) }), t('moreHelp'), nextHint, 'hint');
+      showToast(techLine(d.tech), t('moreHelp'), nextHint, 'hint');
     } else {
       const patch = [];
       for (const [e, v] of d.deductions) { patch.push([e, G.edges[e], v]); G.edges[e] = v; }
@@ -488,7 +517,7 @@
     for (let e = 0; e < geom.NE; e++) if (G.edges[e] !== LINE) G.edges[e] = UNK;
     const s = statsOf(G.level);
     s.won++; s.total += G.time;
-    const record = !s.best || G.time < s.best;
+    const record = G.hints === 0 && (!s.best || G.time < s.best); // records only without hints
     if (record) s.best = G.time;
     const st = me().streak;
     if (st.last !== today()) { st.days = st.last === today(1) ? st.days + 1 : 1; st.last = today(); }
@@ -503,7 +532,57 @@
     $('winErr').textContent = G.errors;
     $('winHints').textContent = G.hints;
     $('winStreak').textContent = daysText(st.days);
-    setTimeout(() => $('winDlg').classList.add('show'), 700);
+    // the loop is traced with the fanfare, then the result (only if this game is still the one on screen)
+    const wonG = G, dur = traceLoop();
+    snd('win');
+    setTimeout(() => { if (G === wonG) $('winDlg').classList.add('show'); }, Math.max(700, dur + 150));
+  }
+  /** Win effect: an overlay path runs along the loop while the drawn lines and the inside wait dimmed.
+   *  Pure decoration on top of the rendered board: a later renderBoard just drops it. Returns its length in ms. */
+  function traceLoop() {
+    if (SFX.reduced() || !board.animate) return 0;
+    const g = geom, W = g.C + 1, adj = new Map();
+    const link = (a, b) => { (adj.get(a) || adj.set(a, []).get(a)).push(b); };
+    let n = 0;
+    for (let e = 0; e < g.NE; e++) {
+      if (G.edges[e] !== LINE) continue;
+      const [x1, y1, x2, y2] = edgeXY(e), a = y1 * W + x1, b = y2 * W + x2;
+      link(a, b); link(b, a); n++;
+    }
+    if (!n) return 0;
+    // walk every loop (normally just one) into a single path
+    let d = '';
+    const seen = new Set();
+    for (const start of adj.keys()) {
+      if (seen.has(start)) continue;
+      let prev = -1, cur = start;
+      d += `M${start % W} ${(start / W) | 0}`;
+      while (!seen.has(cur)) {
+        seen.add(cur);
+        const next = adj.get(cur).find((x) => x !== prev && (!seen.has(x) || x === start));
+        if (next === undefined) break;
+        if (next === start) { d += 'Z'; break; }
+        d += `L${next % W} ${(next / W) | 0}`;
+        prev = cur; cur = next;
+      }
+    }
+    const dur = Math.round(Math.min(1200, Math.max(700, 400 + n * 5)));
+    const NS = 'http://www.w3.org/2000/svg';
+    const p = document.createElementNS(NS, 'path');
+    p.setAttribute('class', 'ln');
+    p.setAttribute('d', d);
+    p.setAttribute('fill', 'none');
+    p.setAttribute('stroke-width', '.14');
+    p.setAttribute('stroke-linejoin', 'round');
+    p.setAttribute('pathLength', '1');
+    p.setAttribute('stroke-dasharray', '1 1');
+    p.setAttribute('stroke-dashoffset', '1');
+    board.appendChild(p);
+    p.animate([{ strokeDashoffset: 1 }, { strokeDashoffset: 0 }], { duration: dur, easing: 'ease-in-out', fill: 'forwards' })
+      .finished.then(() => p.remove(), () => p.remove());
+    board.querySelectorAll('line.ln').forEach((el) => el.animate([{ opacity: 0.2 }, { opacity: 0.2 }], { duration: dur }));
+    board.querySelectorAll('rect.inside').forEach((el) => el.animate([{ opacity: 0 }, { opacity: 0, offset: 0.7 }, { opacity: 1 }], { duration: dur + 300 }));
+    return dur;
   }
   $('winAgain').onclick = () => { $('winDlg').classList.remove('show'); go(G.level); };
   $('winLevel').onclick = () => { $('winDlg').classList.remove('show'); openDrawer(); $('levels').closest('.sec').classList.remove('closed'); };
@@ -549,6 +628,7 @@
   document.querySelectorAll('.sw').forEach((s) => { s.onclick = () => { const S = settings(); S[s.dataset.k] = !S[s.dataset.k]; renderSettings(); renderBoard(); save(); }; });
   document.querySelectorAll('#errMode button').forEach((b) => { b.onclick = () => { settings().errMode = b.dataset.v; renderSettings(); renderBoard(); save(); }; });
   document.querySelectorAll('#themeSeg button').forEach((b) => { b.onclick = () => { settings().theme = b.dataset.v; renderSettings(); applyTheme(); save(); }; });
+  document.querySelectorAll('#soundSeg button').forEach((b) => { b.onclick = () => { settings().sound = b.dataset.v; SFX.setLevel(b.dataset.v); renderSettings(); save(); snd('tap'); }; });
   const openDrawer = () => $('app').classList.add('drawer');
   const closeDrawer = () => $('app').classList.remove('drawer');
   $('menuBtn').onclick = openDrawer;
@@ -590,6 +670,7 @@
     renderTools();
     await Promise.all([loadUser(), loadDB()]);
     $('storeNote').hidden = storeMode !== 'local';
+    SFX.init({ level: settings().sound });
     applyTheme();
     renderUser();
     uiLevel = statLevel = settings().level;

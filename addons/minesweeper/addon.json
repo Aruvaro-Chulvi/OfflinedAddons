@@ -1,7 +1,7 @@
 {
   "id": "minesweeper",
   "name": "Minesweeper",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "author": "Álvaro C. Chulvi",
   "description": "Clear the board without stepping on a mine. Four levels, a first click that is always safe and boards that can be solved by logic alone, without guessing.",
   "icon": "💣",

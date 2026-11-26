@@ -44,7 +44,10 @@
   applyTheme();
 
   // ── Storage ─────────────────────────────────────────────────────────────────────────────────────────
-  const DEFAULTS = { noGuess: true, chord: true, colorNums: false, timer: true, theme: 'auto', level: 1 };
+  const DEFAULTS = { noGuess: true, chord: true, colorNums: false, timer: true, sound: 'soft', theme: 'auto', level: 1 };
+  // sounds and effects (engine/puzzle-fx.js)
+  const SFX = window.PuzzleFX;
+  const snd = (name, opts) => { try { SFX.play(name, opts); } catch (_) {} };
   async function loadDB() {
     try {
       const r = await fetch(`/api/addons/${ID}/storage`, { cache: 'no-store' });
@@ -89,6 +92,7 @@
   // G: {level, R, C, total, mines:null|[...], open:[0/1], flags:[0/1], time, hints, helped, over:null|'win'|'lose', exploded}
   let G = null, mineSet = null, num = null, nb = null;
   let flagMode = false, paused = false, snapshot = null, hint = null, hl = { from: [], target: [], wrong: [] };
+  let hintSeen = null;             // { key, step, data } of the last position whose hint was counted
   let uiLevel = 1, statLevel = 1;
 
   function newGame(level) {
@@ -99,7 +103,7 @@
     settings().level = level;
     me().game = G;
     uiLevel = statLevel = level;
-    snapshot = null; hint = null; hl = { from: [], target: [], wrong: [] }; flagMode = false;
+    snapshot = null; hint = null; hintSeen = null; hl = { from: [], target: [], wrong: [] }; flagMode = false;
     setPause(false); hideToast();
     buildBoard();
     renderAll();
@@ -221,6 +225,7 @@
     const S = settings();
     document.querySelectorAll('.sw').forEach((s) => s.classList.toggle('on', !!S[s.dataset.k]));
     document.querySelectorAll('#themeSeg button').forEach((b) => b.classList.toggle('on', b.dataset.v === S.theme));
+    document.querySelectorAll('#soundSeg button').forEach((b) => b.classList.toggle('on', b.dataset.v === S.sound));
   }
   function renderUser() {
     const name = USER.name || t('appName');
@@ -248,14 +253,32 @@
     if (!started()) firstClick(i);
     if (G.flags[i]) return;
     takeSnapshot();
+    const before = snapshot.open;
     if (G.open[i]) {
       // chord: a number with all its flags opens the rest around it
       if (!settings().chord || num[i] <= 0) return;
       let f = 0; for (const j of nb[i]) if (G.flags[j]) f++;
-      if (f !== num[i]) return;
+      if (f !== num[i]) { snd('chordFail'); SFX.shake(cellEls[i]); return; }
       for (const j of nb[i]) if (!G.open[j] && !G.flags[j]) { if (open1(j)) return; }
     } else if (open1(i)) return;
-    afterMove();
+    if (!afterMove()) openedFx(before, i);
+  }
+  /** Sound and ripple for the cells a move just opened (after renderBoard): they appear ring by ring from the click. */
+  function openedFx(before, from) {
+    const fresh = [];
+    for (let j = 0; j < G.open.length; j++) if (G.open[j] && !before[j]) fresh.push(j);
+    if (!fresh.length) return;
+    if (fresh.length === 1) { snd('open'); return; }
+    snd('cascade', { n: Math.ceil(fresh.length / 6) });
+    if (SFX.reduced()) return;
+    const r0 = (from / G.C) | 0, c0 = from % G.C;
+    const ring = (j) => Math.max(Math.abs(((j / G.C) | 0) - r0), Math.abs((j % G.C) - c0));
+    let far = 1; for (const j of fresh) far = Math.max(far, ring(j));
+    const dur = 170, step = Math.min(12, (450 - dur) / far);
+    for (const j of fresh) {
+      cellEls[j].animate([{ opacity: 0.25, transform: 'scale(.6)' }, { opacity: 1, transform: 'scale(1)' }],
+        { duration: dur, delay: ring(j) * step, easing: 'ease-out', fill: 'backwards' });
+    }
   }
   // Opens one cell; returns true if it was a mine (game lost).
   function open1(i) {
@@ -269,17 +292,41 @@
     clearHint();
     G.flags[i] = G.flags[i] ? 0 : 1;
     renderBoard(); save();
+    snd(G.flags[i] ? 'flag' : 'unflag'); SFX.pop(cellEls[i]);
   }
+  // Renders after a move; returns true if it won the game.
   function afterMove() {
     renderBoard(); renderTools(); save();
     let opened = 0; for (const v of G.open) if (v) opened++;
-    if (opened === G.R * G.C - G.total) win();
+    if (opened === G.R * G.C - G.total) { win(); return true; }
+    return false;
   }
   function lose(i) {
     G.over = 'lose'; G.exploded = i;
     me().streak = 0;
     renderAll(); save(true);
-    setTimeout(() => { $('loseUndo').hidden = !snapshot; $('loseDlg').classList.add('show'); }, 600);
+    // the mine you hit flashes, then the others show up from it outwards; the dialog waits for them
+    snd('lose');
+    let total = 0;
+    if (!SFX.reduced()) {
+      cellEls[i].animate([{ opacity: 1, transform: 'scale(1)' }, { opacity: 0.35, transform: 'scale(1.25)' }, { opacity: 1, transform: 'scale(1)' }],
+        { duration: 240, iterations: 3, easing: 'ease-in-out' });
+      const r0 = (i / G.C) | 0, c0 = i % G.C, others = [];
+      for (const m of G.mines) if (m !== i && !G.flags[m]) others.push([m, Math.hypot(((m / G.C) | 0) - r0, (m % G.C) - c0)]);
+      const dur = 220, far = others.reduce((a, o) => Math.max(a, o[1]), 1), k = (900 - dur - 250) / far;
+      for (const [m, d] of others) {
+        const delay = 250 + d * k;
+        cellEls[m].animate([{ opacity: 0, transform: 'scale(.4)' }, { opacity: 1, transform: 'scale(1.15)', offset: 0.6 }, { opacity: 1, transform: 'scale(1)' }],
+          { duration: dur, delay, easing: 'ease-out', fill: 'backwards' });
+        total = Math.max(total, delay + dur);
+      }
+      total = Math.max(total, 720);
+    }
+    const lost = G;
+    setTimeout(() => {
+      if (G !== lost || G.over !== 'lose') return; // undone or a new game meanwhile
+      $('loseUndo').hidden = !snapshot; $('loseDlg').classList.add('show');
+    }, Math.max(600, total + 100));
   }
   $('loseAgain').onclick = () => { $('loseDlg').classList.remove('show'); finishLost(); newGame(G.level); };
   $('loseClose').onclick = () => { $('loseDlg').classList.remove('show'); finishLost(); };
@@ -315,7 +362,12 @@
     $('winHints').textContent = G.hints;
     $('winRate').textContent = Math.round((s.won / s.played) * 100) + ' %';
     $('winStreak').textContent = u.streak;
-    setTimeout(() => $('winDlg').classList.add('show'), 500);
+    // a diagonal wave across the board with the fanfare, then the result
+    const step = Math.min(40, 700 / (G.R + G.C));
+    const wave = SFX.sweep(cellEls.map((el, k) => [el, (((k / G.C) | 0) + (k % G.C)) * step]), { scale: 1.08 });
+    snd('win');
+    const won = G;
+    setTimeout(() => { if (G === won) $('winDlg').classList.add('show'); }, Math.max(500, wave - 150));
   }
   $('winAgain').onclick = () => { $('winDlg').classList.remove('show'); newGame(G.level); };
   $('winLevel').onclick = () => { $('winDlg').classList.remove('show'); openDrawer(); };
@@ -356,16 +408,23 @@
     if (!live()) return;
     if (!started()) { showToast(t('firstClick'), null, null, 'hint'); return; }
     const key = G.open.join('') + G.flags.join('');
-    if (!hint || hint.key !== key) hint = { key, step: 0, data: E.hint(G.level, G.mines, G.open, G.flags) };
+    if (!hint || hint.key !== key) {
+      const seen = hintSeen && hintSeen.key === key ? hintSeen : null; // same position: same hint, same step
+      hint = { key, step: seen ? seen.step : 0, data: seen ? seen.data : E.hint(G.level, G.mines, G.open, G.flags) };
+    }
     showHintStep();
   }
   function nextHint() { if (hint) { hint.step++; showHintStep(); } }
   function markHelp() { G.hints++; if (!G.helped) { G.helped = true; } }
+  // One hint = one board position: asking again on the same position shows the same step and is not
+  // counted again; the steps of a hint («Más ayuda») are part of that same hint.
   function showHintStep() {
     const d = hint.data;
     hl = { from: [], target: [], wrong: [] };
     if (!d) { hint = null; showToast(t('hintNone'), null, null, 'hint'); renderBoard(); return; }
-    markHelp();
+    if (!hintSeen || hintSeen.key !== hint.key) markHelp();
+    hintSeen = { key: hint.key, step: hint.step, data: d };
+    snd('hint');
     if (d.wrong) {
       hl.wrong = d.wrong.slice();
       showToast(t('hintWrong', { n: d.wrong.length }), t('removeThem'), () => {
@@ -378,7 +437,8 @@
       showToast(t('hintGuess'), null, null, 'hint');
       const i = d.safe[0];
       takeSnapshot();
-      open1(i); afterMove();
+      const before = snapshot.open;
+      open1(i); if (!afterMove()) openedFx(before, i);
       return;
     } else if (hint.step === 0) {
       hl.from = d.from.length ? d.from.slice() : d.safe.concat(d.mines);
@@ -391,8 +451,9 @@
       for (const m of d.mines) G.flags[m] = 1;
       showToast(d.safe.length ? t('hintSafe') : t('hintMine'), null, null, 'hint');
       takeSnapshot();
+      const before = snapshot.open;
       for (const s of d.safe) if (!G.open[s]) open1(s);
-      afterMove();
+      if (!afterMove()) { if (d.safe.length) openedFx(before, d.safe[0]); else snd('flag'); }
       return;
     }
     renderBoard(); save();
@@ -452,6 +513,7 @@
   document.querySelectorAll('.sec-h').forEach((h) => { h.onclick = () => h.parentElement.classList.toggle('closed'); });
   document.querySelectorAll('.sw').forEach((s) => { s.onclick = () => { const S = settings(); S[s.dataset.k] = !S[s.dataset.k]; renderSettings(); renderBoard(); save(); }; });
   document.querySelectorAll('#themeSeg button').forEach((b) => { b.onclick = () => { settings().theme = b.dataset.v; renderSettings(); applyTheme(); save(); }; });
+  document.querySelectorAll('#soundSeg button').forEach((b) => { b.onclick = () => { settings().sound = b.dataset.v; SFX.setLevel(b.dataset.v); renderSettings(); save(); snd('tap'); }; });
   const openDrawer = () => $('app').classList.add('drawer');
   const closeDrawer = () => $('app').classList.remove('drawer');
   $('menuBtn').onclick = openDrawer;
@@ -483,6 +545,7 @@
     buildLevels();
     await Promise.all([loadUser(), loadDB()]);
     $('storeNote').hidden = storeMode !== 'local';
+    SFX.init({ level: settings().sound });
     applyTheme();
     renderUser();
     uiLevel = statLevel = settings().level;

@@ -1,13 +1,14 @@
 /* ═══════════════════════════════════════════════════════════════════════════
-   🧭 Sky Guardians — menús: portada con escena 3D, preparar partida (hangar), ranking, logros, controles,
+   🧭 Arcade Flow Sky Defender — menús: portada con escena 3D, preparar partida (hangar), ranking, logros, controles,
    ajustes, pausa y resultados. Botones grises y planos (Offlined): seleccionado = fondo suave + borde.
+   Todo se maneja también con mando y teclado (ver «Navegación con mando y teclado», al final).
    ═══════════════════════════════════════════════════════════════════════════ */
 import { createMenuScene } from "./menuscene.js";
 import { LIVERIES } from "./planes.js";
 import { WEAPONS, PERKS } from "./combat.js";
 import { logoSvg } from "./logo.js";
 import { ACHIEVEMENTS, RANKS, rankFor, nextRank, daySeed, today } from "./stats.js";
-import { bindings as B, ACTIONS, PAD_ACTIONS, KB_FIXED, setKey, setPad, resetBindings, keyName, padName } from "./controls.js";
+import { bindings as B, ACTIONS, PAD_ACTIONS, KB_FIXED, setKey, setPad, resetBindings, keyName, padName, firstPad } from "./controls.js";
 
 const PLANE_INFO = {
   "sg-attack": { speed: 0.5, agility: 0.95, armor: 0.85, w1: "gun2", w2: "rockets" },
@@ -24,7 +25,7 @@ export function createMenu(api, o) {
   // Gráficos por defecto: en una gráfica integrada (Intel, AMD «Graphics»/«Custom GPU», Apple…) se empieza en Rendimiento
   const integrated = (() => { try { const gl = api.renderer.getContext(), e = gl.getExtension("WEBGL_debug_renderer_info"); const n = e ? String(gl.getParameter(e.UNMASKED_RENDERER_WEBGL)) : "";
     return /Intel|UHD|Iris|Custom GPU|Radeon\(TM\) Graphics|Radeon Graphics|Vega \d+ Graphics|Apple|Mali|Adreno|PowerVR|llvmpipe|SwiftShader/i.test(n) && !/RTX|GTX|RX \d{3,4}|Arc A/i.test(n); } catch { return false; } })();
-  const settings = Object.assign({ invert: false, sens: 1, assist: "mid", cam: "chase", hud: "m", gfx: integrated ? "perf" : "bal" }, (() => { try { return JSON.parse(localStorage.getItem(LS_SET) || "{}"); } catch { return {}; } })());
+  const settings = Object.assign({ invert: false, sens: 1, assist: "mid", cam: "chase", hud: "m", calm: false, gfx: integrated ? "perf" : "bal" }, (() => { try { return JSON.parse(localStorage.getItem(LS_SET) || "{}"); } catch { return {}; } })());
   const saveSettings = () => { try { localStorage.setItem(LS_SET, JSON.stringify(settings)); } catch { } o.applySettings(settings); };
 
   // ── Estilos ──
@@ -112,9 +113,15 @@ export function createMenu(api, o) {
   #sgo .sgset h3 { margin: 16px 0 8px; font-size: .78rem; color: #8f99a5; text-transform: uppercase; letter-spacing: .08em; }
   #sgo .sgset .seg { display: flex; gap: 6px; } #sgo .sgset .seg button { flex: 1; min-width: 0; white-space: normal; overflow-wrap: anywhere; line-height: 1.25; padding: 8px 6px; background: #1c1d21; }
   #sgo .sgset .seg button.on { background: #2a2c31; border-color: #8a8f98; } #sgo .sgset .muted { color: #8f99a5; font-size: .85rem; } #sgo .sgset input[type=range] { width: 100%; }
-  #sgo .sgo-set { max-height: calc(100vh - 220px); overflow-y: auto; padding-right: 4px; }
+  #sgo .sgo-set { max-height: calc(100vh - 220px); overflow-y: auto; padding: 0 6px 4px 4px; }
   #sgo .row { display: flex; gap: 8px; margin-top: 14px; } #sgo button { flex: 1; font: inherit; color: #e9e9ea; background: #222327; border: 1px solid #2b2c31; border-radius: 9px; padding: 10px; cursor: pointer; }
-  #sgo button:hover { border-color: #6b7280; } #sgo button.pri { background: #2a2c31; border-color: #8a8f98; font-weight: 700; }`;
+  #sgo button:hover { border-color: #6b7280; } #sgo button.pri { background: #2a2c31; border-color: #8a8f98; font-weight: 700; }
+  /* Foco al navegar con mando o teclado (body.sg-kn): borde claro y contorno, sin sombra ni azul; con el ratón, nada */
+  #sgm :focus, #sgo :focus { outline: none; }
+  body.sg-kn #sgm .side :focus, body.sg-kn #sgo :focus { outline: 2px solid #d5d9df; outline-offset: 2px; }
+  body.sg-kn #sgm .nav button:focus, body.sg-kn #sgm .btn:focus, body.sg-kn #sgm .seg button:focus, body.sg-kn #sgm .card:focus, body.sg-kn #sgm .livgrid button:focus,
+  body.sg-kn #sgm .liv button:focus, body.sg-kn #sgm .go:focus, body.sg-kn #sgm select:focus, body.sg-kn #sgo button:focus, body.sg-kn .kb:focus { background-color: #2a2c31; border-color: #c9ced6; }
+  body.sg-kn #sgm .back:focus { color: #e9e9ea; outline-offset: 4px; border-radius: 4px; }`;
   document.head.appendChild(css);
 
   const root = document.createElement("div"); root.id = "sgm";
@@ -266,17 +273,19 @@ export function createMenu(api, o) {
         <div class="muted" style="margin-top:6px">${t("setAssistH")}</div>
         <h3>${t("setInvert")}</h3><div class="seg" id="sgm-inv"><button data-v="0" class="${settings.invert ? "" : "on"}">${t("invNo")}</button><button data-v="1" class="${settings.invert ? "on" : ""}">${t("invYes")}</button></div>
         <h3>${t("setSens")}</h3><input type="range" id="sgm-sens" min="0.4" max="2" step="0.1" value="${settings.sens}"><div class="muted" id="sgm-sensv">×${settings.sens}</div>
-        <h3>${t("volMusic")}</h3><input type="range" id="sgm-vm" min="0" max="1" step="0.05" value="${o.sound ? o.sound.volume.music : 0.5}">
+        <h3>${t("volMusic")}</h3><input type="range" id="sgm-vm" min="0" max="1" step="0.05" value="${o.sound ? o.sound.volume.music : 0.85}">
         <div id="sgm-um" hidden><h3 id="sgm-um-lbl"></h3><div class="seg" id="sgm-um-seg"></div><div class="muted" id="sgm-um-cur" style="margin-top:6px" hidden></div></div>
-        <h3>${t("volSfx")}</h3><input type="range" id="sgm-vs" min="0" max="1" step="0.05" value="${o.sound ? o.sound.volume.sfx : 0.8}">
+        <h3>${t("volSfx")}</h3><input type="range" id="sgm-vs" min="0" max="1" step="0.05" value="${o.sound ? o.sound.volume.sfx : 0.15}">
         <h3>${t("setGfx")}</h3><div class="seg" id="sgm-gfx">${["perf", "bal", "quality"].map(x => `<button data-v="${x}" class="${settings.gfx === x ? "on" : ""}">${t("gfx_" + x)}</button>`).join("")}</div>
         <div class="muted" style="margin-top:6px">${t("gfxh_" + settings.gfx)}</div>
         <h3>${t("setFps")}</h3><div class="seg" id="sgm-fps"><button data-v="0" class="${settings.fps ? "" : "on"}">${t("fpsHide")}</button><button data-v="1" class="${settings.fps ? "on" : ""}">${t("fpsShow")}</button></div>
         <h3>${t("setHud")}</h3><div class="seg" id="sgm-hud">${["s", "m", "l"].map(x => `<button data-v="${x}" class="${settings.hud === x ? "on" : ""}">${t("hud" + x.toUpperCase())}</button>`).join("")}</div>
+        <h3>${t("setCalm")}</h3><div class="seg" id="sgm-calm"><button data-v="0" class="${settings.calm ? "" : "on"}">${t("calmNo")}</button><button data-v="1" class="${settings.calm ? "on" : ""}">${t("calmYes")}</button></div>
+        <div class="muted" style="margin-top:6px">${t("calmH")}</div>
         <h3>${t("setCam")}</h3><div class="seg" id="sgm-cam"><button data-v="chase" class="${settings.cam === "chase" ? "on" : ""}">${t("camNear")}</button><button data-v="far" class="${settings.cam === "far" ? "on" : ""}">${t("camFar")}</button></div></div>`;
     const q = id => box.querySelector("#" + id);
     const seg = (id, key, conv = v => v) => { q(id).onclick = e => { const b = e.target.closest("[data-v]"); if (b) { settings[key] = conv(b.dataset.v); saveSettings(); settingsPanel(box); } }; };
-    seg("sgm-as", "assist"); seg("sgm-inv", "invert", v => v === "1"); seg("sgm-cam", "cam"); seg("sgm-hud", "hud"); seg("sgm-gfx", "gfx"); seg("sgm-fps", "fps", v => v === "1");
+    seg("sgm-as", "assist"); seg("sgm-inv", "invert", v => v === "1"); seg("sgm-cam", "cam"); seg("sgm-hud", "hud"); seg("sgm-gfx", "gfx"); seg("sgm-fps", "fps", v => v === "1"); seg("sgm-calm", "calm", v => v === "1");
     if (o.sound) { q("sgm-vm").oninput = e => o.sound.setVolume("music", +e.target.value); q("sgm-vs").oninput = e => { o.sound.setVolume("sfx", +e.target.value); o.sound.play("hit"); }; }
     q("sgm-sens").oninput = e => { settings.sens = +e.target.value; q("sgm-sensv").textContent = "×" + settings.sens; saveSettings(); };
     // Tu música (Offlined 4): «Original · Mi música…»
@@ -285,19 +294,9 @@ export function createMenu(api, o) {
   }
   function planeCard(p, i) {
     const I = PLANE_INFO[p.id], bar = v => `<div class="bar"><i style="width:${v * 100}%"></i></div>`;
-    return `<div class="card ${st.plane === i ? "on" : ""}" data-i="${i}"><b>${t(p.key)}</b>
+    return `<div class="card ${st.plane === i ? "on" : ""}" data-i="${i}" tabindex="0" role="button"><b>${t(p.key)}</b>
       <div class="stat"><span>${t("sSpeed")}</span>${bar(I.speed)}</div><div class="stat"><span>${t("sAgility")}</span>${bar(I.agility)}</div>
       <div class="stat"><span>${t("sArmor")}</span>${bar(I.armor)}</div><div class="muted" style="margin-top:4px">${t(I.w1)} · ${t(I.w2)}</div></div>`;
-  }
-  function controlsHtml() {
-    const K = (...k) => k.map(x => `<kbd>${x}</kbd>`).join(" ");
-    const row = (k, a) => `<tr><td>${k}</td><td>${t(a)}</td></tr>`;
-    return `<h2>${t("controls")}</h2><h3>🎮 ${t("ctlPad")}</h3><table class="keys">
-      ${row(t("kLeftStick"), "cFly")}${row(t("kRightStick"), "cLook")}${row(K("RT"), "cW1")}${row(K("LT"), "cW2")}${row(K("RB") + " / " + K("LB"), "cSpeed")}
-      ${row(K("Y"), "cTarget")}${row(K("↑"), "cCam")}${row(K("Start"), "cPause")}</table>
-      <h3>⌨️ ${t("ctlKb")}</h3><table class="keys">
-      ${row(t("kMouse"), "cMouseAim")}${row(t("kClickL") + " / " + t("kClickR"), "cW12")}${row(K("W") + " / " + K("S"), "cSpeed")}
-      ${row(K("Tab") + " " + K("E"), "cTarget")}${row(K("↑") + K("↓") + K("←") + K("→"), "cFlyKeys")}${row(K("Space") + " / " + K("V"), "cW12")}${row(K("C"), "cCam")}${row(K("Esc"), "cPause")}</table>`;
   }
 
   // ── Punto: elegir en el mapa, al azar o uno reciente; aviso si está en plena ciudad ──
@@ -335,26 +334,26 @@ export function createMenu(api, o) {
   function controlsEditor(box) {
     const row = a => `<tr><td>${t("act_" + a)}</td>
       <td><button class="kb" data-k="${a}" ${KB_FIXED[a] ? "disabled" : ""}>${B.kb[a].map(c => esc(keyName(c, t))).join(" · ")}</button></td>
-      <td>${PAD_ACTIONS.includes(a) ? `<button class="kb" data-p="${a}">${padName(B.pad[a])}</button>` : `<span class="muted">${a === "up" || a === "down" ? t("stickL") : a === "left" || a === "right" ? t("stickL") : ""}</span>`}</td></tr>`;
+      <td>${PAD_ACTIONS.includes(a) ? `<button class="kb" data-p="${a}">${padName(B.pad[a])}</button>` : `<span class="muted">${["up", "down", "left", "right"].includes(a) ? t("stickL") : ""}</span>`}</td></tr>`;
     box.innerHTML = `<h2>${t("controls")}</h2><table class="keys ctl"><tr><th></th><th>⌨️ ${t("colKb")}</th><th>🎮 ${t("colPad")}</th></tr>${ACTIONS.map(row).join("")}</table>
       <p class="muted">🖱 ${t("mouseRow")}<br>🎮 ${t("stickRow")}</p><div id="sgm-ctlmsg" class="warn" style="min-height:1.3em"></div>
       <button class="btn" id="sgm-ctlreset">${t("resetCtl")}</button>`;
     const msg = box.querySelector("#sgm-ctlmsg");
     box.querySelector("#sgm-ctlreset").onclick = () => { resetBindings(); controlsEditor(box); };
     box.querySelectorAll("button[data-k]").forEach(b => b.onclick = () => {
-      msg.textContent = t("pressKey");
-      const h = e => { e.preventDefault(); e.stopPropagation(); removeEventListener("keydown", h, true); if (e.code !== "Escape") setKey(b.dataset.k, e.code); controlsEditor(box); };
+      msg.textContent = t("pressKey"); capturing = true;   // la navegación de los menús no toca esa tecla
+      const h = e => { e.preventDefault(); e.stopPropagation(); removeEventListener("keydown", h, true); capturing = false; if (e.code !== "Escape") setKey(b.dataset.k, e.code); controlsEditor(box); };
       addEventListener("keydown", h, true);
     });
     box.querySelectorAll("button[data-p]").forEach(b => b.onclick = () => {
-      msg.textContent = t("pressPad");
-      const gp0 = navigator.getGamepads ? [...navigator.getGamepads()].find(g => g) : null;
+      msg.textContent = t("pressPad"); capturing = true;
+      const gp0 = firstPad();
       const held = new Set(gp0 ? gp0.buttons.map((x, i) => (x.pressed ? i : -1)).filter(i => i >= 0) : []);
       const t0 = performance.now();
       (function poll() {
-        const gp = navigator.getGamepads ? [...navigator.getGamepads()].find(g => g) : null;
-        if (gp) { const i = gp.buttons.findIndex((x, k) => x.pressed && !held.has(k)); if (i >= 0) { setPad(b.dataset.p, i); controlsEditor(box); return; } gp.buttons.forEach((x, k) => { if (!x.pressed) held.delete(k); }); }
-        if (performance.now() - t0 < 8000) requestAnimationFrame(poll); else controlsEditor(box);
+        const gp = firstPad();
+        if (gp) { const i = gp.buttons.findIndex((x, k) => x.pressed && !held.has(k)); if (i >= 0) { capturing = false; setPad(b.dataset.p, i); controlsEditor(box); return; } gp.buttons.forEach((x, k) => { if (!x.pressed) held.delete(k); }); }
+        if (performance.now() - t0 < 8000) requestAnimationFrame(poll); else { capturing = false; controlsEditor(box); }
       })();
     });
   }
@@ -423,7 +422,9 @@ export function createMenu(api, o) {
   let cur = "home";
   function show(name) {
     if (cur === "hangar" && name !== "hangar") { screens._lp = null; screens._hp = null; o.previewLivery(null); }
+    const fresh = name !== cur || root.classList.contains("hide");   // otra pantalla (no la misma redibujada)
     cur = name; root.classList.remove("hide"); scene3.start(); screens[name]();
+    navScreen(fresh);
   }
   function hide() { root.classList.add("hide"); scene3.stop(); }
   side.addEventListener("click", e => {
@@ -454,22 +455,29 @@ export function createMenu(api, o) {
   }
   function offerTraining() {
     try { localStorage.setItem("sg_trainAsked", "1"); } catch { }
-    overlay(`<h2>🎓 ${t("firstTitle")}</h2><div class="sub">${t("firstBody")}</div><div class="row"><button class="pri" id="sgo-ft">${t("firstTrain")}</button><button id="sgo-fp">${t("firstPlay")}</button></div>`);
+    overlay(`<h2>🎓 ${t("firstTitle")}</h2><div class="sub">${t("firstBody")}</div><div class="row"><button class="pri" id="sgo-ft">${t("firstTrain")}</button><button id="sgo-fp">${t("firstPlay")}</button></div>`,
+      { kind: "first", focus: "#sgo-ft", back: () => closeOverlay() });
     $("sgo-ft").onclick = () => { closeOverlay(); show("training"); };
     $("sgo-fp").onclick = () => { closeOverlay(); show("play"); };
   }
 
   // ══ Pausa y resultados (encima del juego) ══
-  function overlay(html) { ov.innerHTML = `<div class="box">${html}</div>`; ov.classList.remove("sgm-hide"); }
-  function closeOverlay() { ov.classList.add("sgm-hide"); }
+  // kind: qué ventana es (pausa, resultados…) · focus: el botón que recibe el foco al abrirse · back: lo que hacen B / Esc
+  function overlay(html, { kind = null, focus = null, back = null } = {}) {
+    ov.innerHTML = `<div class="box">${html}</div>`; ov.classList.remove("sgm-hide");
+    ovKind = kind; ovFocus = focus; ovBack = back;
+    navOpened(kind === "results" || kind === "trainDone" ? 600 : 0);   // tras la partida, un momento sin aceptar (Espacio es disparar)
+  }
+  function closeOverlay() { ov.classList.add("sgm-hide"); ovKind = ovFocus = ovBack = null; lastKey = null; }
   function showPause(on) {
     if (!on) { closeOverlay(); return; }
     overlay(`<h2>${t("paused")}</h2><div class="sub">${esc(o.title)}</div>
       <div class="row" style="flex-direction:column"><button class="pri" id="sgo-res">${t("resume")}</button><button id="sgo-ctl">${t("controls")}</button>
-      <button id="sgo-set">${t("settings")}</button><button id="sgo-quit">${t("quit")}</button></div>`);
+      <button id="sgo-set">${t("settings")}</button><button id="sgo-quit">${t("quit")}</button></div>`, { kind: "pause", focus: "#sgo-res", back: () => o.onResume() });
     $("sgo-res").onclick = () => o.onResume();
     $("sgo-quit").onclick = () => {
-      overlay(`<h2>${t("quitConfirm")}</h2><div class="sub">${t("quitConfirmSub")}</div><div class="row"><button id="sgo-qy">${t("quitYes")}</button><button class="pri" id="sgo-qn">${t("quitNo")}</button></div>`);
+      overlay(`<h2>${t("quitConfirm")}</h2><div class="sub">${t("quitConfirmSub")}</div><div class="row"><button id="sgo-qy">${t("quitYes")}</button><button class="pri" id="sgo-qn">${t("quitNo")}</button></div>`,
+        { kind: "quit", focus: "#sgo-qn", back: () => showPause(true) });
       $("sgo-qy").onclick = () => { closeOverlay(); o.onQuit(); }; $("sgo-qn").onclick = () => showPause(true);
     };
     $("sgo-ctl").onclick = pauseControls;
@@ -478,11 +486,11 @@ export function createMenu(api, o) {
   // Controles y Ajustes de la pausa. También los abren la rueda dentada y el botón de controles de la barra
   // de arriba del motor (HOOK.openSettings / HOOK.openControls): un solo sitio para los ajustes.
   function pauseControls() {
-    overlay(`<div id="sgo-ctl-ed"></div><div class="row"><button class="pri" id="sgo-b">${t("back")}</button></div>`);
+    overlay(`<div id="sgo-ctl-ed"></div><div class="row"><button class="pri" id="sgo-b">${t("back")}</button></div>`, { kind: "pauseSub", back: () => showPause(true) });
     controlsEditor($("sgo-ctl-ed")); $("sgo-b").onclick = () => showPause(true);
   }
   function pauseSettings() {
-    overlay(`<h2>${t("settings")}</h2><div id="sgo-setbox" class="sgo-set"></div><div class="row"><button class="pri" id="sgo-b">${t("back")}</button></div>`);
+    overlay(`<h2>${t("settings")}</h2><div id="sgo-setbox" class="sgo-set"></div><div class="row"><button class="pri" id="sgo-b">${t("back")}</button></div>`, { kind: "pauseSub", back: () => showPause(true) });
     settingsPanel($("sgo-setbox")); $("sgo-b").onclick = () => showPause(true);
   }
   function showResults(r, res, training) {
@@ -505,7 +513,8 @@ export function createMenu(api, o) {
       ${res.prevBest && !res.record ? `<div class="muted" style="margin-bottom:8px">${t("bestCmp", { w: res.prevBest.wave, s: res.prevBest.score.toLocaleString(api.LOCALE), d: fmt(res.prevBest.time || 0) })}</div>` : ""}
       <div class="news">${news}</div>
       ${o.canReplay && o.canReplay() ? `<div class="row" style="margin-top:10px"><button id="sgo-replay">${t("rpBtn")}</button></div>` : ""}
-      <div class="row"><button class="pri" id="sgo-again">${t("again")}</button><button id="sgo-rank">${t("ranking")}</button><button id="sgo-menu">${t("menu")}</button></div>`);
+      <div class="row"><button class="pri" id="sgo-again">${t("again")}</button><button id="sgo-rank">${t("ranking")}</button><button id="sgo-menu">${t("menu")}</button></div>`,
+      { kind: "results", focus: "#sgo-again" });   // sin «atrás»: B (bengalas) o Esc al morir no te sacan de los resultados
     lastResults = [r, res, training];
     if ($("sgo-replay")) $("sgo-replay").onclick = () => { closeOverlay(); o.onReplay(); };
     if ($("sgo-graph")) drawGraph($("sgo-graph"), r);
@@ -518,11 +527,206 @@ export function createMenu(api, o) {
   function showTrainingDone(newAch) {
     overlay(`<h2>🎓 ${t("trainDone")}</h2><div class="sub">${t("trainDoneSub")}</div>
       <div class="news">${newAch.map(id => { const a = ACHIEVEMENTS.find(x => x.id === id); return `<div>${a.icon} ${t("newAch")}: <b>${t("a_" + id)}</b></div>`; }).join("")}</div>
-      <div class="row"><button class="pri" id="sgo-play">${t("play")}</button><button id="sgo-menu">${t("menu")}</button></div>`);
+      <div class="row"><button class="pri" id="sgo-play">${t("play")}</button><button id="sgo-menu">${t("menu")}</button></div>`, { kind: "trainDone", focus: "#sgo-play" });
     $("sgo-play").onclick = () => { closeOverlay(); o.onQuit(); show("play"); };
     $("sgo-menu").onclick = () => { closeOverlay(); o.onQuit(); };
   }
 
+  // ══ Navegación con mando y teclado por los menús y las ventanas ══
+  // Solo con un menú o una ventana delante: en vuelo no toca ni el mando ni el teclado.
+  // · Cruceta / stick izquierdo / flechas: el foco va al botón más cercano en esa dirección (Tab: en orden).
+  // · A / Intro / Espacio: pulsar. B / Esc: atrás (en la pausa, seguir; Esc la quita el motor). Start: lo lleva arcade.js.
+  // · En un selector (.seg con una opción elegida) ← → cambian la opción; en un deslizador, el valor; en una lista, la opción.
+  // · El mando se lee con requestAnimationFrame solo mientras hay algo abierto, una vez por fotograma (firstPad).
+  //   A y B actúan al soltarlos: así, al volver al vuelo, ya no están pulsados (B también es bengalas).
+  // · El foco se ve solo al navegar así (body.sg-kn); un clic con el ratón lo esconde.
+  const FOCUSABLE = "button, select, input[type=range], [tabindex='0']";
+  const NO_AUTO = "#sgm-um-seg";            // «Música del juego»: elegir abre cosas, así que ← → solo mueven el foco
+  const PAD = { A: 0, B: 1, UP: 12, DOWN: 13, LEFT: 14, RIGHT: 15 };
+  const rtl = document.documentElement.dir === "rtl";
+  let ovKind = null, ovFocus = null, ovBack = null, capturing = false, navMode = false, lastKey = null;
+  let navRaf = 0, navCtxWas = null, needFreeze = true, quietUntil = 0;
+  let padHeld = new Set(), armed = new Set(), dirHeld = null, dirT = 0;
+  const navCtx = () => (!ov.classList.contains("sgm-hide") ? ov : !root.classList.contains("hide") ? side : null);
+  const visible = el => !el.disabled && !el.hidden && el.getClientRects().length > 0 && getComputedStyle(el).visibility !== "hidden";
+  const focusables = c => [...c.querySelectorAll(FOCUSABLE)].filter(visible);
+  const setNavMode = v => { if (navMode !== v) { navMode = v; document.body.classList.toggle("sg-kn", v); } };
+  addEventListener("pointerdown", () => setNavMode(false), true);
+  addEventListener("gamepadconnected", () => { if (navCtx()) { setNavMode(true); navWake(); } });
+  // Lo que tiene el foco se recuerda por su id o su data-…: al redibujarse la pantalla (cada opción la redibuja) vuelve al mismo
+  function keyOf(el, c) {
+    if (el.id) return "#" + CSS.escape(el.id);
+    const anc = el.parentElement && el.parentElement.closest("[id]"), pre = anc && anc !== c && c.contains(anc) ? "#" + CSS.escape(anc.id) + " " : "";
+    for (const a of el.attributes) if (a.name.startsWith("data-")) return `${pre}[${a.name}="${CSS.escape(a.value)}"]`;
+    return null;
+  }
+  document.addEventListener("focusin", e => { const c = navCtx(); if (c && c.contains(e.target)) lastKey = keyOf(e.target, c); });
+  function focusEl(el) {
+    if (!el) return;
+    // Al entrar en un selector, el foco va a la opción elegida (así ← → cambian desde ella)
+    const seg = el.closest(".seg"), on = seg && !seg.matches(NO_AUTO) && seg.querySelector("button.on"), a = document.activeElement;
+    if (on && on !== el && visible(on) && !(a && seg.contains(a))) el = on;
+    el.focus({ preventScroll: true }); el.scrollIntoView({ block: "nearest", inline: "nearest" });
+  }
+  function initialFocus(c) {
+    const pref = c === ov ? ovFocus : cur === "home" ? ".main" : null, p = pref && c.querySelector(pref);
+    if (p && visible(p)) return p;
+    const list = focusables(c);
+    return list.find(e => !e.classList.contains("back")) || list[0] || null;
+  }
+  const focused = c => { const a = document.activeElement; return a && a !== document.body && c.contains(a) && visible(a) ? a : null; };
+  function ensureFocus(c) {
+    const a = focused(c); if (a) return a;
+    let el = null;
+    if (lastKey) try { el = c.querySelector(lastKey); } catch { el = null; }
+    if (!el || !visible(el)) el = initialFocus(c);
+    focusEl(el);
+    return el;
+  }
+  // El más cercano en una dirección: distancia en esa dirección + 3 × separación de lado (0 si se solapan)
+  function nearest(from, dir, list) {
+    const r0 = from.getBoundingClientRect(), cx0 = (r0.left + r0.right) / 2, cy0 = (r0.top + r0.bottom) / 2, vert = dir === "up" || dir === "down";
+    let best = null, bs = Infinity;
+    for (const el of list) {
+      if (el === from) continue;
+      const r = el.getBoundingClientRect(), cx = (r.left + r.right) / 2, cy = (r.top + r.bottom) / 2;
+      let main, cross, tie;
+      if (vert) {
+        if ((dir === "down" ? cy - cy0 : cy0 - cy) <= 2) continue;
+        main = Math.max(0, dir === "down" ? r.top - r0.bottom : r0.top - r.bottom);
+        cross = Math.max(0, Math.max(r.left, r0.left) - Math.min(r.right, r0.right));
+        tie = Math.abs(rtl ? r.right - r0.right : r.left - r0.left) * 0.05;   // en una fila, el primero en el sentido de lectura
+      } else {
+        if ((dir === "right" ? cx - cx0 : cx0 - cx) <= 2) continue;
+        cross = Math.max(0, Math.max(r.top, r0.top) - Math.min(r.bottom, r0.bottom));
+        if (cross > 0) continue;   // ← → solo dentro de la misma fila
+        main = Math.max(0, dir === "right" ? r.left - r0.right : r0.left - r.right);
+        tie = Math.abs(cy - cy0) * 0.05;
+      }
+      const sc = main + cross * 3 + tie;
+      if (sc < bs) { bs = sc; best = el; }
+    }
+    return best;
+  }
+  function stepSelect(s, d, wrap) {
+    const n = s.options.length; if (!n || s.disabled) return;
+    const i = wrap ? (s.selectedIndex + d + n) % n : Math.max(0, Math.min(n - 1, s.selectedIndex + d));
+    if (i === s.selectedIndex) return;
+    s.selectedIndex = i; s.dispatchEvent(new Event("change", { bubbles: true }));
+  }
+  function afterChange() { const c = navCtx(); if (c) ensureFocus(c); }
+  function navDir(dir) {
+    const c = navCtx(); if (!c) return;
+    const a = focused(c);
+    if (!navMode) { setNavMode(true); if (a) return; }   // la primera pulsación solo enseña dónde está el foco
+    if (!a) { ensureFocus(c); return; }
+    if (dir === "left" || dir === "right") {
+      if (a.type === "range") {   // en árabe el deslizador va al revés: → baja
+        if ((dir === "right") !== rtl) a.stepUp(); else a.stepDown();
+        a.dispatchEvent(new Event("input", { bubbles: true })); a.dispatchEvent(new Event("change", { bubbles: true })); return;
+      }
+      if (a.tagName === "SELECT") { stepSelect(a, dir === "right" ? 1 : -1, false); afterChange(); return; }
+      const seg = a.closest(".seg");
+      if (seg && seg.querySelector(".on") && !seg.matches(NO_AUTO)) {   // selector: ← → eligen la opción de al lado
+        const bs = [...seg.querySelectorAll("button")].filter(visible), i = bs.indexOf(a), nb = bs[i + ((dir === "right") !== rtl ? 1 : -1)];
+        if (nb) { lastKey = keyOf(nb, c); nb.click(); if (nb.isConnected) focusEl(nb); else afterChange(); }   // casi siempre se redibuja
+        return;
+      }
+    }
+    const nb = nearest(a, dir, focusables(c));
+    if (nb) focusEl(nb);
+  }
+  function navTab(d) {
+    const c = navCtx(); if (!c) return;
+    setNavMode(true);
+    const list = focusables(c); if (!list.length) return;
+    const a = focused(c), i = a ? list.indexOf(a) : -1;
+    focusEl(list[i < 0 ? 0 : (i + d + list.length) % list.length]);
+  }
+  function navActivate() {
+    const c = navCtx(); if (!c || performance.now() < quietUntil) return;
+    setNavMode(true);
+    const a = focused(c);
+    if (!a) { ensureFocus(c); return; }
+    if (a.tagName === "SELECT") { stepSelect(a, 1, true); afterChange(); return; }
+    if (a.type === "range") return;
+    a.click(); afterChange();
+  }
+  function navBack() {
+    const c = navCtx(); if (!c) return;
+    if (c === ov) { if (ovBack) ovBack(); }
+    else { const b = side.querySelector(".back"); if (b && visible(b)) b.click(); }
+    afterChange();
+  }
+  // Teclado (en captura: antes que el motor). No actúa mientras se reasigna una tecla.
+  const DIRS = { ArrowUp: "up", ArrowDown: "down", ArrowLeft: "left", ArrowRight: "right" };
+  addEventListener("keydown", e => {
+    if (capturing || e.ctrlKey || e.altKey || e.metaKey) return;
+    const c = navCtx(); if (!c) return;
+    const k = e.code, eat = () => { e.preventDefault(); e.stopImmediatePropagation(); };
+    if (DIRS[k]) { eat(); navDir(DIRS[k]); return; }
+    if (k === "Tab") { eat(); navTab(e.shiftKey ? -1 : 1); return; }
+    if (k === "Enter" || k === "NumpadEnter" || k === "Space") { eat(); if (!e.repeat) navActivate(); return; }
+    if (k === "Escape") {
+      if (c === ov && ovKind === "pause") return;   // Esc en la pausa: el motor la quita, como siempre
+      if (c === ov || side.querySelector(".back")) { eat(); if (!e.repeat) navBack(); }   // con los resultados, Esc no hace nada (ni quita la pausa por debajo)
+      return;
+    }
+    if (k === "KeyR" && c === ov && ovKind === "results") { eat(); if (!e.repeat && performance.now() >= quietUntil && $("sgo-again")) $("sgo-again").click(); }
+  }, true);
+  // Espacio pulsa el botón al soltarlo: ya se pulsó al bajarlo (arriba), así que se anula
+  addEventListener("keyup", e => { if (!capturing && e.code === "Space" && navCtx()) e.preventDefault(); }, true);
+  // Mando
+  function freeze(gp) {   // lo que ya estaba pulsado al abrirse algo no cuenta hasta soltarlo
+    padHeld = new Set(); armed = new Set();
+    if (gp) gp.buttons.forEach((b, i) => { if (b.pressed) padHeld.add(i); });
+    dirHeld = gp ? padDir(gp) : null; dirT = Infinity;
+  }
+  function padDir(gp) {
+    const p = i => !!(gp.buttons[i] && gp.buttons[i].pressed);
+    if (p(PAD.UP)) return "up"; if (p(PAD.DOWN)) return "down"; if (p(PAD.LEFT)) return "left"; if (p(PAD.RIGHT)) return "right";
+    const ax = gp.axes[0] || 0, ay = gp.axes[1] || 0;
+    if (Math.max(Math.abs(ax), Math.abs(ay)) < 0.5) return null;   // zona muerta
+    return Math.abs(ax) > Math.abs(ay) ? (ax > 0 ? "right" : "left") : (ay > 0 ? "down" : "up");
+  }
+  function navWake() { if (!navRaf) navRaf = requestAnimationFrame(navLoop); }
+  function navLoop(now) {
+    navRaf = 0;
+    const c = navCtx(); if (!c) { navCtxWas = null; needFreeze = true; return; }   // nada abierto: se deja de mirar el mando
+    navRaf = requestAnimationFrame(navLoop);
+    const gp = firstPad();
+    if (c !== navCtxWas) { navCtxWas = c; needFreeze = true; }
+    if (navMode) ensureFocus(c);
+    if (!gp) return;
+    if (needFreeze || capturing) { needFreeze = false; freeze(gp); return; }
+    for (const i of [PAD.A, PAD.B]) {
+      const p = !!(gp.buttons[i] && gp.buttons[i].pressed);
+      if (p && !padHeld.has(i)) { padHeld.add(i); armed.add(i); }
+      else if (!p && padHeld.has(i)) { padHeld.delete(i); if (armed.delete(i)) { if (i === PAD.A) navActivate(); else navBack(); } }
+    }
+    const dir = padDir(gp);
+    if (!dir) { dirHeld = null; return; }
+    if (dir !== dirHeld) { dirHeld = dir; dirT = now + 380; navDir(dir); }
+    else if (now >= dirT) { dirT = now + 180; navDir(dir); }   // mantenido: repite
+  }
+  // Al abrir una ventana: foco en su botón principal (en los resultados, «Otra vez»)
+  function navOpened(quietMs) {
+    lastKey = null; needFreeze = true; quietUntil = performance.now() + quietMs;
+    if (firstPad()) setNavMode(true);
+    focusEl(initialFocus(ov));
+    // Controles y Ajustes de la pausa se rellenan justo después de abrir la ventana: entonces, a lo primero de dentro
+    if (!ovFocus) queueMicrotask(() => { if (navCtx() === ov) focusEl(initialFocus(ov)); });
+    navWake();
+  }
+  // Al cambiar de pantalla del menú: foco en lo primero útil (si se redibuja la misma, se queda donde estaba)
+  function navScreen(fresh) {
+    if (navCtx() !== side) { navWake(); return; }
+    if (fresh) { lastKey = null; needFreeze = true; if (firstPad()) setNavMode(true); focusEl(initialFocus(side)); }
+    else if (navMode) ensureFocus(side);
+    navWake();
+  }
+
   o.applySettings(settings);
-  return { show, hide, showPause, pauseSettings, pauseControls, showResults, reopenResults, showTrainingDone, closeOverlay, settings, get current() { return cur; } };
+  return { show, hide, showPause, pauseSettings, pauseControls, showResults, reopenResults, showTrainingDone, closeOverlay, settings,
+    get current() { return cur; }, get overlayKind() { return navCtx() === ov ? ovKind : null; } };
 }

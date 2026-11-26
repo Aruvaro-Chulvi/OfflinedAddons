@@ -1,6 +1,7 @@
 /* Texts of the Calcudoku addon in Offlined's ten languages. {x} are placeholders. */
 window.CALC_I18N = {
  "en": {
+  "sound": "Sound", "soundOff": "Off", "soundSoft": "Soft", "soundNormal": "Normal",
   "lv": [
    "Very easy",
    "Easy",
@@ -86,6 +87,7 @@ window.CALC_I18N = {
   "rules": "Every row and column holds each number once; the numbers in a cage give its result with its operation."
  },
  "es": {
+  "sound": "Sonido", "soundOff": "Apagado", "soundSoft": "Suave", "soundNormal": "Normal",
   "lv": [
    "Muy fácil",
    "Fácil",
@@ -171,6 +173,7 @@ window.CALC_I18N = {
   "rules": "Cada fila y columna lleva cada número una sola vez; los números de una jaula dan su resultado con su operación."
  },
  "fr": {
+  "sound": "Son", "soundOff": "Coupé", "soundSoft": "Doux", "soundNormal": "Normale",
   "lv": [
    "Très facile",
    "Facile",
@@ -256,6 +259,7 @@ window.CALC_I18N = {
   "rules": "Chaque ligne et colonne contient chaque chiffre une fois ; les chiffres d’une cage donnent son résultat avec son opération."
  },
  "pt": {
+  "sound": "Som", "soundOff": "Desligado", "soundSoft": "Suave", "soundNormal": "Normal",
   "lv": [
    "Muito fácil",
    "Fácil",
@@ -341,6 +345,7 @@ window.CALC_I18N = {
   "rules": "Cada linha e coluna leva cada número uma só vez; os números de uma jaula dão o seu resultado com a sua operação."
  },
  "it": {
+  "sound": "Suono", "soundOff": "Spento", "soundSoft": "Leggero", "soundNormal": "Normale",
   "lv": [
    "Molto facile",
    "Facile",
@@ -426,6 +431,7 @@ window.CALC_I18N = {
   "rules": "Ogni riga e colonna contiene ogni numero una volta; i numeri di una gabbia danno il suo risultato con la sua operazione."
  },
  "de": {
+  "sound": "Ton", "soundOff": "Aus", "soundSoft": "Leise", "soundNormal": "Normal",
   "lv": [
    "Sehr leicht",
    "Leicht",
@@ -511,6 +517,7 @@ window.CALC_I18N = {
   "rules": "Jede Zeile und Spalte enthält jede Zahl einmal; die Zahlen eines Käfigs ergeben mit seiner Rechenart das Ergebnis."
  },
  "zh": {
+  "sound": "声音", "soundOff": "关闭", "soundSoft": "轻柔", "soundNormal": "正常",
   "lv": [
    "非常简单",
    "简单",
@@ -596,6 +603,7 @@ window.CALC_I18N = {
   "rules": "每行每列每个数字只出现一次；笼子里的数字通过其运算得到所示结果。"
  },
  "hi": {
+  "sound": "ध्वनि", "soundOff": "बंद", "soundSoft": "धीमी", "soundNormal": "सामान्य",
   "lv": [
    "बहुत आसान",
    "आसान",
@@ -681,6 +689,7 @@ window.CALC_I18N = {
   "rules": "हर पंक्ति और स्तंभ में हर अंक एक बार आता है; पिंजरे के अंक उसकी संक्रिया से दिया गया परिणाम बनाते हैं।"
  },
  "ar": {
+  "sound": "الصوت", "soundOff": "مطفأ", "soundSoft": "خافت", "soundNormal": "عادية",
   "lv": [
    "سهل جدًا",
    "سهل",
@@ -766,6 +775,7 @@ window.CALC_I18N = {
   "rules": "يحتوي كل صف وعمود على كل رقم مرة واحدة؛ وأرقام القفص تعطي نتيجته بعمليته."
  },
  "ru": {
+  "sound": "Звук", "soundOff": "Выкл.", "soundSoft": "Тихо", "soundNormal": "Обычно",
   "lv": [
    "Очень лёгкий",
    "Лёгкий",
@@ -861,7 +871,11 @@ window.CALC_TECH = {
   "cage": "Cage combinations",
   "cage_line": "Cage and line",
   "naked_pair": "Naked pair",
-  "trial": "Trial"
+  "trial": "Trial",
+  "hidden_pair": "Hidden pair",
+  "naked_triple": "Naked triple",
+  "line_sum": "Line sum",
+  "x_wing": "X-Wing"
  },
  "es": {
   "given": "Jaula de una casilla",
@@ -870,7 +884,11 @@ window.CALC_TECH = {
   "cage": "Combinaciones de la jaula",
   "cage_line": "Jaula y línea",
   "naked_pair": "Par desnudo",
-  "trial": "Prueba"
+  "trial": "Prueba",
+  "hidden_pair": "Par oculto",
+  "naked_triple": "Trío desnudo",
+  "line_sum": "Suma de la línea",
+  "x_wing": "X-Wing"
  },
  "fr": {
   "given": "Cage d’une case",
@@ -879,7 +897,11 @@ window.CALC_TECH = {
   "cage": "Combinaisons de la cage",
   "cage_line": "Cage et ligne",
   "naked_pair": "Paire nue",
-  "trial": "Essai"
+  "trial": "Essai",
+  "hidden_pair": "Paire cachée",
+  "naked_triple": "Triplet nu",
+  "line_sum": "Somme de la ligne",
+  "x_wing": "X-Wing"
  },
  "pt": {
   "given": "Jaula de uma casa",
@@ -888,7 +910,11 @@ window.CALC_TECH = {
   "cage": "Combinações da jaula",
   "cage_line": "Jaula e linha",
   "naked_pair": "Par nu",
-  "trial": "Tentativa"
+  "trial": "Tentativa",
+  "hidden_pair": "Par oculto",
+  "naked_triple": "Trio nu",
+  "line_sum": "Soma da linha",
+  "x_wing": "X-Wing"
  },
  "it": {
   "given": "Gabbia di una casella",
@@ -897,7 +923,11 @@ window.CALC_TECH = {
   "cage": "Combinazioni della gabbia",
   "cage_line": "Gabbia e linea",
   "naked_pair": "Coppia nuda",
-  "trial": "Tentativo"
+  "trial": "Tentativo",
+  "hidden_pair": "Coppia nascosta",
+  "naked_triple": "Tripla nuda",
+  "line_sum": "Somma della linea",
+  "x_wing": "X-Wing"
  },
  "de": {
   "given": "Käfig aus einem Feld",
@@ -906,7 +936,11 @@ window.CALC_TECH = {
   "cage": "Käfig-Kombinationen",
   "cage_line": "Käfig und Linie",
   "naked_pair": "Nacktes Paar",
-  "trial": "Probieren"
+  "trial": "Probieren",
+  "hidden_pair": "Verstecktes Paar",
+  "naked_triple": "Nacktes Tripel",
+  "line_sum": "Liniensumme",
+  "x_wing": "X-Wing"
  },
  "zh": {
   "given": "单格笼",
@@ -915,7 +949,11 @@ window.CALC_TECH = {
   "cage": "笼子组合",
   "cage_line": "笼子与行列",
   "naked_pair": "显性数对",
-  "trial": "试探"
+  "trial": "试探",
+  "hidden_pair": "隐性数对",
+  "naked_triple": "显性三数组",
+  "line_sum": "行列总和",
+  "x_wing": "X翼"
  },
  "hi": {
   "given": "एक खाने का पिंजरा",
@@ -924,7 +962,11 @@ window.CALC_TECH = {
   "cage": "पिंजरे के संयोजन",
   "cage_line": "पिंजरा और रेखा",
   "naked_pair": "खुला जोड़ा",
-  "trial": "प्रयास"
+  "trial": "प्रयास",
+  "hidden_pair": "छिपा जोड़ा",
+  "naked_triple": "खुली तिकड़ी",
+  "line_sum": "रेखा का योग",
+  "x_wing": "X-Wing"
  },
  "ar": {
   "given": "قفص من خانة واحدة",
@@ -933,7 +975,11 @@ window.CALC_TECH = {
   "cage": "تركيبات القفص",
   "cage_line": "القفص والخط",
   "naked_pair": "زوج ظاهر",
-  "trial": "تجربة"
+  "trial": "تجربة",
+  "hidden_pair": "زوج مخفي",
+  "naked_triple": "ثلاثية ظاهرة",
+  "line_sum": "مجموع الخط",
+  "x_wing": "X-Wing"
  },
  "ru": {
   "given": "Клетка из одной ячейки",
@@ -942,6 +988,145 @@ window.CALC_TECH = {
   "cage": "Комбинации клетки",
   "cage_line": "Клетка и линия",
   "naked_pair": "Открытая пара",
-  "trial": "Проба"
+  "trial": "Проба",
+  "hidden_pair": "Скрытая пара",
+  "naked_triple": "Открытая тройка",
+  "line_sum": "Сумма линии",
+  "x_wing": "X-Wing"
+ }
+};
+
+/* One short sentence per technique, shown with its name at the «technique» step of a hint.
+   It explains the general rule only, never where it applies. */
+window.CALC_TECH_DESC = {
+ "en": {
+  "given": "A cage of just one cell holds exactly the number shown in it.",
+  "naked_single": "If a cell has only one candidate left, that number goes there.",
+  "hidden_single": "If a number fits in only one cell of a row or column, it must go there.",
+  "cage": "Only some combinations of numbers give the cage's result with its operation; numbers that appear in none of them are ruled out.",
+  "cage_line": "If a cage must hold a number in its part inside one row or column, that number can't go elsewhere in that line.",
+  "naked_pair": "Two cells of the same row or column with the same two candidates: those numbers can't go elsewhere in that line.",
+  "trial": "Try a number and follow its consequences; if they end in a contradiction, that number is wrong.",
+  "hidden_pair": "If two numbers can only go in the same two cells of a row or column, those cells hold no other number.",
+  "naked_triple": "Three cells of the same row or column sharing only three candidates: those numbers can't go elsewhere in that line.",
+  "line_sum": "Every row and column adds up to the same total; subtracting the sum cages inside it gives the sum of the remaining cells.",
+  "x_wing": "If in two rows a number can only go in the same two columns, it can't go elsewhere in those columns, and vice versa."
+ },
+ "es": {
+  "given": "Una jaula de una sola casilla lleva justo el número que muestra.",
+  "naked_single": "Si a una casilla solo le queda un candidato, ese es su número.",
+  "hidden_single": "Si un número solo cabe en una casilla de la fila o columna, tiene que ir ahí.",
+  "cage": "Solo algunas combinaciones de números dan el resultado de la jaula con su operación; los que no aparecen en ninguna quedan descartados.",
+  "cage_line": "Si una jaula tiene que llevar un número en su parte dentro de una fila o columna, no puede ir en el resto de esa línea.",
+  "naked_pair": "Dos casillas de la misma fila o columna con los mismos dos candidatos: esos números no pueden ir en el resto de la línea.",
+  "trial": "Prueba un número y sigue sus consecuencias; si acaban en contradicción, ese número no es.",
+  "hidden_pair": "Si dos números solo pueden ir en las mismas dos casillas de una fila o columna, ahí no cabe otro número.",
+  "naked_triple": "Tres casillas de la misma fila o columna que solo reúnen tres candidatos: esos números no pueden ir en el resto de la línea.",
+  "line_sum": "Cada fila y columna suma siempre lo mismo; restando las jaulas de suma que caben en ella, sale lo que suman las casillas restantes.",
+  "x_wing": "Si en dos filas un número solo puede ir en las mismas dos columnas, no puede ir en el resto de esas columnas, y al revés."
+ },
+ "fr": {
+  "given": "Une cage d’une seule case contient exactement le chiffre indiqué.",
+  "naked_single": "S’il ne reste qu’un candidat dans une case, c’est son chiffre.",
+  "hidden_single": "Si un chiffre ne peut aller que dans une seule case de la ligne ou de la colonne, il va là.",
+  "cage": "Seules certaines combinaisons de chiffres donnent le résultat de la cage avec son opération ; les chiffres absents de toutes sont exclus.",
+  "cage_line": "Si une cage doit contenir un chiffre dans sa partie située sur une ligne ou colonne, ce chiffre ne va pas ailleurs sur celle-ci.",
+  "naked_pair": "Deux cases d’une même ligne ou colonne avec les deux mêmes candidats : ces chiffres ne vont pas ailleurs sur cette ligne.",
+  "trial": "Essayez un chiffre et suivez ses conséquences ; si elles mènent à une contradiction, ce chiffre est faux.",
+  "hidden_pair": "Si deux chiffres ne peuvent aller que dans les deux mêmes cases d’une ligne ou colonne, ces cases n’acceptent aucun autre chiffre.",
+  "naked_triple": "Trois cases d’une même ligne ou colonne ne réunissant que trois candidats : ces chiffres ne vont pas ailleurs sur cette ligne.",
+  "line_sum": "Chaque ligne et colonne a toujours la même somme ; en retirant les cages d’addition qu’elle contient, on obtient la somme des cases restantes.",
+  "x_wing": "Si dans deux lignes un chiffre ne peut aller que dans les deux mêmes colonnes, il ne va pas ailleurs dans ces colonnes, et inversement."
+ },
+ "pt": {
+  "given": "Uma jaula de uma só casa leva exatamente o número indicado.",
+  "naked_single": "Se numa casa só resta um candidato, esse é o seu número.",
+  "hidden_single": "Se um número só cabe numa casa da linha ou coluna, tem de ir para lá.",
+  "cage": "Só algumas combinações de números dão o resultado da jaula com a sua operação; os que não aparecem em nenhuma ficam excluídos.",
+  "cage_line": "Se uma jaula tem de levar um número na sua parte dentro de uma linha ou coluna, esse número não pode ir no resto dessa linha.",
+  "naked_pair": "Duas casas da mesma linha ou coluna com os mesmos dois candidatos: esses números não podem ir no resto da linha.",
+  "trial": "Experimenta um número e segue as suas consequências; se acabarem numa contradição, esse número está errado.",
+  "hidden_pair": "Se dois números só podem ir nas mesmas duas casas de uma linha ou coluna, aí não cabe outro número.",
+  "naked_triple": "Três casas da mesma linha ou coluna que só juntam três candidatos: esses números não podem ir no resto da linha.",
+  "line_sum": "Cada linha e coluna soma sempre o mesmo; subtraindo as jaulas de soma que estão nela, obtém-se a soma das casas restantes.",
+  "x_wing": "Se em duas linhas um número só pode ir nas mesmas duas colunas, não pode ir no resto dessas colunas, e vice-versa."
+ },
+ "it": {
+  "given": "Una gabbia di una sola casella contiene proprio il numero indicato.",
+  "naked_single": "Se in una casella resta un solo candidato, quello è il suo numero.",
+  "hidden_single": "Se un numero entra in una sola casella della riga o colonna, deve andare lì.",
+  "cage": "Solo alcune combinazioni di numeri danno il risultato della gabbia con la sua operazione; i numeri che non compaiono in nessuna sono esclusi.",
+  "cage_line": "Se una gabbia deve contenere un numero nella sua parte dentro una riga o colonna, quel numero non può stare nel resto di quella linea.",
+  "naked_pair": "Due caselle della stessa riga o colonna con gli stessi due candidati: quei numeri non possono stare nel resto della linea.",
+  "trial": "Prova un numero e seguine le conseguenze; se portano a una contraddizione, quel numero è sbagliato.",
+  "hidden_pair": "Se due numeri possono andare solo nelle stesse due caselle di una riga o colonna, lì non entra altro numero.",
+  "naked_triple": "Tre caselle della stessa riga o colonna che riuniscono solo tre candidati: quei numeri non possono stare nel resto della linea.",
+  "line_sum": "Ogni riga e colonna ha sempre la stessa somma; togliendo le gabbie di somma che contiene, si ottiene la somma delle caselle restanti.",
+  "x_wing": "Se in due righe un numero può andare solo nelle stesse due colonne, non può stare nel resto di quelle colonne, e viceversa."
+ },
+ "de": {
+  "given": "Ein Käfig aus nur einem Feld enthält genau die angegebene Zahl.",
+  "naked_single": "Bleibt in einem Feld nur ein Kandidat übrig, ist das seine Zahl.",
+  "hidden_single": "Passt eine Zahl nur in ein Feld der Zeile oder Spalte, gehört sie dorthin.",
+  "cage": "Nur manche Zahlenkombinationen ergeben mit der Rechenart das Ergebnis des Käfigs; Zahlen, die in keiner vorkommen, fallen weg.",
+  "cage_line": "Muss ein Käfig eine Zahl in seinem Teil innerhalb einer Zeile oder Spalte enthalten, fällt sie im Rest dieser Linie weg.",
+  "naked_pair": "Zwei Felder derselben Zeile oder Spalte mit denselben zwei Kandidaten: Diese Zahlen fallen im Rest der Linie weg.",
+  "trial": "Probiere eine Zahl aus und verfolge die Folgen; enden sie in einem Widerspruch, ist die Zahl falsch.",
+  "hidden_pair": "Können zwei Zahlen nur in denselben zwei Feldern einer Zeile oder Spalte stehen, passt dort keine andere Zahl.",
+  "naked_triple": "Drei Felder derselben Zeile oder Spalte mit zusammen nur drei Kandidaten: Diese Zahlen fallen im Rest der Linie weg.",
+  "line_sum": "Jede Zeile und Spalte hat dieselbe Summe; zieht man die Summenkäfige darin ab, erhält man die Summe der übrigen Felder.",
+  "x_wing": "Kann eine Zahl in zwei Zeilen nur in denselben zwei Spalten stehen, fällt sie im Rest dieser Spalten weg, und umgekehrt."
+ },
+ "zh": {
+  "given": "只有一格的笼子，格中就是所示的数字。",
+  "naked_single": "如果某格只剩一个候选数，那就是它的数字。",
+  "hidden_single": "如果某数字在行或列内只能填在一个格子里，就填在那里。",
+  "cage": "只有部分数字组合能用笼子的运算得到其结果；不出现在任何组合中的数字被排除。",
+  "cage_line": "如果笼子在某行或列内的部分必须包含某数字，该行或列的其他格不能填它。",
+  "naked_pair": "同一行或列中有两格的候选数都是相同的两个数，这两个数不能出现在该行或列的其他格。",
+  "trial": "试填一个数字并推导下去；如果出现矛盾，这个数字就是错的。",
+  "hidden_pair": "如果两个数字在某行或列中只能填在相同的两格，这两格就不能填其他数字。",
+  "naked_triple": "同一行或列中有三格的候选数合起来只有三个数，这些数不能出现在该行或列的其他格。",
+  "line_sum": "每行每列的总和都相同；减去完全位于其中的加法笼，就得到其余格子的总和。",
+  "x_wing": "如果某数字在两行中都只能位于相同的两列，那么这两列的其他格不能填它，反之亦然。"
+ },
+ "hi": {
+  "given": "सिर्फ़ एक खाने वाले पिंजरे में ठीक वही अंक आता है जो उसमें दिखाया गया है।",
+  "naked_single": "अगर किसी खाने में सिर्फ़ एक विकल्प बचा है, तो वही उसका अंक है।",
+  "hidden_single": "अगर कोई अंक पंक्ति या स्तंभ के सिर्फ़ एक खाने में आ सकता है, तो वह वहीं जाएगा।",
+  "cage": "पिंजरे की संक्रिया से उसका परिणाम सिर्फ़ कुछ अंक-संयोजनों से बनता है; जो अंक किसी में नहीं आते, वे हट जाते हैं।",
+  "cage_line": "अगर किसी पिंजरे के किसी पंक्ति या स्तंभ वाले हिस्से में कोई अंक आना ही है, तो वह उस रेखा में बाकी जगह नहीं आ सकता।",
+  "naked_pair": "एक ही पंक्ति या स्तंभ के दो खानों में वही दो विकल्प हों, तो ये अंक उस रेखा में बाकी जगह नहीं आ सकते।",
+  "trial": "कोई अंक आज़माएँ और उसके परिणाम देखें; अगर विरोधाभास निकले, तो वह अंक गलत है।",
+  "hidden_pair": "अगर दो अंक किसी पंक्ति या स्तंभ के उन्हीं दो खानों में ही आ सकते हैं, तो उन खानों में कोई और अंक नहीं आएगा।",
+  "naked_triple": "एक ही पंक्ति या स्तंभ के तीन खानों में कुल मिलाकर तीन ही विकल्प हों, तो ये अंक उस रेखा में बाकी जगह नहीं आ सकते।",
+  "line_sum": "हर पंक्ति और स्तंभ का योग एक-सा होता है; उसमें पूरे आने वाले जोड़ के पिंजरे घटाने पर बाकी खानों का योग मिलता है।",
+  "x_wing": "अगर दो पंक्तियों में कोई अंक उन्हीं दो स्तंभों में ही आ सकता है, तो वह उन स्तंभों में बाकी जगह नहीं आ सकता, और उल्टा भी।"
+ },
+ "ar": {
+  "given": "القفص المكوَّن من خانة واحدة يحمل الرقم المعروض فيه تمامًا.",
+  "naked_single": "إذا بقي مرشح واحد فقط في خانة، فهو رقمها.",
+  "hidden_single": "إذا كان رقم لا يناسب إلا خانة واحدة في الصف أو العمود، فمكانه هناك.",
+  "cage": "بعض تركيبات الأرقام فقط تعطي نتيجة القفص بعمليته؛ والأرقام التي لا تظهر في أي منها مستبعدة.",
+  "cage_line": "إذا كان على قفص أن يحمل رقمًا في جزئه الواقع داخل صف أو عمود، فلا يوضع هذا الرقم في بقية ذلك الخط.",
+  "naked_pair": "خانتان في الصف أو العمود نفسه لهما المرشحان نفسهما: لا يوضع هذان الرقمان في بقية الخط.",
+  "trial": "جرّب رقمًا وتتبّع نتائجه؛ إن انتهت إلى تناقض، فهذا الرقم خاطئ.",
+  "hidden_pair": "إذا كان رقمان لا يقعان إلا في الخانتين نفسيهما من صف أو عمود، فلا يوضع فيهما رقم آخر.",
+  "naked_triple": "ثلاث خانات في الصف أو العمود نفسه لا تجمع إلا ثلاثة مرشحين: لا توضع هذه الأرقام في بقية الخط.",
+  "line_sum": "مجموع كل صف وعمود هو نفسه دائمًا؛ وبطرح أقفاص الجمع الواقعة فيه يُعرف مجموع الخانات الباقية.",
+  "x_wing": "إذا كان رقم في صفين لا يقع إلا في العمودين نفسيهما، فلا يوضع في بقية هذين العمودين، والعكس صحيح."
+ },
+ "ru": {
+  "given": "Клетка из одной ячейки содержит ровно указанное в ней число.",
+  "naked_single": "Если в ячейке остался один кандидат, это и есть её число.",
+  "hidden_single": "Если число подходит только в одну ячейку строки или столбца, оно стоит там.",
+  "cage": "Лишь некоторые сочетания чисел дают результат клетки её действием; числа, которых нет ни в одном, исключаются.",
+  "cage_line": "Если клетка обязана содержать число в своей части внутри строки или столбца, в остальной части этой линии его нет.",
+  "naked_pair": "Две ячейки одной строки или столбца с одинаковыми двумя кандидатами: в остальных ячейках линии этих чисел нет.",
+  "trial": "Попробуйте число и проследите следствия; если они ведут к противоречию, число неверно.",
+  "hidden_pair": "Если два числа могут стоять только в одних и тех же двух ячейках строки или столбца, других чисел там нет.",
+  "naked_triple": "Три ячейки одной строки или столбца, у которых всего три кандидата на всех: в остальных ячейках линии этих чисел нет.",
+  "line_sum": "Сумма каждой строки и столбца одинакова; вычтя клетки на сложение внутри неё, получаем сумму оставшихся ячеек.",
+  "x_wing": "Если в двух строках число может стоять только в одних и тех же двух столбцах, в остальных ячейках этих столбцов его нет, и наоборот."
  }
 };

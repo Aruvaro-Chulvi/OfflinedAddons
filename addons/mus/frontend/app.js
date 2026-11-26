@@ -89,14 +89,24 @@
   // G: {level, g (engine game), helped}
   let G = null, aiTimer = null, disc = new Set(), amount = 2, statLevel = 2;
   const delay = () => SPEED[settings().speed] || 950;
+  // Card movement: anim = cards are moving (no input); pendingFx = what to animate after the next render;
+  // echo = the last word said when the engine already cleared it (closing a lance), kept on screen a moment;
+  // epoch bumps on a new game so old timers stop.
+  const FX = window.CardFX;
+  const FX_SPEED = { slow: 1.3, normal: 1, fast: 0.7 };
+  const DEAL_GAP = 85, FLY = 280;
+  let anim = false, pendingFx = null, echo = null, epoch = 0;
+  const later = (fn, ms) => { const ep = epoch; setTimeout(() => { if (ep === epoch) fn(); }, ms); };
 
   function newGame() {
     clearTimeout(aiTimer);
+    epoch++; FX.cancel(); anim = false; echo = null;
+    $('countDlg').classList.remove('show');
     const S = settings();
     G = { level: S.level, g: M.newGame({ target: S.target, reyes8: +S.kings === 8, dealer: 3 }), helped: false };
     statsOf(G.level).played++;
     M.newHand(G.g);
-    handSounds();
+    pendingFx = { type: 'deal' };
     me().game = G;
     disc = new Set(); amount = 2;
     save();
@@ -110,13 +120,50 @@
   $('confirmYes').onclick = () => { $('confirmDlg').classList.remove('show'); newGame(); };
   $('confirmNo').onclick = () => $('confirmDlg').classList.remove('show');
 
-  function handSounds() { snd('shuffle'); snd('deal', { n: 8, delay: 0.55 }); }
+  // ── Card movement (animation and sound together) ────────────────────────────────────────────────────
+  const cardsOf = (p) => (p === 0 ? $('myCards') : $('seat' + p).querySelector('.cards'));
+  /** The deck: a card-sized spot in the middle of the table. */
+  function deckRect() {
+    const ref = $('seat1').querySelector('.card');
+    const w = ref ? ref.getBoundingClientRect().width : 40;
+    return FX.centreOf(document.querySelector('.center-box'), w, w * 1.5);
+  }
+  function runFx(fx) {
+    const h = G.g.hand;
+    if (fx.type === 'deal') {
+      // shuffle, then 4 rounds of one card each, starting with the mano; every card has its own sound
+      const targets = [];
+      for (let k = 0; k < 4; k++) for (let i = 0; i < 4; i++) { const el = cardsOf((h.mano + i) % 4).children[k]; if (el) targets.push(el); }
+      const from = deckRect();
+      FX.hide(targets);
+      snd('shuffle');
+      return Promise.all(targets.map((el, i) => FX.fly({ from, to: el, html: el.innerHTML, delay: 550 + i * DEAL_GAP, dur: FLY, onStart: () => snd('card') })));
+    }
+    if (fx.type === 'discard') {
+      // the discarded cards go to the middle, then the new ones come from the deck
+      const fresh = [...cardsOf(fx.p).children].slice(-fx.n);
+      FX.hide(fresh);
+      const out = Promise.all(fx.from.map(([c, r], i) => FX.fly({
+        from: r, to: deckRect(), html: fx.p === 0 ? C.cardSVG(c) : C.backSVG(), delay: i * 50, dur: FLY, fade: true,
+        onStart: i === 0 ? () => snd('take') : null,
+      })));
+      return out.then(() => Promise.all(fresh.map((el, i) => FX.fly({ from: deckRect(), to: el, html: el.innerHTML, delay: 100 + i * DEAL_GAP, dur: FLY, onStart: () => snd('card') }))));
+    }
+    return Promise.resolve();
+  }
+
   let lastTurn = -1;
   function step() {
     clearTimeout(aiTimer);
-    if (!G) return;
+    if (!G || anim) return;
     const g = G.g, h = g.hand;
     render();
+    if (pendingFx) {
+      const fx = pendingFx, ep = epoch;
+      pendingFx = null; anim = true; renderActions();
+      runFx(fx).then(() => { if (ep !== epoch) return; anim = false; step(); });
+      return;
+    }
     if (h.phase === 'conteo') { h.countRows = M.conteo(g); afterHand(); return; }
     if (h.phase === 'handEnd') { afterHand(); return; }
     if (h.turn === 0) { if (lastTurn !== 0 && lastTurn !== -1) snd('turn'); lastTurn = 0; return; } // waiting for you
@@ -133,16 +180,24 @@
     const before = h.lance ? h.lance.name : null;
     const fx = { envido: 'envido', quiero: 'quiero', noquiero: 'noquiero', ordago: 'ordago' }[d.type];
     if (fx) snd(fx);
-    if (d.type === 'discard') { snd('take'); snd('deal', { n: Math.max(1, d.cards.length), delay: 0.25 }); }
+    echo = null;
+    if (d.type === 'discard') {
+      // where the discarded cards are now (sound and movement happen after the next render)
+      const kids = cardsOf(p).children;
+      const from = d.cards.map((c) => [c, FX.rect(p === 0 ? $('myCards').querySelector(`.card[data-c="${c}"]`) : kids[h.hands[p].indexOf(c)])]);
+      pendingFx = { type: 'discard', p, from, n: Math.max(1, d.cards.length) };
+    }
     if (h.phase === 'mus') M.musDecision(g, p, d.type === 'mus');
     else if (h.phase === 'discard') M.discard(g, p, d.cards);
     else M.act(g, p, d);
+    // the engine clears the bubbles when a lance (or the discards) ends: keep the last word visible for a moment
+    const last = h.log[h.log.length - 1];
+    if (last && last.p === p && (!h.said[p] || h.said[p].what !== last.what)) echo = { p, what: last.what, extra: last.extra };
     // a refused bet scores at once
     if (before && h.results[before] && h.results[before].status === 'noquiero' && d.type === 'noquiero') {
       const r = h.results[before];
       toast(t('deje', { who: r.team === 0 ? t('us') : t('them'), n: r.pts }));
     }
-    if (h.ordago) banner(t('ordagoWon', { who: h.ordago.team === 0 ? t('us') : t('them') }));
     save();
   }
   function afterHand() {
@@ -158,8 +213,11 @@
       }
       save(true);
     }
-    render();
-    setTimeout(showCount, 500);
+    // (step() has just drawn the table: drawing it again here would cut the cards' turn-over animation)
+    // the cards turn face up first; an órdago's winner is announced once you can see why
+    const ord = h.ordago && !h.ordagoShown;
+    if (ord) { h.ordagoShown = true; later(() => banner(t('ordagoWon', { who: h.ordago.team === 0 ? t('us') : t('them') })), 1000); }
+    later(showCount, ord ? 2600 : 1300);
   }
 
   // ── Count dialog ────────────────────────────────────────────────────────────────────────────────────
@@ -208,7 +266,7 @@
     const g = G.g;
     if (g.over) { showEnd(); return; }
     M.nextHand(g);
-    handSounds();
+    pendingFx = { type: 'deal' }; echo = null;
     disc = new Set(); amount = 2;
     save();
     step();
@@ -234,12 +292,15 @@
       const el = $('seat' + p);
       el.classList.toggle('turn', !reveal && h.turn === p);
       el.querySelector('.mano').hidden = p !== h.mano;
-      const said = h.said[p];
+      const own = h.said[p], said = own || (echo && echo.p === p ? echo : null);
       const b = el.querySelector('.bubble');
       b.textContent = said ? t('said_' + said.what, { n: said.extra }) : '';
       b.classList.toggle('strong', !!said && (said.what === 'ordago' || said.what === 'envido'));
+      b.classList.toggle('echo', !own && !!said);
       if (p === 0) continue;
-      el.querySelector('.cards').innerHTML = h.hands[p].map((c) => `<div class="card">${reveal ? C.cardSVG(c) : C.backSVG()}</div>`).join('');
+      // at the end of the hand the cards turn over one after another (only the first time they are shown)
+      const flip = reveal && !h.flipDone;
+      el.querySelector('.cards').innerHTML = h.hands[p].map((c, k) => `<div class="card${flip ? ' flipin' : ''}"${flip ? ` style="animation-delay:${(p - 1) * 160 + k * 60}ms"` : ''}>${reveal ? C.cardSVG(c) : C.backSVG()}</div>`).join('');
       el.querySelector('.decl').textContent = h.decl.pares ? `Pares: ${h.decl.pares[p] ? t('declYes') : t('declNo')} · Juego: ${h.decl.juego[p] ? t('declYes') : t('declNo')}` : '';
     }
     // my cards
@@ -268,12 +329,13 @@
     $('infoThem').textContent = g.score[1] + ' · ' + t('vacas') + ' ' + g.vacas[1];
     $('infoMano').textContent = t('manoIs', { who: seatName(h.mano) });
     $('infoTarget').textContent = t('points', { n: g.target });
+    if (reveal) h.flipDone = true;
     renderActions();
   }
   function renderActions() {
     const g = G.g, h = g.hand, box = $('actions');
     let html = '';
-    if (h.turn === 0 && h.phase !== 'conteo' && h.phase !== 'handEnd') {
+    if (!anim && h.turn === 0 && h.phase !== 'conteo' && h.phase !== 'handEnd') {
       if (h.phase === 'mus') html = btn('mus', t('mus'), true) + btn('noMus', t('noMus'));
       else if (h.phase === 'discard') html = btn('discard', t('discardN', { n: disc.size }), true, !disc.size);
       else {
@@ -294,7 +356,7 @@
 
   $('actions').addEventListener('click', (e) => {
     const b = e.target.closest('button'); if (!b || !G) return;
-    const g = G.g, h = g.hand; if (h.turn !== 0) return;
+    const g = G.g, h = g.hand; if (h.turn !== 0 || anim) return;
     const a = b.dataset.a;
     if (a === 'minus') { amount = Math.max(2, amount - 1); renderActions(); return; }
     if (a === 'plus') { amount = Math.min(30, amount + 1); renderActions(); return; }
@@ -310,7 +372,7 @@
   });
   $('myCards').addEventListener('click', (e) => {
     const el = e.target.closest('.card'); if (!el || !G) return;
-    const h = G.g.hand; if (h.phase !== 'discard' || h.turn !== 0) return;
+    const h = G.g.hand; if (h.phase !== 'discard' || h.turn !== 0 || anim) return;
     const c = +el.dataset.c;
     if (disc.has(c)) disc.delete(c); else disc.add(c);
     render();
@@ -380,9 +442,9 @@
   }
   document.querySelectorAll('#targetSeg button').forEach((b) => { b.onclick = () => { settings().target = +b.dataset.v; renderLevels(); save(); }; });
   document.querySelectorAll('#kingsSeg button').forEach((b) => { b.onclick = () => { settings().kings = +b.dataset.v; renderLevels(); save(); }; });
-  document.querySelectorAll('#speedSeg button').forEach((b) => { b.onclick = () => { settings().speed = b.dataset.v; renderSettings(); save(); }; });
+  document.querySelectorAll('#speedSeg button').forEach((b) => { b.onclick = () => { settings().speed = b.dataset.v; FX.setSpeed(FX_SPEED[b.dataset.v]); renderSettings(); save(); }; });
   document.querySelectorAll('#themeSeg button').forEach((b) => { b.onclick = () => { settings().theme = b.dataset.v; renderSettings(); applyTheme(); save(); }; });
-  document.querySelectorAll('.sw').forEach((s) => { s.onclick = () => { const S = settings(); S[s.dataset.k] = !S[s.dataset.k]; renderSettings(); if (G) render(); save(); }; });
+  document.querySelectorAll('.sw').forEach((s) => { s.onclick = () => { const S = settings(); S[s.dataset.k] = !S[s.dataset.k]; renderSettings(); if (G && !anim) render(); save(); }; });
   document.querySelectorAll('.sec-h').forEach((h) => { h.onclick = () => h.parentElement.classList.toggle('closed'); });
   $('newBtn').onclick = requestNew;
   const closeDrawer = () => $('app').classList.remove('drawer');
@@ -399,6 +461,7 @@
     await Promise.all([loadUser(), loadDB()]);
     $('storeNote').hidden = storeMode !== 'local';
     window.GameSound.init({ level: settings().sound, skip: SKIP_SOUNDS });
+    FX.setSpeed(FX_SPEED[settings().speed]);
     applyTheme();
     renderUser(); renderLevels(); renderSettings();
     statLevel = settings().level;

@@ -37,7 +37,8 @@ Los enemigos llegan por los rumbos que se avisan en el respiro entre oleadas (te
 muchas oleadas tienen tema: ataque a la torre, cazas, enjambre de drones, escuadrón de bombarderos, helicópteros y
 vuelo rasante.
 
-El **entrenamiento** (2 minutos) enseña a volar, disparar, fijar objetivos y reparar la torre.
+El **entrenamiento** (unos 3 minutos) enseña a volar, disparar, encadenar una racha, fijar objetivos, soltar bengalas,
+reparar la torre, elegir ventajas y llamar a la oleada, con las teclas o los botones que tengas asignados.
 
 Al acabar la partida puedes **ver la repetición de los últimos 30 segundos** con cámaras de cine (detrás de tu
 avión, pasadas, desde el pie de la torre y, si cae, la torre viniéndose abajo), a ×½, ×1 o ×2.
@@ -114,6 +115,11 @@ Controles arcade para **mando** y para **teclado y ratón**, los dos se pueden c
 | Acelerar · Frenar | W o Mayús · S o Ctrl | RB · LB |
 | Cámara · Pausa | C · Esc | Cruceta arriba · Start |
 
+Los menús, la pausa y los resultados también se manejan con el mando (cruceta o stick izquierdo para moverte, A para
+elegir, B para volver, Start para seguir) o con el teclado (flechas o Tab, Intro o Espacio, Esc; R repite la partida en
+los resultados). En los selectores, ← → cambian la opción. En Ajustes, «Reducir efectos» quita la cámara lenta y suaviza
+las sacudidas de cámara y los destellos rojos.
+
 El juego se pausa solo cuando la ventana pierde el foco, cuando se minimiza Offlined o cuando se desconecta el mando.
 Salir del addon a mitad de partida pide confirmación: una partida sin terminar no cuenta.
 
@@ -121,8 +127,9 @@ Salir del addon a mitad de partida pide confirmación: una partida sin terminar 
 
 Rangos (cadete, piloto, teniente, capitán, as y guardián) según la mejor oleada alcanzada, 33 logros, tu historial y
 un **ranking familiar** por modo y dificultad, con todos los usuarios de Offlined que juegan en este ordenador.
-Desde la versión 1.3 el ranking solo compara partidas con las reglas nuevas (Arena Neón, puertas Flow, vuelo
-rasante); las de antes siguen en tu historial y en tus logros.
+Cuando cambian las reglas de puntuación, el ranking solo compara partidas con las reglas nuevas: desde la versión 1.4
+(racha, últimas oleadas, jefe y bonus de la torre); antes, desde la 1.3 (Arena Neón, puertas Flow, vuelo rasante).
+Las partidas de antes siguen en tu historial y en tus logros.
 
 ## Sonido
 

@@ -8,17 +8,18 @@
    · Stick derecho: mirar alrededor (al soltarlo, la cámara vuelve detrás).
    · RT: arma 1 · LT: arma 2 (con el caza, mantener para fijar misiles y soltar para lanzarlos).
    · RB: acelerar (postcombustión en el caza) · LB: frenar. Sin tocarlos, velocidad de combate automática.
-   · Y: siguiente objetivo; mantenido, la cámara mira al objetivo. · Cruceta ↑: cámara cerca/lejos · Start: pausa.
+   · Y: siguiente objetivo; mantenido, la cámara mira al objetivo. · B: bengalas · X: llamar ya a la oleada.
+   · Cruceta ↑: cámara cerca/lejos · Start: pausa (y seguir). Todo reasignable en Controles (controls.js).
 
    TECLADO Y RATÓN (como el modo arcade de War Thunder: «apuntado con el ratón»):
    · Clic en la pantalla para capturar el ratón. Mueve el ratón y la nave vuela sola hacia donde apuntas
      (el círculo pequeño). Clic izquierdo: arma 1 · clic derecho: arma 2.
    · W acelerar (Shift también) · S frenar · Tab o E: siguiente objetivo; mantenido, cámara al objetivo.
-   · Sin ratón: flechas o A/D para volar (↑↓ morro, ←→ girar), Espacio arma 1, V arma 2.
+   · Sin ratón: flechas o A/D para volar (↑↓ morro, ←→ girar), Espacio arma 1, V arma 2, F bengalas, N oleada.
    · Esc suelta el ratón y pausa.
    ═══════════════════════════════════════════════════════════════════════════ */
 
-import { bindings as B, kbAny, kbHas } from "./controls.js";
+import { bindings as B, kbAny, kbHas, firstPad } from "./controls.js";
 
 const TURN = { "sg-attack": 1.15, "sg-fighter": 0.95 };   // rad/s de giro con el mando a tope
 const BANK = 0.95;                                        // alabeo que se ve al girar a tope (rad)
@@ -32,8 +33,9 @@ export function createArcade(api, combat) {
     aimYaw: 0, aimPitch: 0, mouseOn: false, padPrev: [] };
   const dz = v => (Math.abs(v) < 0.15 ? 0 : (v - Math.sign(v) * 0.15) / 0.85);   // zona muerta con rampa
   const _q = new THREE.Quaternion(), UP = new THREE.Vector3(0, 1, 0), _aim = new THREE.Vector3(), _focus = new THREE.Vector3();
-  const pad = () => (navigator.getGamepads ? [...navigator.getGamepads()].find(g => g) : null);
+  const pad = firstPad;   // una lectura por fotograma, compartida
   const canvas = api.renderer.domElement;
+  const ext = { startBlocked: () => false };   // game.js: true con una ventana delante que no es la pausa
 
   // ── Ratón: se captura con un clic; mueve la dirección de apuntado ──
   canvas.addEventListener("click", () => { if (st.on && !S.paused && !document.pointerLockElement) canvas.requestPointerLock && Promise.resolve(canvas.requestPointerLock()).catch(() => { }); });
@@ -53,13 +55,16 @@ export function createArcade(api, combat) {
 
   addEventListener("keydown", e => { if (st.on && !S.paused && e.code !== "KeyC" && kbHas("cam", e.code) && !e.repeat) api.setCam(api.rig.next()); });
   // ── Botones del mando que funcionan también en pausa (Start) ──
+  // Start no hace nada con los resultados o el fin del entrenamiento delante (el juego seguiría por debajo) ni en la
+  // repetición (allí Start la salta). Para seguir vale aunque la nave esté derribada; para pausar, no.
   (function poll() {
     requestAnimationFrame(poll);
     if (!st.on) return;
     const gp = pad(); if (!gp) return;
     const b = i => !!(gp.buttons[i] && gp.buttons[i].pressed);
     const now = [b(B.pad.pause), b(B.pad.cam)];
-    if (now[0] && !st.padPrev[0] && S.running && !S.waitT && !(S.crashT > 0)) api.pause(!S.paused);
+    if (now[0] && !st.padPrev[0] && S.running && !S.waitT && !combat.replaying && !(combat.state.game.over) && !ext.startBlocked()
+        && (S.paused || !(S.crashT > 0))) api.pause(!S.paused);
     if (now[1] && !st.padPrev[1] && !S.paused) api.setCam(api.rig.next());
     st.padPrev = now;
   })();
@@ -69,8 +74,7 @@ export function createArcade(api, combat) {
     if (!st.on) return null;
     const k = S.keys, f = S.flight, P = S.P;
     const has = (...c) => c.some(x => k.has(x));
-    // Teclado sin ratón: flechas (y A/D para girar)
-    // Teclado, según la asignación del jugador (controls.js)
+    // Teclado sin ratón, según la asignación del jugador (controls.js): por defecto flechas (y A/D para girar)
     let pitchIn = (kbAny("up", k) ? 1 : 0) - (kbAny("down", k) ? 1 : 0);
     let turnIn = (kbAny("right", k) ? 1 : 0) - (kbAny("left", k) ? 1 : 0);
     let accel = kbAny("accel", k) || has("ShiftRight"), brake = kbAny("brake", k) || has("ControlRight");
@@ -150,6 +154,7 @@ export function createArcade(api, combat) {
       if (document.pointerLockElement && document.exitPointerLock) document.exitPointerLock();
     },
     get mouseOn() { return st.mouseOn; },
+    set startBlocked(fn) { ext.startBlocked = typeof fn === "function" ? fn : () => false; },
     setSens(k) { MOUSE_SENS = 0.0022 * (k || 1); },
   };
 }

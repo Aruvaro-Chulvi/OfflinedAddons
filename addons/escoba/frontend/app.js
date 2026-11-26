@@ -10,6 +10,9 @@
   const ME = 0, AI = 1;
   const SKIP_SOUNDS = ['chip'];
   const SPEED = { slow: 1400, normal: 900, fast: 450 };
+  const FX_SPEED = { slow: 1.3, normal: 1, fast: 0.7 };   // card flights follow the game speed
+  const DEAL_GAP = 110, FLY = 300;                        // ms between dealt cards, ms per flight
+  const FX = window.CardFX;
 
   // ── Language ────────────────────────────────────────────────────────────────────────────────────────
   const I18N = window.ESCOBA_I18N;
@@ -87,8 +90,15 @@
   // ── Game state ──────────────────────────────────────────────────────────────────────────────────────
   // G: {level, target, pts:[me, ai], handNo, dealer, s (engine state), helped, over}
   let G = null, sel = null, picks = new Set(), reveal = null, busy = false, statLevel = 2;
+  // anim: cards are moving (no input). ghost: cards still drawn on the table that already belong to a pile
+  // (initial escoba, the rest at the end) until they fly there. epoch: bumps on a new game so old timers stop.
+  let anim = false, ghost = null, epoch = 0;
+  const later = (fn, ms) => { const ep = epoch; setTimeout(() => { if (ep === epoch) fn(); }, ms); };
 
   function newGame() {
+    epoch++; FX.cancel();
+    busy = false; anim = false; ghost = null;
+    $('handDlg').classList.remove('show');
     const S = settings();
     G = { level: S.level, target: S.target, pts: [0, 0], handNo: 1, dealer: AI, s: null, helped: false, over: false };
     statsOf(G.level).played++;
@@ -97,14 +107,58 @@
     closeDrawer();
   }
   function startHand() {
+    const ep = epoch;
     G.s = E.newHand(G.dealer);
-    snd('shuffle'); snd('deal', { n: 6, delay: 0.55 });
-    sel = null; picks = new Set(); reveal = null;
-    renderAll(); save();
+    delete G.scored;
     const ini = G.s.events.find((e) => e.type === 'initial');
-    if (ini) { banner(t('escoba')); toast(t('initialEscoba')); snd('escoba', { delay: 1.1 }); }
     G.s.events = [];
-    if (G.s.turn === AI) setTimeout(aiTurn, delay());
+    sel = null; picks = new Set(); reveal = null; hintMv = null;
+    ghost = ini ? ini.cards.slice() : null;
+    anim = true;
+    renderAll(); save();
+    // shuffle, then each card leaves the deck with its own sound: the 4 on the table first, then 3 each
+    snd('shuffle');
+    dealAnim(dealTargets(true), 550).then(async () => {
+      if (ep !== epoch) return;
+      if (ini) {
+        // a table of 15 (or 30) goes straight to the dealer: an escoba
+        await FX.wait(250);
+        if (ep !== epoch) return;
+        const items = ghost.map((c) => [c, FX.rect(tableCardEl(c))]);
+        ghost = null; renderBoard();
+        await sweep(items, ini.player);
+        if (ep !== epoch) return;
+        banner(t('escoba')); toast(t('initialEscoba')); snd('escoba');
+      }
+      anim = false; renderBoard();
+      if (G.s.turn === AI) later(aiTurn, delay());
+    });
+  }
+
+  // ── Card movement (animation and sound together) ──────────────────────────────────────────────────
+  const face = (c) => C.cardSVG(c, { value: settings().showValue });
+  const handEl = (p) => $(p === ME ? 'myHand' : 'aiHand');
+  const tableCardEl = (c) => $('table').querySelector(`.card[data-c="${c}"]`);
+  /** Elements in dealing order: optionally the table, then 3 rounds of one card each, non-dealer first. */
+  function dealTargets(withTable) {
+    const out = withTable ? [...$('table').children] : [];
+    const first = 1 - G.s.dealer;
+    for (let k = 0; k < 3; k++) for (const p of [first, G.s.dealer]) { const el = handEl(p).children[k]; if (el) out.push(el); }
+    return out;
+  }
+  function dealAnim(targets, start) {
+    const from = FX.rect($('deckStack'));
+    FX.hide(targets);
+    return Promise.all(targets.map((el, i) => FX.fly({ from, to: el, html: el.innerHTML, delay: start + i * DEAL_GAP, dur: FLY, onStart: () => snd('card') })));
+  }
+  /** Cards [[id, rect]] fly to a player's pile; the siete de oros chimes when it lands. */
+  function sweep(items, p) {
+    const to = $(p === ME ? 'myPile' : 'aiPile');
+    return Promise.all(items.map(([c, r], i) => FX.fly({
+      from: r, to, hideTarget: false, html: face(c), delay: i * 45, dur: FLY + 80,
+      onStart: i === 0 ? () => snd('take') : null,
+      onLand: c === E.SIETE_OROS ? () => snd('coin') : null,
+    })));
   }
   const delay = () => SPEED[settings().speed] || 900;
   function requestNew() {
@@ -122,45 +176,80 @@
     let sum = val(sel); for (const c of picks) sum += val(c);
     return sum === 15;
   }
-  function myTurn() { return G && !G.over && !busy && G.s.turn === ME && G.s.hands[ME].length; }
+  function myTurn() { return G && !G.over && !busy && !anim && G.s.turn === ME && G.s.hands[ME].length; }
   function doMove(p, mv) {
-    const takesSiete = mv.take.length && (mv.take.includes(E.SIETE_OROS) || mv.card === E.SIETE_OROS);
-    if (mv.take.length) snd('take'); else if (p === ME) snd('play');
-    if (takesSiete) snd('coin', { delay: 0.12 });
+    const ep = epoch;
+    // where the cards are now, before the move changes the table
+    const src = p === ME ? handEl(ME).querySelector(`.card[data-c="${mv.card}"]`) : $('table').querySelector('.card.played');
+    const fromCard = FX.rect(src);
+    const takeRects = mv.take.map((c) => [c, FX.rect(tableCardEl(c))]);
     const r = E.play(G.s, mv);
-    if (r.escoba) snd('escoba', { delay: 0.15 });
-    if (r.dealt) snd('deal', { n: 6, delay: 0.35 });
-    if (r.escoba) {
-      banner(t('escoba'));
-      if (p === ME) statsOf(G.level).escobas++;
-      if (p === AI) toast(t('aiEscoba'));
-    }
     const rest = G.s.events.find((e) => e.type === 'rest');
-    if (rest) { toast(t('restTo', { who: rest.player === ME ? t('you') : t('computer') })); snd('take', { delay: 0.4 }); }
     G.s.events = [];
-    sel = null; picks = new Set(); reveal = null;
+    if (r.escoba && p === ME) statsOf(G.level).escobas++;
+    sel = null; picks = new Set(); reveal = null; hintMv = null;
+    ghost = rest ? rest.cards.slice() : null;
+    anim = true;
     renderAll(); save();
-    if (r.handOver) { setTimeout(scoreHand, 700); return; }
-    if (G.s.turn === AI) setTimeout(aiTurn, delay());
-    else if (p === AI) snd('turn', { delay: 0.35 });
+    const dealt = r.dealt ? dealTargets(false) : [];
+    FX.hide(dealt);
+    let moved;
+    if (mv.take.length) moved = sweep([[mv.card, fromCard], ...takeRects], p);
+    else if (p === ME) moved = FX.fly({ from: fromCard, to: tableCardEl(mv.card), html: face(mv.card), dur: FLY, onLand: () => snd('play') });
+    else moved = Promise.resolve(true);   // the computer's card is already on the table
+    moved.then(async () => {
+      if (ep !== epoch) return;
+      if (r.escoba) {
+        banner(t('escoba')); snd('escoba');
+        if (p === AI) toast(t('aiEscoba'));
+        await FX.wait(900);
+      }
+      if (ep !== epoch) return;
+      if (r.dealt) { await FX.wait(250); if (ep !== epoch) return; await dealAnim(dealt, 0); }
+      if (ep !== epoch) return;
+      if (rest) {
+        // what is left on the table goes to whoever took last
+        await FX.wait(350);
+        if (ep !== epoch) return;
+        const items = ghost.map((c) => [c, FX.rect(tableCardEl(c))]);
+        ghost = null; renderBoard();
+        toast(t('restTo', { who: rest.player === ME ? t('you') : t('computer') }));
+        await sweep(items, rest.player);
+      }
+      if (ep !== epoch) return;
+      anim = false; renderBoard();
+      if (r.handOver) { later(scoreHand, 500); return; }
+      if (G.s.turn === AI) later(aiTurn, delay());
+      else if (p === AI) snd('turn');
+    });
   }
   function aiTurn() {
-    if (!G || G.over || G.s.turn !== AI) return;
+    if (!G || G.over || G.s.turn !== AI || anim) return;
     busy = true; renderStatus();
-    setTimeout(() => {
+    later(() => {
       const mv = E.choose(G.s, AI, G.level);
-      // show the card and what it takes before applying it
+      // the card travels from the computer's hand to the table, then what it takes is shown before applying it
+      const backs = $('aiHand').children;
+      const from = FX.rect(backs[backs.length - 1]);
       reveal = mv;
-      snd('play');
       renderBoard();
-      setTimeout(() => { busy = false; doMove(AI, mv); }, delay());
+      FX.fly({ from, to: $('table').querySelector('.card.played'), html: face(mv.card), dur: FLY, onLand: () => snd('play') })
+        .then((ok) => { if (ok) later(() => { busy = false; doMove(AI, mv); }, delay()); });
     }, 60);
   }
 
   // ── Scoring ─────────────────────────────────────────────────────────────────────────────────────────
   function scoreHand() {
-    const sc = E.score(G.s);
-    G.pts[0] += sc.total[0]; G.pts[1] += sc.total[1];
+    if (!G) return;
+    // add the points once: reopening the addon with this dialog open must not count the hand again
+    if (!G.scored) {
+      const s0 = E.score(G.s);
+      G.pts[0] += s0.total[0]; G.pts[1] += s0.total[1];
+      G.scored = s0;
+      if ((G.pts[0] >= G.target || G.pts[1] >= G.target) && G.pts[0] !== G.pts[1]) finishGame();
+      save(true);
+    }
+    const sc = G.scored;
     const row = (k, a, b, det) => `<tr><td>${t(k)}${det ? `<span class="det">${det}</span>` : ''}</td><td>${a || '·'}</td><td>${b || '·'}</td></tr>`;
     const r = sc.rows, d = sc.detail;
     $('handRows').innerHTML =
@@ -171,9 +260,6 @@
       row('rowSietes', r.sietes[0], r.sietes[1], d.sietes[0] + ' · ' + d.sietes[1]) +
       `<tr class="tot"><td>${t('total')}</td><td>${sc.total[0]}</td><td>${sc.total[1]}</td></tr>` +
       `<tr class="tot"><td>${t('running')}</td><td>${G.pts[0]}</td><td>${G.pts[1]}</td></tr>`;
-    const over = (G.pts[0] >= G.target || G.pts[1] >= G.target) && G.pts[0] !== G.pts[1];
-    if (over) finishGame();
-    save(true);
     renderAll();
     snd('handEnd');
     $('handDlg').classList.add('show');
@@ -212,10 +298,10 @@
     const opts = captureOptions(sel);
     const can = new Set(); if (S.sumHelp) for (const o of opts) for (const c of o) can.add(c);
     // computer hand (backs)
-    $('aiHand').innerHTML = s.hands[AI].map(() => backHTML()).join('');
+    $('aiHand').innerHTML = s.hands[AI].slice(reveal ? 1 : 0).map(() => backHTML()).join('');
     // table
     let tbl = '';
-    for (const c of s.table) {
+    for (const c of ghost ? s.table.concat(ghost) : s.table) {
       let cls = 'btn-card';
       if (reveal && reveal.take.includes(c)) cls += ' pick';
       else if (picks.has(c)) cls += ' pick';
@@ -355,9 +441,9 @@
     }
   }
   document.querySelectorAll('#targetSeg button').forEach((b) => { b.onclick = () => { settings().target = +b.dataset.v; renderLevels(); save(); }; });
-  document.querySelectorAll('#speedSeg button').forEach((b) => { b.onclick = () => { settings().speed = b.dataset.v; renderSettings(); save(); }; });
+  document.querySelectorAll('#speedSeg button').forEach((b) => { b.onclick = () => { settings().speed = b.dataset.v; FX.setSpeed(FX_SPEED[b.dataset.v]); renderSettings(); save(); }; });
   document.querySelectorAll('#themeSeg button').forEach((b) => { b.onclick = () => { settings().theme = b.dataset.v; renderSettings(); applyTheme(); save(); }; });
-  document.querySelectorAll('.sw').forEach((s) => { s.onclick = () => { const S = settings(); S[s.dataset.k] = !S[s.dataset.k]; renderSettings(); renderBoard(); save(); }; });
+  document.querySelectorAll('.sw').forEach((s) => { s.onclick = () => { const S = settings(); S[s.dataset.k] = !S[s.dataset.k]; renderSettings(); if (!anim) renderBoard(); save(); }; });
   document.querySelectorAll('.sec-h').forEach((h) => { h.onclick = () => h.parentElement.classList.toggle('closed'); });
   $('newBtn').onclick = requestNew;
   const closeDrawer = () => $('app').classList.remove('drawer');
@@ -367,7 +453,9 @@
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
       for (const id of ['confirmDlg', 'endDlg']) if ($(id).classList.contains('show')) { $(id).classList.remove('show'); return; }
-      sel = null; picks = new Set(); hintMv = null; closeDrawer(); renderBoard(); return;
+      closeDrawer();
+      if (!anim) { sel = null; picks = new Set(); hintMv = null; renderBoard(); }
+      return;
     }
     if (document.querySelector('.overlay.show') || !myTurn()) return;
     const n = +e.key;
@@ -385,6 +473,7 @@
     await Promise.all([loadUser(), loadDB()]);
     $('storeNote').hidden = storeMode !== 'local';
     window.GameSound.init({ level: settings().sound, skip: SKIP_SOUNDS });
+    FX.setSpeed(FX_SPEED[settings().speed]);
     applyTheme();
     renderUser();
     statLevel = settings().level;
@@ -392,8 +481,8 @@
     if (saved && saved.s && !saved.over) {
       G = saved;
       renderAll();
-      if (G.s.turn === AI && (G.s.hands[0].length || G.s.hands[1].length)) setTimeout(aiTurn, delay());
-      else if (!G.s.hands[0].length && !G.s.hands[1].length && !G.s.stock.length) scoreHand();
+      if (G.s.turn === AI && (G.s.hands[0].length || G.s.hands[1].length)) later(aiTurn, delay());
+      else if (!G.s.hands[0].length && !G.s.hands[1].length && !G.s.stock.length) scoreHand();   // shows the result, adds nothing twice
     } else newGame();
   }
   init();

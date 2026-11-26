@@ -42,7 +42,10 @@
   applyTheme();
 
   // ── Storage (one object, a section per Offlined user) ───────────────────────────────────────────────
-  const DEFAULTS = { legal: true, last: true, coords: true, theme: 'auto', level: 2, color: 'w', clock: 0 };
+  const DEFAULTS = { legal: true, last: true, coords: true, sound: 'soft', theme: 'auto', level: 2, color: 'w', clock: 0 };
+  // sounds and effects (engine/puzzle-fx.js)
+  const SFX = window.PuzzleFX;
+  const snd = (name, opts) => { try { SFX.play(name, opts); } catch (_) {} };
   async function loadDB() {
     try {
       const r = await fetch(`/api/addons/${ID}/storage`, { cache: 'no-store' });
@@ -101,6 +104,7 @@
     G = { moves: [], level: S.level, me: meColor, clock: base ? { base, t: [base, base] } : null, helped: false, result: null };
     me().game = G;
     stopWorker();
+    clearSlides();
     sel = -1; userFlip = false; hintArrow = null; endShown = false;
     rebuild();
     turnStart = performance.now();
@@ -183,36 +187,48 @@
     G.clock.t[pos.side] = Math.max(0, G.clock.t[pos.side] - (now - turnStart));
     turnStart = now;
   }
-  function applyMove(uci) {
+  /** Apply a move. noSlide: the piece is already there (dropped by drag), so it does not glide. */
+  function applyMove(uci, noSlide) {
     spendClock();
+    const info = moveInfo(pos.board, uci);
     G.moves.push(uci);
     hintArrow = null; sel = -1;
     rebuild();
     const st = pos.status();
     if (st.over) finish(st.result, st.reason);
+    clearSlides();
     renderAll();
+    // the piece glides; its sound lands with it
+    const land = !noSlide && slide(info.pairs) ? SLIDE_MS / 1000 : 0;
+    snd(info.kind, { delay: land });
+    if (pos.inCheck()) {
+      if (!G.result) snd('check', { delay: land + 0.12 });
+      pulseCheck(land * 1000);
+    }
     save();
     if (!G.result && pos.side !== G.me) engineTurn();
   }
-  function tryMove(from, to) {
+  function tryMove(from, to, noSlide) {
     const cand = legal.filter((m) => C.mFrom(m) === from && C.mTo(m) === to);
     if (!cand.length) return false;
-    if (cand.length > 1) { askPromo(cand); return true; }
-    applyMove(pos.uci(cand[0]));
+    if (cand.length > 1) { askPromo(cand, noSlide); return true; }
+    applyMove(pos.uci(cand[0]), noSlide);
     return true;
   }
-  function askPromo(cand) {
+  function askPromo(cand, noSlide) {
     const box = $('promoPieces'); box.innerHTML = '';
     for (const pr of [C.Q, C.R, C.B, C.N]) {
       const m = cand.find((x) => C.mPromo(x) === pr);
       if (!m) continue;
       const b = document.createElement('button');
       b.innerHTML = PZ(TYPE[pr], G.me);
-      b.onclick = () => { $('promo').classList.remove('show'); applyMove(pos.uci(m)); };
+      b.onclick = () => { $('promo').classList.remove('show'); applyMove(pos.uci(m), noSlide); };
       box.appendChild(b);
     }
     $('promo').classList.add('show');
   }
+  /** Close the promotion choice without moving (Escape or a click outside the pieces). */
+  function cancelPromo() { $('promo').classList.remove('show'); sel = -1; renderBoard(); }
 
   function resultFor(result) { // from my side
     if (result === '1/2-1/2') return 'draw';
@@ -241,6 +257,7 @@
     const moves = Math.ceil(G.moves.length / 2);
     $('endSub').textContent = t('endSub', { reason: t('r_' + G.result.reason), moves, lv: lvName(G.level) }) + (G.helped ? ' · ' + t('withHelp') : '');
     $('endW').textContent = s.won; $('endD').textContent = s.draw; $('endL').textContent = s.lost;
+    snd(out === 'win' ? 'win' : out === 'loss' ? 'lose' : 'draw');
     renderAll();
     $('endDlg').classList.add('show');
   }
@@ -289,9 +306,68 @@
         if (col === leftCol) html += `<span class="co r">${r + 1}</span>`;
       }
       if (el.className !== cls) el.className = cls;
-      if (el._h !== html) { el.innerHTML = html; el._h = html; }
+      if (el._h !== html) {
+        el.innerHTML = html; el._h = html;
+        // a piece still gliding into this square: its new element picks the glide up where it was
+        const sl = slides.find((x) => x.to === s);
+        if (sl) startSlide(sl);
+      }
     }
     renderArrow();
+  }
+
+  // ── Slides: a moved piece glides from its old square (FLIP with the Web Animations API) ─────────────
+  // The board keeps each square's markup until it changes, so clock ticks never touch a gliding piece;
+  // if a square is rebuilt mid-glide (selection dots, flip), renderBoard starts the glide again at the same point.
+  const SLIDE_MS = 170;
+  let slides = []; // [{from, to, t0, anim}] in 0x88 squares
+  /** What a move does on board b (before it): squares that glide and the sound it makes. */
+  function moveInfo(b, uci) {
+    const from = C.sqParse(uci.slice(0, 2)), to = C.sqParse(uci.slice(2, 4)), p = b[from];
+    const pairs = [[from, to]];
+    let kind = 'move';
+    if ((p & 7) === C.K && Math.abs((to & 7) - (from & 7)) === 2) { // castling: the rook glides too
+      const r = from & 0x70, long = (to & 7) === 2;
+      pairs.push([r + (long ? 0 : 7), r + (long ? 3 : 5)]);
+      kind = 'castle';
+    } else if (uci.length > 4) kind = 'promote';
+    else if (b[to] || ((p & 7) === C.P && (to & 7) !== (from & 7))) kind = 'capture'; // en passant: diagonal to an empty square
+    return { pairs, kind };
+  }
+  function startSlide(sl) {
+    const el = sqEls[indexOfSq(sl.to)].querySelector('.pz');
+    const left = SLIDE_MS - (performance.now() - sl.t0);
+    if (sl.anim) { try { sl.anim.cancel(); } catch (_) {} sl.anim = null; }
+    if (!el || !el.animate || left <= 0) return;
+    const size = board.clientWidth / 8, kf = indexOfSq(sl.from), kt = indexOfSq(sl.to);
+    const dx = ((kf & 7) - (kt & 7)) * size, dy = ((kf >> 3) - (kt >> 3)) * size;
+    el.style.zIndex = 3; // above the pieces and dots it passes over
+    const a = el.animate([{ transform: `translate(${dx}px, ${dy}px)` }, { transform: 'translate(0, 0)' }],
+      { duration: SLIDE_MS, easing: 'cubic-bezier(.2, .7, .3, 1)' });
+    a.currentTime = SLIDE_MS - left;
+    sl.anim = a;
+    a.onfinish = a.oncancel = () => { if (sl.anim === a) { el.style.zIndex = ''; slides = slides.filter((x) => x !== sl); } };
+  }
+  /** Glide pieces along [from, to] pairs (they must already stand on `to`). Returns false if nothing glides. */
+  function slide(pairs) {
+    if (!pairs || !pairs.length || SFX.reduced()) return false;
+    const t0 = performance.now();
+    for (const [from, to] of pairs) { const sl = { from, to, t0, anim: null }; slides.push(sl); startSlide(sl); }
+    return true;
+  }
+  function clearSlides() {
+    const old = slides; slides = [];
+    for (const sl of old) if (sl.anim) { try { sl.anim.cancel(); } catch (_) {} }
+  }
+  /** A short pulse of the red glow on the king in check (after the glide lands). */
+  function pulseCheck(delay) {
+    if (SFX.reduced() || !pos) return;
+    const el = sqEls[indexOfSq(pos.king[pos.side])];
+    if (!el || !el.animate) return;
+    const opts = { duration: 520, delay: delay || 0, easing: 'ease-out' };
+    try { el.animate([{ opacity: 1, transform: 'scale(.6)' }, { opacity: 1, transform: 'scale(1.15)', offset: 0.4 }, { opacity: 1, transform: 'scale(1)' }], Object.assign({ pseudoElement: '::after' }, opts)); } catch (_) {}
+    const k = el.querySelector('.pz');
+    if (k) k.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.12)', offset: 0.4 }, { transform: 'scale(1)' }], opts);
   }
   function renderArrow() {
     const a = $('arrow');
@@ -401,6 +477,7 @@
     const S = settings();
     document.querySelectorAll('.sw').forEach((s) => s.classList.toggle('on', !!S[s.dataset.k]));
     document.querySelectorAll('#themeSeg button').forEach((b) => b.classList.toggle('on', b.dataset.v === S.theme));
+    document.querySelectorAll('#soundSeg button').forEach((b) => b.classList.toggle('on', b.dataset.v === S.sound));
   }
   function renderUser() {
     const name = USER.name || t('you');
@@ -420,6 +497,8 @@
   const wrap = $('boardWrap');
   wrap.addEventListener('pointerdown', (e) => {
     if (e.button !== 0 || !G) return;
+    // the promotion choice sits on top of the board: its clicks must not reach the squares underneath
+    if (e.target.closest('#promo')) { if (!e.target.closest('.box')) cancelPromo(); return; }
     const s = sqAtPoint(e.clientX, e.clientY);
     if (s < 0) return;
     if (sel >= 0 && s !== sel && myTurn() && tryMove(sel, s)) { e.preventDefault(); return; }
@@ -453,7 +532,10 @@
     if (d.ghost) d.ghost.remove();
     if (d.moved && !cancel) {
       const s = sqAtPoint(e.clientX, e.clientY);
-      if (s >= 0 && s !== d.sq && tryMove(d.sq, s)) return;
+      if (s >= 0 && s !== d.sq) {
+        if (tryMove(d.sq, s, true)) return; // dropped: the piece is already there, no glide
+        snd('error'); // dropped on a square it cannot reach
+      }
     } else if (!d.moved && d.toggleOff) sel = -1;
     renderBoard();
   }
@@ -476,12 +558,24 @@
     let n = 0;
     if (pos.side !== G.me) n = 1; else n = 2;
     n = Math.min(n, G.moves.length);
+    const before = G.moves.slice();
     G.moves.splice(G.moves.length - n, n);
     if (C.fromMoves(G.moves).side !== G.me && G.moves.length) G.moves.pop();
     const first = markHelped();
     sel = -1; hintArrow = null;
     rebuild(); turnStart = performance.now();
+    clearSlides();
     renderAll(); save();
+    // the taken-back pieces glide home (one or two moves never share a landing square)
+    const removed = before.slice(G.moves.length), back = [];
+    if (removed.length && removed.length <= 2) {
+      const p = C.fromMoves(G.moves);
+      for (const u of removed) {
+        for (const [f, to] of moveInfo(p.board, u).pairs) back.push([to, f]);
+        const m = p.fromUci(u); if (m) p.make(m);
+      }
+    }
+    snd('move', { delay: slide(back) ? SLIDE_MS / 1000 : 0 });
     if (first) toast(t('helpNote'));
     if (pos.side !== G.me) engineTurn();
   };
@@ -495,6 +589,7 @@
       hintArrow = [C.sqParse(u.slice(0, 2)), C.sqParse(u.slice(2, 4))];
       const first = markHelped();
       renderBoard(); renderTools(); save();
+      snd('hint');
       toast(t('hintShown') + (first ? ' ' + t('helpNote') : ''));
     });
   };
@@ -552,6 +647,7 @@
   document.querySelectorAll('.sec-h').forEach((h) => { h.onclick = () => h.parentElement.classList.toggle('closed'); });
   document.querySelectorAll('.sw').forEach((s) => { s.onclick = () => { const S = settings(); S[s.dataset.k] = !S[s.dataset.k]; renderSettings(); renderBoard(); save(); }; });
   document.querySelectorAll('#themeSeg button').forEach((b) => { b.onclick = () => { settings().theme = b.dataset.v; renderSettings(); applyTheme(); save(); }; });
+  document.querySelectorAll('#soundSeg button').forEach((b) => { b.onclick = () => { settings().sound = b.dataset.v; SFX.setLevel(b.dataset.v); renderSettings(); save(); snd('move'); }; });
   const closeDrawer = () => $('app').classList.remove('drawer');
   $('menuBtn').onclick = () => $('app').classList.add('drawer');
   $('drawerClose').onclick = closeDrawer;
@@ -559,7 +655,8 @@
 
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
-      if ($('confirmDlg').classList.contains('show')) $('confirmNo').click();
+      if ($('promo').classList.contains('show')) cancelPromo();
+      else if ($('confirmDlg').classList.contains('show')) $('confirmNo').click();
       else if ($('endDlg').classList.contains('show')) $('endClose').click();
       else { sel = -1; closeDrawer(); renderBoard(); }
     } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') { e.preventDefault(); if (!$('undoBtn').disabled) $('undoBtn').click(); }
@@ -581,6 +678,7 @@
     buildLevels();
     await Promise.all([loadUser(), loadDB()]);
     $('storeNote').hidden = storeMode !== 'local';
+    SFX.init({ level: settings().sound });
     applyTheme();
     renderUser();
     statLevel = settings().level;

@@ -139,7 +139,7 @@ svg.i { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-widt
 .toast { position: absolute; top: 12px; left: 50%; transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 10px 14px;
   border-radius: 8px; font-size: 13px; width: max-content; max-width: min(92%, 560px); display: none; align-items: center; gap: 10px; z-index: 5; }
 .toast.show { display: flex; }
-.toast .t { flex: 1; }
+.toast .t { flex: 1; white-space: pre-line; }
 .toast button { background: none; border: 1px solid currentColor; border-radius: 6px; padding: 3px 8px; font-size: 12px; color: inherit; white-space: nowrap; }
 
 /* ── Dialogs ── */
@@ -186,3 +186,7 @@ svg.i { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-widt
   .tool { padding: 10px 0; }
   .num b { font-size: 18px; }
 }
+
+/* ── Effects (engine/puzzle-fx.js): flash colour (the win itself traces the loop) ── */
+:root { --fx-flash: rgba(40, 40, 40, .2); }
+[data-theme="dark"] { --fx-flash: rgba(255, 255, 255, .2); }

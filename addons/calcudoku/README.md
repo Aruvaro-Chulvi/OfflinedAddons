@@ -16,17 +16,21 @@ of one cell just shows its number. Numbers may repeat inside a cage if they are 
 
 - **Six levels**:
 
-  | Level | Grid | Operations |
-  |---|---|---|
-  | Very easy | 4×4 | + |
-  | Easy | 5×5 | + − |
-  | Medium | 6×6 | + − × ÷ |
-  | Hard | 7×7 | + − × ÷ |
-  | Expert | 8×8 | + − × ÷ |
-  | Master | 9×9 | + − × ÷ |
+  | Level | Grid | Operations | Hardest technique it asks for |
+  |---|---|---|---|
+  | Very easy | 4×4 | + | Cage combinations |
+  | Easy | 5×5 | + − | Cage combinations (sometimes cage and line) |
+  | Medium | 6×6 | + − × ÷ | Cage and line, or naked / hidden pairs |
+  | Hard | 7×7 | + − × ÷ | Pairs, or the sum of a line |
+  | Expert | 8×8 | + − × ÷ | Sum of a line, naked triple or X-Wing |
+  | Master | 9×9 | + − × ÷ | Naked triple or X-Wing |
+
+  Levels differ by the reasoning they need, not only by the size: every puzzle of a level needs at least its
+  technique and nothing harder than the level allows.
 
 - **Every puzzle is new.** The generator builds a random Latin square, cuts it into cages and picks the operations;
-  a puzzle is kept only if a logical solver finishes it (cage combinations, cage-and-line, singles, pairs), which
+  a puzzle is kept only if a logical solver finishes it (singles, cage combinations, cage and line, naked and hidden pairs,
+  line sums, naked triples, X-Wing), which
   also proves its solution is unique.
 - **Game codes** (`XXXX-XXXX`): the same code always gives the same puzzle.
 - Notes, auto notes, undo/redo, highlighting of the row, column and same number.

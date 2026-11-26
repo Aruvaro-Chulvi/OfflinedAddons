@@ -3,25 +3,32 @@
  * An N×N grid holds 1..N once in every row and column. The grid is split into cages; each cage shows a target
  * and an operation (+ − × ÷), or just a number for a single cell.
  *
- * - deduce(): logical solver (cage combinations, singles, pairs) used for grading and hints.
+ * - step(): logical solver, easiest technique first: singles, cage combinations, cage-in-a-line, naked / hidden
+ *   pairs, line sums (a row adds up to N(N+1)/2), naked triples, X-Wing. Used for grading and hints.
  * - generate(): random Latin square → random cages → operations; a puzzle is accepted only if the logical
- *   solver finishes it, which also proves the solution is unique. Seeded: a game code always gives the same
- *   puzzle. A JS generator function (yields between attempts) driven by a Web Worker.
+ *   solver finishes it with the techniques its level allows (which also proves the solution is unique) AND it
+ *   needs at least the level's minimum technique: levels differ by the reasoning they ask for, not only by size.
+ *   Seeded: a game code always gives the same puzzle. A JS generator function (yields between attempts) driven
+ *   by a Web Worker.
  *
  * Changing the generator changes which puzzle a code gives: bump ENGINE_VERSION when you do.
  */
 (function (root) {
   'use strict';
-  const ENGINE_VERSION = 1;
+  const ENGINE_VERSION = 2;
 
+  // minRank / maxRank: the hardest technique a puzzle of this level must need / may need (see RANK).
   const LEVELS = {
-    1: { N: 4, ops: '+', maxCage: 3, singles: [1, 2] },
-    2: { N: 5, ops: '+-', maxCage: 3, singles: [1, 2] },
-    3: { N: 6, ops: '+-*/', maxCage: 4, singles: [1, 2] },
-    4: { N: 7, ops: '+-*/', maxCage: 4, singles: [0, 2] },
-    5: { N: 8, ops: '+-*/', maxCage: 4, singles: [0, 1] },
-    6: { N: 9, ops: '+-*/', maxCage: 5, singles: [0, 1] },
+    1: { N: 4, ops: '+', maxCage: 3, singles: [1, 2], minRank: 0, maxRank: 2 },
+    2: { N: 5, ops: '+-', maxCage: 3, singles: [1, 2], minRank: 2, maxRank: 3 },
+    3: { N: 6, ops: '+-*/', maxCage: 4, singles: [1, 2], minRank: 3, maxRank: 4 },
+    4: { N: 7, ops: '+-*/', maxCage: 4, singles: [0, 1], minRank: 4, maxRank: 5 },
+    5: { N: 8, ops: '+-*/', maxCage: 4, singles: [0, 1], minRank: 5, maxRank: 6 },
+    6: { N: 9, ops: '+-*/', maxCage: 5, singles: [0, 1], minRank: 6, maxRank: 6 },
   };
+  // How hard each technique is for a person (the level of a puzzle is its hardest step).
+  const RANK = { given: 0, naked_single: 1, hidden_single: 1, cage: 2, cage_line: 3, naked_pair: 4, hidden_pair: 4,
+    line_sum: 5, naked_triple: 6, x_wing: 6 };
 
   const POP = new Uint8Array(1024);
   for (let m = 1; m < 1024; m++) POP[m] = POP[m >> 1] + (m & 1);
@@ -128,7 +135,7 @@
   }
   // All value tuples of a cage that fit the candidates, the operation and row/column uniqueness inside it.
   function cageOptions(P, cand, k, req) {
-    const { N } = P, cg = P.cages[k], cells = cg.cells, n = cells.length;
+    const { N } = P, cg = typeof k === 'number' ? P.cages[k] : k, cells = cg.cells, n = cells.length;
     const union = new Int16Array(n);
     let count = 0;
     const vals = new Int8Array(n);
@@ -184,10 +191,11 @@
 
   /**
    * One deduction from candidates. Returns {tech, elim:[[cell, digit]...], place?:[cell, digit], cells:[...]} or
-   * {contradiction:true} or null. Techniques: naked_single, hidden_single, cage, naked_pair.
+   * {contradiction:true} or null. Only techniques up to maxRank are tried (all when it is undefined).
    */
-  function step(P, cand, done) {
+  function step(P, cand, done, maxRank) {
     const { N } = P, L = linesOf(N);
+    const allow = (tech) => maxRank === undefined || RANK[tech] <= maxRank;
     // naked single (not yet "placed")
     for (let i = 0; i < N * N; i++) {
       if (!cand[i]) return { contradiction: true };
@@ -203,6 +211,7 @@
       }
     }
     // cage combinations
+    if (!allow('cage')) return null;
     for (let k = 0; k < P.cages.length; k++) {
       const cg = P.cages[k];
       if (cg.cells.every((i) => done[i])) continue;
@@ -213,6 +222,7 @@
       if (elim.length) return { tech: 'cage', elim, cells: cg.cells.slice(), cage: k };
     }
     // a digit confined to one cage inside a line must be in that cage
+    if (!allow('cage_line')) return null;
     for (let u = 0; u < L.length; u++) {
       for (let d = 1; d <= N; d++) {
         const b = bit(d), where = L[u].filter((i) => cand[i] & b);
@@ -230,6 +240,7 @@
       }
     }
     // naked pair in a line
+    if (!allow('naked_pair')) return null;
     for (let u = 0; u < L.length; u++) {
       const U = L[u];
       for (let a = 0; a < N; a++) {
@@ -242,7 +253,84 @@
         }
       }
     }
+    // hidden pair in a line: two digits that can only go in the same two cells
+    for (let u = 0; u < L.length; u++) {
+      const U = L[u], pos = [];
+      for (let d = 1; d <= N; d++) { let m = 0; U.forEach((i, x) => { if (cand[i] & bit(d)) m |= 1 << x; }); pos.push(m); }
+      for (let d1 = 0; d1 < N; d1++) {
+        if (POP[pos[d1]] !== 2) continue;
+        for (let d2 = d1 + 1; d2 < N; d2++) {
+          if (pos[d2] !== pos[d1]) continue;
+          const keep = bit(d1 + 1) | bit(d2 + 1), cells = [], elim = [];
+          U.forEach((i, x) => { if (pos[d1] & (1 << x)) { cells.push(i); for (const d of digits(cand[i] & ~keep)) elim.push([i, d]); } });
+          if (elim.length) return { tech: 'hidden_pair', elim, cells };
+        }
+      }
+    }
+    // line sum: a row (or two neighbouring rows) adds up to N(N+1)/2 each; take away the sum cages that lie
+    // entirely inside and what is already placed: the few cells left behave like a hidden «+» cage
+    if (!allow('line_sum')) return null;
+    for (const S of lineSets(N)) {
+      const inSet = new Set(S.cells);
+      let left = S.total;
+      const rest = [], seen = new Set();
+      for (const i of S.cells) {
+        if (seen.has(i)) continue;
+        const k = P.cageOf[i], cg = P.cages[k];
+        if ((cg.op === '+' || cg.op === '=') && cg.cells.every((x) => inSet.has(x))) { left -= cg.target; for (const x of cg.cells) seen.add(x); continue; }
+        seen.add(i);
+        if (done[i]) left -= dOf(cand[i]); else rest.push(i);
+      }
+      if (!rest.length || rest.length > 4 || rest.length === S.cells.length) continue;
+      const { count, union } = cageOptions(P, cand, { cells: rest, op: '+', target: left });
+      if (!count) return { contradiction: true };
+      const elim = [];
+      rest.forEach((i, x) => { for (const d of digits(cand[i] & ~union[x])) elim.push([i, d]); });
+      if (elim.length) return { tech: 'line_sum', elim, cells: rest.slice() };
+    }
+    // naked triple in a line: three cells that together can only hold three digits
+    if (!allow('naked_triple')) return null;
+    for (let u = 0; u < L.length; u++) {
+      const U = L[u], open = U.filter((i) => POP[cand[i]] >= 2 && POP[cand[i]] <= 3);
+      for (let a = 0; a < open.length; a++) for (let b2 = a + 1; b2 < open.length; b2++) for (let c2 = b2 + 1; c2 < open.length; c2++) {
+        const m = cand[open[a]] | cand[open[b2]] | cand[open[c2]];
+        if (POP[m] !== 3) continue;
+        const trio = [open[a], open[b2], open[c2]], elim = [];
+        for (const i of U) if (!trio.includes(i)) for (const d of digits(cand[i] & m)) elim.push([i, d]);
+        if (elim.length) return { tech: 'naked_triple', elim, cells: trio };
+      }
+    }
+    // X-Wing: in two rows a digit fits only in the same two columns → not elsewhere in those columns (and the
+    // same with rows and columns swapped)
+    for (let d = 1; d <= N; d++) {
+      const b = bit(d);
+      for (const byRow of [true, false]) {
+        const at = (a, x) => (byRow ? a * N + x : x * N + a);
+        const masks = [];
+        for (let a = 0; a < N; a++) { let m = 0; for (let x = 0; x < N; x++) if (cand[at(a, x)] & b) m |= 1 << x; masks.push(m); }
+        for (let a1 = 0; a1 < N; a1++) {
+          if (POP[masks[a1]] !== 2) continue;
+          for (let a2 = a1 + 1; a2 < N; a2++) {
+            if (masks[a2] !== masks[a1]) continue;
+            const xs = []; for (let x = 0; x < N; x++) if (masks[a1] & (1 << x)) xs.push(x);
+            const elim = [];
+            for (const x of xs) for (let a = 0; a < N; a++) if (a !== a1 && a !== a2 && (cand[at(a, x)] & b)) elim.push([at(a, x), d]);
+            if (elim.length) return { tech: 'x_wing', elim, cells: [at(a1, xs[0]), at(a1, xs[1]), at(a2, xs[0]), at(a2, xs[1])] };
+          }
+        }
+      }
+    }
     return null;
+  }
+  // Rows, columns, and pairs of neighbouring rows / columns, with what their cells add up to.
+  const SETS = {};
+  function lineSets(N) {
+    if (SETS[N]) return SETS[N];
+    const T = (N * (N + 1)) / 2, out = [];
+    const row = (r) => Array.from({ length: N }, (_, c) => r * N + c), col = (c) => Array.from({ length: N }, (_, r) => r * N + c);
+    for (let k = 0; k < N; k++) { out.push({ cells: row(k), total: T }); out.push({ cells: col(k), total: T }); }
+    for (let k = 0; k + 1 < N; k++) { out.push({ cells: row(k).concat(row(k + 1)), total: 2 * T }); out.push({ cells: col(k).concat(col(k + 1)), total: 2 * T }); }
+    return (SETS[N] = out);
   }
 
   function applyStep(P, cand, done, s) {
@@ -254,16 +342,14 @@
       for (let x = 0; x < N; x++) { if (x !== c) cand[r * N + x] &= ~b; if (x !== r) cand[x * N + c] &= ~b; }
     }
   }
-  const RANK = { given: 0, naked_single: 1, hidden_single: 1, cage: 2, cage_line: 3, naked_pair: 3 };
-
-  /** Solve by logic only. {solved, hardest, steps}. */
-  function grade(P, values) {
+  /** Solve by logic only, with techniques up to maxRank (all when undefined). {solved, hardest, steps}. */
+  function grade(P, values, maxRank) {
     const N = P.N, cand = initCand(P, values), done = new Uint8Array(N * N);
     if (values) for (let i = 0; i < N * N; i++) if (values[i]) done[i] = 1;
     let hardest = 'given', steps = 0;
     for (let guard = 0; guard < 20000; guard++) {
       if (done.every((x) => x)) return { solved: true, hardest, steps };
-      const s = step(P, cand, done);
+      const s = step(P, cand, done, maxRank);
       if (!s || s.contradiction) return { solved: false, hardest, steps };
       if (RANK[s.tech] > RANK[hardest]) hardest = s.tech;
       applyStep(P, cand, done, s);
@@ -303,9 +389,9 @@
       for (let k = 0; k < 6; k++) {
         const cages = makeCages(N, sol, rng, cfg);
         const P = setup(N, cages);
-        const g = grade(P, null);
+        const g = grade(P, null, cfg.maxRank);
         yield { attempt, try: k };
-        if (g.solved) {
+        if (g.solved && RANK[g.hardest] >= cfg.minRank) {
           return { N, level, cages: cages.map((c) => ({ cells: c.cells, op: c.op, target: c.target })), solution: Array.from(sol).join(''),
             hardest: g.hardest, seed, code: encodeCode(level, seed), engine: ENGINE_VERSION };
         }
@@ -358,7 +444,7 @@
     return count;
   }
 
-  const api = { ENGINE_VERSION, LEVELS, generate, generateSync, grade, hint, encodeCode, decodeCode, setup, countSolutions };
+  const api = { ENGINE_VERSION, LEVELS, RANK, generate, generateSync, grade, hint, encodeCode, decodeCode, setup, countSolutions };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.CalcEngine = api;
 })(typeof self !== 'undefined' ? self : this);
