@@ -36,12 +36,20 @@ count as kings and the twos as aces; with 4 kings they keep their value.
   Offlined; a short rules page inside the addon.
 - Partner signals (*señas*) are not included in this first version.
 
-## Sound
+## Sound and animation
 
 Short, quiet sound effects that follow the rhythm of the game: shuffling and dealing, a card on the table, taking
 cards, a soft chime when it is your turn and small signals for the big moments (envido, quiero, órdago, counting the points, a vaca won). Settings → Sound: off, soft
 (default) or normal. The card and chip sounds are recordings from Kenney's «Casino Audio» pack (CC0, kenney.nl);
 the signals are synthesised in the browser.
+
+The cards move together with their sound:
+
+- The 16 cards are dealt one by one from the middle of the table; discards go to the middle and the new cards come in.
+- At the end of the hand the cards turn over one by one; after an órdago the winner is announced once the cards are
+  shown.
+- The last word of each lance stays visible for a moment.
+- The animation follows Settings → Computer speed and respects the system's «reduce motion» (cards then just appear).
 
 ## Where your data is
 

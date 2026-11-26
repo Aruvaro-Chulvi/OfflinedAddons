@@ -35,12 +35,20 @@ Our own design, made for clarity: the four suits (oros, copas, espadas, bastos) 
 traditional numbers 1–7, 10, 11, 12, and the figures (sota, caballo, rey) drawn with flat
 geometric shapes in two tones of the suit colour, on a soft panel. A small badge shows the value of the figures in this game (8, 9, 10).
 
-## Sound
+## Sound and animation
 
 Short, quiet sound effects that follow the rhythm of the game: shuffling and dealing, a card on the table, taking
 cards, a soft chime when it is your turn and small signals for the big moments (an escoba, the siete de oros, the end of a hand). Settings → Sound: off, soft
 (default) or normal. The card and chip sounds are recordings from Kenney's «Casino Audio» pack (CC0, kenney.nl);
 the signals are synthesised in the browser.
+
+The cards move together with their sound:
+
+- The deck is shuffled and each card leaves it with its own sound: 4 to the table, then 3 to each player.
+- The computer's card travels from its hand to the table; the cards you take fly to the pile (the siete de oros
+  chimes when it lands), and so do an initial escoba and the cards left on the table at the end.
+- The «¡Escoba!» banner and its sound arrive together.
+- The animation follows Settings → Computer speed and respects the system's «reduce motion» (cards then just appear).
 
 ## Where your data is
 

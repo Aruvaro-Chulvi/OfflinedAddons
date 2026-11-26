@@ -19,21 +19,34 @@ addon in this repository can be installed from inside Offlined with one click, i
 
 | | Addon | What it does | |
 |---|---|---|---|
-| 📊 | **[Spreadsheet](addons/spreadsheet/)** | Spreadsheets with formulas, formatting and several sheets, powered by Univer. | Official |
-| 🗒️ | **[Text document](addons/notes/)** | Rich-text documents with search, read-aloud and places on the map. | Official |
-| ✏️ | **[Whiteboard](addons/whiteboard/)** | An infinite whiteboard for sketches and diagrams, powered by Excalidraw. | Official |
-| 🎙️ | **[Audio notes](addons/audio-notes/)** | Voice notes with noise reduction, a player, MP3 export and calendar links. | Official |
-| 🔢 | **[Sudoku](addons/sudoku/)** | Classic sudoku with eight levels, from very easy to deadly, and its own puzzle generator. | Official |
-| ♟️ | **[Chess](addons/chess/)** | Chess against the computer: four levels, optional clock, hints and our own engine. | Official |
-| ⭕ | **[Circuit](addons/circuit/)** | Draw one closed loop around the numbers (Slitherlink-style): six levels and its own generator. | Official |
-| 💣 | **[Minesweeper](addons/minesweeper/)** | Clear the board without stepping on a mine: four levels and boards solvable without guessing. | Official |
-| 🧮 | **[Calcudoku](addons/calcudoku/)** | Numbers without repeats and cages with + − × ÷: six sizes and its own generator. | Official |
-| 🃏 | **[Escoba](addons/escoba/)** | The Spanish card game Escoba del 15 against the computer, with our own Spanish deck. | Official |
-| 🂠 | **[Mus](addons/mus/)** | Mus in pairs against the computer: envites, órdagos, 8 or 4 kings, vacas to 30 or 40. | Official |
+| 🔢 | **[Sudoku](addons/sudoku/)** | Classic sudoku with eight levels, from very easy to deadly, its own generator, hints that explain each technique, sound and effects. | Official |
+| ♟️ | **[Chess](addons/chess/)** | Chess against the computer: four levels, optional clock, hints, sliding pieces with sound and our own engine. | Official |
+| ⭕ | **[Circuit](addons/circuit/)** | Draw one closed loop around the numbers (Slitherlink-style): six levels, its own generator, sound and effects. | Official |
+| 💣 | **[Minesweeper](addons/minesweeper/)** | Clear the board without stepping on a mine: four levels, boards solvable without guessing, sound and effects. | Official |
+| 🧮 | **[Calcudoku](addons/calcudoku/)** | Numbers without repeats and cages with + − × ÷: six levels that differ by the technique they ask for, from 4×4 to 9×9. | Official |
+| 🃏 | **[Escoba](addons/escoba/)** | The Spanish card game Escoba del 15 against the computer, with our own Spanish deck and animated cards with sound. | Official |
+| 🂠 | **[Mus](addons/mus/)** | Mus in pairs against the computer: envites, órdagos, 8 or 4 kings, vacas to 30 or 40, animated cards with sound. | Official |
 | 🔳 | **[QR Generator](addons/qr-generator/)** | QR codes for links, Wi‑Fi, contacts, events and more: colours, shapes, logo, PNG/SVG and label sheets. | Official |
+| ✈️ | **[Arcade Flow Sky Defender](addons/sky-guardians/)** | Air-combat survival: defend a giant tower against ever stronger waves, in the Neon Arena or over your own maps. Gamepad, keyboard or mouse. | Official |
+
+The office apps (spreadsheet, text documents, whiteboard and audio notes) are built into Offlined 4, so they are no
+longer addons; their last addon versions are kept in [`withdrawn/`](withdrawn/).
 
 The full, current list is [`catalog.json`](catalog.json); the signed packages are in the
 [latest release](https://github.com/Aruvaro-Chulvi/OfflinedAddons/releases/latest).
+
+### What's new — 27 November 2026
+
+- **Escoba 1.2 and Mus 1.2:** the cards move with their sound — dealing, captures, discards and the reveal at the
+  end of the hand.
+- **Sudoku, Calcudoku, Circuit, Minesweeper and Chess 1.1:** a Sound setting and effects (finished rows light up,
+  openings ripple, chess pieces slide). A hint counts once per position, the hint explains the technique, and
+  best times only count games without hints.
+- **Calcudoku 1.1:** new techniques (hidden pairs, line sums, naked triples, X-Wing); each level now asks for its
+  own reasoning, not only a bigger grid.
+- **Arcade Flow Sky Defender 1.4:** menus with gamepad or keyboard, elite enemies and a boss that grows, a fairer
+  streak, a «Reduce effects» option and a longer training.
+- **QR Generator 1.2.1:** fixes for all-day events and for the logo.
 
 ## Make your own
 

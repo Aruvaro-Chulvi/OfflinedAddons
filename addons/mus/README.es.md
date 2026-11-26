@@ -37,12 +37,20 @@ treses cuentan como reyes y los doses como ases; con 4 reyes conservan su valor.
   idiomas de Offlined; una página breve de reglas dentro del addon.
 - Las señas entre compañeros no están en esta primera versión.
 
-## Sonido
+## Sonido y animación
 
 Efectos cortos y discretos que siguen el ritmo de la partida: barajar y repartir, una carta en la mesa, llevarse
 cartas, un aviso suave cuando te toca y pequeñas señales para los momentos importantes (envido, quiero, órdago, la cuenta de tantos, la vaca ganada). Ajustes → Sonido:
 apagado, suave (por defecto) o normal. Los sonidos de cartas y fichas son grabaciones del paquete «Casino Audio» de
 Kenney (CC0, kenney.nl); las señales se generan en el propio navegador.
+
+Las cartas se mueven a la vez que suenan:
+
+- Las 16 cartas se reparten una a una desde el centro de la mesa; los descartes van al centro y entran las nuevas.
+- Al final de la mano las cartas se vuelven una a una; tras un órdago, el ganador se anuncia después de enseñarlas.
+- La última palabra de cada lance se queda a la vista un momento.
+- La animación sigue Ajustes → Velocidad del ordenador y respeta el «reducir movimiento» del sistema (entonces las
+  cartas aparecen sin más).
 
 ## Dónde se guardan tus datos
 

@@ -33,11 +33,14 @@ exactly two lines. You win when the loop is closed and every number is satisfied
   the numbers, then removes numbers while a "human" solver can still finish the puzzle using only the techniques
   of the level. Solving it by sound deduction also proves that the solution is unique.
 - **Game codes** (`XXXX-XXXX`): the same code always gives the same puzzle.
-- **Hints in three steps**: the area, then the technique, then the lines or crosses it gives.
+- **Hints in three steps**: the area, then the technique (explained in one sentence), then the lines or crosses it
+  gives. A hint counts once per board position: asking again or for **More help** on the same position adds nothing.
 - **Mistakes**: *Free* (default; the addon tells you when a closed loop does not satisfy the numbers) or
   *Strict* (wrong lines and crosses shown at once and counted).
-- Undo/redo, restart, pause, timer, statistics per level and a daily streak; light and dark theme like Offlined;
-  the 10 languages of Offlined.
+- Undo/redo, restart, pause, timer, statistics per level and a daily streak; best times only count games without
+  hints. Light and dark theme like Offlined; the 10 languages of Offlined.
+- **Sound** (Settings): *Off*, *Soft* (default) or *Normal*. Short sounds made in the browser (no audio files) for
+  lines and crosses; silent when Offlined is muted. When you win, the loop is traced around the board.
 
 ### Keyboard
 

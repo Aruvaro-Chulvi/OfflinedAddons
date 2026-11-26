@@ -44,6 +44,6 @@ Desaparece de *Addons disponibles*; las copias instaladas siguen funcionando.
 
 ## Addons oficiales
 
-`tools/official.json` lista los addons hechos por Offlined; el catálogo los marca como «Oficial». El paquete de
-Offlined sigue incluyendo su propia copia de los cuatro addons integrados (hoja de cálculo, notas, pizarra y notas de audio);
-cuando uno de ellos cambie aquí, cópialo también en Offlined.
+`tools/official.json` lista los addons hechos por Offlined; el catálogo los marca como «Oficial». Las apps de
+oficina (hoja de cálculo, notas, pizarra y notas de audio) vienen integradas en Offlined 4 y se retiraron del
+catálogo el 27 de noviembre de 2026; sus últimas versiones como addon están en `withdrawn/`.

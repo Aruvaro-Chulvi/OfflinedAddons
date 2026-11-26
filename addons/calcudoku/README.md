@@ -34,7 +34,10 @@ of one cell just shows its number. Numbers may repeat inside a cage if they are 
   also proves its solution is unique.
 - **Game codes** (`XXXX-XXXX`): the same code always gives the same puzzle.
 - Notes, auto notes, undo/redo, highlighting of the row, column and same number.
-- **Hints in three steps**: the area, then the technique, then the number.
+- **Hints in three steps**: the area, then the technique (explained in one sentence), then the number. A hint counts
+  once per board position, even if you ask again or press «More help»; best times only count games without hints.
+- **Sound** (Settings): Off / Soft (default) / Normal, made in the browser (no audio files) and silent when Offlined
+  is muted. A finished row, column or cage lights up from the cell outwards, and a wave crosses the board when you win.
 - **Mistakes**: *Free* (default) or *Strict* (wrong numbers shown at once and counted).
 - Pause, timer, statistics per level and a daily streak; light and dark theme like Offlined; the 10 languages of
   Offlined.

@@ -34,7 +34,12 @@ repetirse dentro de una jaula si no están en la misma fila o columna.
   jaula y línea, pares desnudos y ocultos, suma de la línea, tríos desnudos, X-Wing), lo que además demuestra que la solución es única.
 - **Códigos de partida** (`XXXX-XXXX`): el mismo código da siempre el mismo tablero.
 - Notas, autonotas, deshacer/rehacer, resaltado de fila, columna y del mismo número.
-- **Pistas en tres escalones**: la zona, luego la técnica y al final el número.
+- **Pistas en tres escalones**: la zona, luego la técnica (explicada en una frase) y al final el número. Una pista
+  cuenta una sola vez por posición del tablero, aunque la pidas otra vez o pulses «Más ayuda»; los mejores tiempos solo
+  cuentan las partidas sin pistas.
+- **Sonido** (Ajustes): Apagado / Suave (por defecto) / Normal, generado en el navegador (sin archivos de audio) y en
+  silencio si Offlined está silenciado. Una fila, columna o jaula completa se ilumina desde la casilla, y al ganar una
+  onda recorre el tablero.
 - **Errores**: *Libre* (por defecto) o *Estricto* (los números equivocados se marcan al momento y se cuentan).
 - Pausa, cronómetro, estadísticas por nivel y racha de días; tema claro y oscuro como Offlined; los 10 idiomas de
   Offlined.

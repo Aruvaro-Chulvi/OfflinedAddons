@@ -35,11 +35,15 @@ que pasa tiene exactamente dos líneas. Ganas cuando el circuito está cerrado y
   escribe todos los números y quita números mientras un solucionador «humano» pueda terminarlo usando solo las
   técnicas del nivel. Resolverlo con deducciones correctas demuestra además que la solución es única.
 - **Códigos de partida** (`XXXX-XXXX`): el mismo código da siempre el mismo tablero.
-- **Pistas en tres escalones**: la zona, luego la técnica y al final las líneas o cruces que da.
+- **Pistas en tres escalones**: la zona, luego la técnica (explicada en una frase) y al final las líneas o cruces
+  que da. Una pista cuenta una sola vez por posición del tablero: volver a pedirla o pulsar **Más ayuda** no suma más.
 - **Errores**: *Libre* (por defecto; el addon avisa si un circuito cerrado no cumple los números) o *Estricto*
   (las líneas y cruces equivocadas se marcan al momento y se cuentan).
-- Deshacer/rehacer, reiniciar, pausa, cronómetro, estadísticas por nivel y racha de días; tema claro y oscuro como
-  Offlined; los 10 idiomas de Offlined.
+- Deshacer/rehacer, reiniciar, pausa, cronómetro, estadísticas por nivel y racha de días; los mejores tiempos solo
+  cuentan partidas sin pistas. Tema claro y oscuro como Offlined; los 10 idiomas de Offlined.
+- **Sonido** (Ajustes): *Apagado*, *Suave* (por defecto) o *Normal*. Sonidos cortos generados en el navegador (sin
+  archivos de audio) al poner líneas y cruces; se callan cuando Offlined está en silencio. Al ganar, el circuito se
+  recorre de punta a punta.
 
 ### Teclado
 

@@ -25,11 +25,16 @@ Sudoku clásico de 9×9 dentro de Offlined, totalmente sin conexión y con su pr
 - **Códigos de partida**: cada sudoku tiene un código (`XXXX-XXXX`). El mismo código da siempre el mismo sudoku,
   para compartirlo o repetirlo.
 - Notas a lápiz, autonotas, deshacer/rehacer, resaltado de fila, columna, caja y del mismo número.
-- **Pistas en tres escalones**: primero la zona, luego la técnica y al final el número.
+- **Pistas en tres escalones**: primero la zona, luego la técnica (explicada en una frase) y al final el número.
+  Una pista cuenta una sola vez por posición del tablero: volver a pedirla o pulsar **Más ayuda** no suma más.
 - **Errores**: *Libre* (por defecto: los encuentras tú; el addon avisa si el tablero lleno tiene errores) o
   *Estricto* (se marcan al momento y se cuentan).
 - Pausa (tapa el tablero), cronómetro y estadísticas por nivel: jugadas, ganadas, mejor tiempo, tiempo medio y
-  racha de días.
+  racha de días. Los mejores tiempos solo cuentan partidas sin pistas.
+- **Sonido** (Ajustes): *Apagado*, *Suave* (por defecto) o *Normal*. Sonidos cortos generados en el navegador (sin
+  archivos de audio) al escribir un número, poner notas, borrar y en los errores del modo *Estricto*; se callan
+  cuando Offlined está en silencio. Una fila, columna o caja completa se ilumina desde la casilla hacia fuera, y al
+  ganar una onda recorre el tablero.
 - Tema claro y oscuro como Offlined, los 10 idiomas de Offlined, teclado y pantalla táctil.
 
 ### Teclado

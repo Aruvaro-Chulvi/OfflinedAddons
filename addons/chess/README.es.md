@@ -22,8 +22,10 @@ addon.
   oculto.
 - Clic en la pieza y luego en la casilla, o arrastrándola. Se marcan las jugadas posibles, la última jugada y el
   rey en jaque.
-- Reglas completas: enroque, captura al paso, coronación (eliges la pieza), jaque mate, ahogado, triple
-  repetición, regla de los 50 movimientos y material insuficiente.
+- Las piezas se deslizan hasta su casilla (también la torre al enrocar; **Atrás** las devuelve deslizándose) y el
+  rey en jaque late.
+- Reglas completas: enroque, captura al paso, coronación (eliges la pieza; `Esc` o un clic fuera la cancela), jaque
+  mate, ahogado, triple repetición, regla de los 50 movimientos y material insuficiente.
 - **Atrás** deshace tu última jugada (y la respuesta del ordenador); **Pista** muestra con una flecha la jugada
   del ordenador. Usar cualquiera de las dos marca la partida como **con ayuda**: cuenta igual, y las estadísticas
   dicen cuántas victorias fueron con ayuda. La racha solo suma victorias sin ayuda.
@@ -31,6 +33,9 @@ addon.
   confirmación.
 - Jugadas en notación con figuras (`♘f3`), igual en todos los idiomas, y **Copiar PGN** para abrir la partida en
   cualquier otro programa de ajedrez.
+- **Sonido** (Ajustes): *Apagado*, *Suave* (por defecto) o *Normal*. Sonidos cortos generados en el navegador (sin
+  archivos de audio) al mover, capturar, enrocar, coronar, dar jaque y al acabar la partida; se callan cuando
+  Offlined está en silencio.
 - Estadísticas por nivel (ganadas, tablas, perdidas), tema claro y oscuro como Offlined, los 10 idiomas de
   Offlined.
 

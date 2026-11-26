@@ -25,11 +25,15 @@ Classic 9×9 sudoku inside Offlined, fully offline, with its own puzzle generato
 - **Game codes**: each sudoku has a code (`XXXX-XXXX`). The same code always gives the same sudoku, so you can share
   it or play it again.
 - Notes (pencil marks), auto notes, undo/redo, highlighting of the row, column, box and same number.
-- **Hints in three steps**: first the area to look at, then the technique, then the digit.
+- **Hints in three steps**: first the area to look at, then the technique (explained in one sentence), then the
+  digit. A hint counts once per board position: asking again or for **More help** on the same position adds nothing.
 - **Mistakes**: *Free* (default — you find them yourself; the addon tells you when a full board has mistakes) or
   *Strict* (shown at once and counted).
 - Pause (the board is hidden), timer, and statistics per level: played, won, best and average time, and a daily
-  streak.
+  streak. Best times only count games without hints.
+- **Sound** (Settings): *Off*, *Soft* (default) or *Normal*. Short sounds made in the browser (no audio files) for
+  writing a digit, notes, erasing and mistakes in *Strict* mode; silent when Offlined is muted. A finished row,
+  column or box lights up from the cell outwards, and a wave crosses the board when you win.
 - Light and dark theme like Offlined, the 10 languages of Offlined, keyboard and touch.
 
 ### Keyboard

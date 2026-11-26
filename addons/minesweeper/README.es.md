@@ -30,12 +30,17 @@ diagonal). Usa los números para deducir dónde están las minas.
   si un solucionador lógico puede despejarlo desde ahí. Nunca te quedarás atascado en un 50/50.
 - **Pistas en tres escalones**: los números en los que fijarse, el razonamiento (número ya completo, tantas minas
   como casillas ocultas, comparar dos números, minas que quedan en total) y al final se abre la casilla segura o se
-  marca la mina.
+  marca la mina. Una pista cuenta una sola vez por posición del tablero: volver a pedirla o pulsar **Más ayuda** no
+  suma más.
 - **Deshacer la jugada** después de pisar una mina. Las pistas y deshacer marcan la partida como **con ayuda**:
   cuenta como ganada, pero no para el mejor tiempo, el tiempo medio ni la racha.
 - Estadísticas por nivel (jugadas, ganadas, % de victorias, mejor tiempo y tiempo medio), racha de victorias sin
   ayuda, pausa que tapa el tablero, números en gris o de colores, tema claro y oscuro como Offlined, los 10 idiomas
   de Offlined.
+- **Sonido** (Ajustes): *Apagado*, *Suave* (por defecto) o *Normal*. Sonidos cortos generados en el navegador (sin
+  archivos de audio); se callan cuando Offlined está en silencio. Las zonas que se abren se despliegan en onda desde
+  el clic, las banderas aparecen con un pequeño salto, un clic en un número que no puede abrir tiembla y, al
+  perder, las minas aparecen una tras otra.
 
 ### Teclado
 

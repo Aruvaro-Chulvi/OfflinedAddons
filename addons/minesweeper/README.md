@@ -29,10 +29,14 @@ numbers to work out where the mines are.
   logical solver can clear it from there. You will never be stuck on a 50/50.
 - **Hints in three steps**: the numbers to look at, the reasoning (a number already complete, exactly as many mines
   as hidden cells, comparing two numbers, mines left in total), then the safe cell is opened or the mine flagged.
+  A hint counts once per board position: asking again or for **More help** on the same position adds nothing.
 - **Undo that move** after stepping on a mine. Hints and undo mark the game as **with help**: it still counts as a
   win, but not for the best time, the average time or the winning streak.
 - Statistics per level (played, won, win rate, best and average time), a streak of wins without help, a pause that
   hides the board, numbers in grey or in colour, light and dark theme like Offlined, the 10 languages of Offlined.
+- **Sound** (Settings): *Off*, *Soft* (default) or *Normal*. Short sounds made in the browser (no audio files);
+  silent when Offlined is muted. Openings ripple out from the click, flags pop, a number click that cannot open
+  shakes, and when you lose the mines appear one after another.
 
 ### Keyboard
 

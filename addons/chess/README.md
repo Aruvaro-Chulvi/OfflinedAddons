@@ -18,14 +18,17 @@ Chess against the computer inside Offlined, fully offline, with a chess engine w
 - Play **White, Black or random**. The board turns to your side; **Flip** turns it at any time.
 - **Optional clock**: none (default), 5, 10 or 15 minutes each. It stops while the addon is hidden.
 - Click a piece and then its square, or drag it. Possible moves, the last move and a king in check are marked.
-- Full rules: castling, en passant, promotion (you choose the piece), checkmate, stalemate, threefold repetition,
-  the fifty-move rule and insufficient material.
+- Pieces slide to their square (the rook too when castling; **Back** slides them back) and a king in check pulses.
+- Full rules: castling, en passant, promotion (you choose the piece; `Esc` or a click outside cancels it),
+  checkmate, stalemate, threefold repetition, the fifty-move rule and insufficient material.
 - **Back** takes back your last move (and the computer's reply); **Hint** shows the computer's move with an
   arrow. Using either marks the game as **with help**: it still counts, and the statistics show how many wins
   were with help. The winning streak only counts wins without help.
 - **Draw** offers a draw (the computer accepts when it is worse, or in a level, long game); **Resign** asks first.
 - Moves in figurine notation (`♘f3`), the same in every language, and **Copy PGN** to open the game in any other
   chess program.
+- **Sound** (Settings): *Off*, *Soft* (default) or *Normal*. Short sounds made in the browser (no audio files) for a
+  move, a capture, castling, promotion, check and the end of the game; silent when Offlined is muted.
 - Statistics per level (won, draws, lost), light and dark theme like Offlined, the 10 languages of Offlined.
 
 ## The engine

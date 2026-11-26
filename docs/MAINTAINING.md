@@ -44,6 +44,6 @@ It disappears from *Available addons*; installed copies keep working.
 
 ## Official addons
 
-`tools/official.json` lists the addons made by Offlined; the catalogue marks them «Official». The Offlined
-build still ships its own copy of the four built-in addons (spreadsheet, notes, whiteboard, audio-notes); when
-one of them changes here, copy it into Offlined too.
+`tools/official.json` lists the addons made by Offlined; the catalogue marks them «Official». The office apps
+(spreadsheet, notes, whiteboard, audio-notes) are built into Offlined 4 and were withdrawn from the catalogue on
+27 November 2026; their last addon versions are in `withdrawn/`.

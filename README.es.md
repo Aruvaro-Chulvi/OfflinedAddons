@@ -19,21 +19,34 @@ menú **Addons**. Todos los addons de este repositorio se pueden instalar desde 
 
 | | Addon | Qué hace | |
 |---|---|---|---|
-| 📊 | **[Hoja de cálculo](addons/spreadsheet/)** | Hojas de cálculo con fórmulas, formato y varias hojas, con tecnología de Univer. | Oficial |
-| 🗒️ | **[Documento de texto](addons/notes/)** | Documentos de texto enriquecido con búsqueda, lectura en voz alta y lugares en el mapa. | Oficial |
-| ✏️ | **[Pizarra](addons/whiteboard/)** | Una pizarra infinita para bocetos y diagramas, con tecnología de Excalidraw. | Oficial |
-| 🎙️ | **[Notas de audio](addons/audio-notes/)** | Notas de voz con reducción de ruido, reproductor, exportación a MP3 y enlaces al calendario. | Oficial |
-| 🔢 | **[Sudoku](addons/sudoku/)** | Sudoku clásico con ocho niveles, de muy fácil a mortal, y su propio generador de tableros. | Oficial |
-| ♟️ | **[Ajedrez](addons/chess/)** | Ajedrez contra el ordenador: cuatro niveles, reloj opcional, pistas y motor propio. | Oficial |
-| ⭕ | **[Circuito](addons/circuit/)** | Dibuja un único circuito cerrado alrededor de los números (tipo Slitherlink): seis niveles y generador propio. | Oficial |
-| 💣 | **[Buscaminas](addons/minesweeper/)** | Despeja el tablero sin pisar minas: cuatro niveles y tableros que se resuelven sin adivinar. | Oficial |
-| 🧮 | **[Calcudoku](addons/calcudoku/)** | Números sin repetir y jaulas con + − × ÷: seis tamaños y generador propio. | Oficial |
-| 🃏 | **[Escoba](addons/escoba/)** | La escoba del 15 contra el ordenador, con baraja española de diseño propio. | Oficial |
-| 🂠 | **[Mus](addons/mus/)** | Mus por parejas contra el ordenador: envites, órdagos, 8 o 4 reyes, vacas a 30 o 40. | Oficial |
+| 🔢 | **[Sudoku](addons/sudoku/)** | Sudoku clásico con ocho niveles, de muy fácil a mortal, generador propio, pistas que explican cada técnica, sonido y efectos. | Oficial |
+| ♟️ | **[Ajedrez](addons/chess/)** | Ajedrez contra el ordenador: cuatro niveles, reloj opcional, pistas, piezas que se deslizan con sonido y motor propio. | Oficial |
+| ⭕ | **[Circuito](addons/circuit/)** | Dibuja un único circuito cerrado alrededor de los números (tipo Slitherlink): seis niveles, generador propio, sonido y efectos. | Oficial |
+| 💣 | **[Buscaminas](addons/minesweeper/)** | Despeja el tablero sin pisar minas: cuatro niveles, tableros que se resuelven sin adivinar, sonido y efectos. | Oficial |
+| 🧮 | **[Calcudoku](addons/calcudoku/)** | Números sin repetir y jaulas con + − × ÷: seis niveles que se distinguen por la técnica que piden, de 4×4 a 9×9. | Oficial |
+| 🃏 | **[Escoba](addons/escoba/)** | La escoba del 15 contra el ordenador, con baraja española de diseño propio y cartas animadas con sonido. | Oficial |
+| 🂠 | **[Mus](addons/mus/)** | Mus por parejas contra el ordenador: envites, órdagos, 8 o 4 reyes, vacas a 30 o 40, cartas animadas con sonido. | Oficial |
 | 🔳 | **[Generador de QR](addons/qr-generator/)** | Códigos QR de enlaces, Wi‑Fi, contactos, eventos y más: colores, formas, logo, PNG/SVG y hojas de etiquetas. | Oficial |
+| ✈️ | **[Arcade Flow Sky Defender](addons/sky-guardians/)** | Supervivencia de combate aéreo: defiende una torre gigante de oleadas cada vez más fuertes, en la Arena Neón o sobre tus propios mapas. Con mando, teclado o ratón. | Oficial |
+
+Las apps de oficina (hoja de cálculo, documentos de texto, pizarra y notas de audio) vienen integradas en Offlined 4,
+así que ya no son addons; sus últimas versiones como addon se conservan en [`withdrawn/`](withdrawn/).
 
 La lista completa y actualizada está en [`catalog.json`](catalog.json); los paquetes firmados están en la
 [última versión publicada](https://github.com/Aruvaro-Chulvi/OfflinedAddons/releases/latest).
+
+### Novedades del 27 de noviembre de 2026
+
+- **Escoba 1.2 y Mus 1.2:** las cartas se mueven con su sonido: el reparto, las capturas, los descartes y las cartas
+  que se destapan al final de la mano.
+- **Sudoku, Calcudoku, Circuito, Buscaminas y Ajedrez 1.1:** ajuste de sonido y efectos (las filas completas se
+  iluminan, las aperturas se propagan en onda, las piezas de ajedrez se deslizan). Cada pista cuenta una sola vez por
+  posición, la pista explica la técnica y los récords solo cuentan las partidas sin pistas.
+- **Calcudoku 1.1:** técnicas nuevas (pares ocultos, suma de la línea, tríos desnudos, X-Wing); cada nivel pide su
+  propio razonamiento, no solo un tablero más grande.
+- **Arcade Flow Sky Defender 1.4:** menús con mando o teclado, enemigos élite y un jefe que crece, una racha más
+  justa, la opción «Reducir efectos» y un entrenamiento más completo.
+- **Generador de QR 1.2.1:** correcciones en los eventos de día completo y en el logo.
 
 ## Crea el tuyo
 
